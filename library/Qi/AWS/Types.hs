@@ -6,10 +6,9 @@
 module Qi.AWS.Types where
 
 import           Data.Aeson
-import qualified Data.Text      as T
-import           Network.AWS    (Logger)
+import qualified Data.Text   as T
+import           Network.AWS (Logger)
 import           Protolude
-import           Qi.AWS.Cognito
 
 
 data AwsMode = RealDeal | LocalStack

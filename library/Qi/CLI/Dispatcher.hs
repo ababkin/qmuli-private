@@ -10,7 +10,6 @@ module Qi.CLI.Dispatcher (
   , describeCfStack
   , destroyCfStack
   , cycleStack
-  , printLogs
   ) where
 
 import           Control.Lens
@@ -18,13 +17,11 @@ import           Control.Monad.Freer
 import           Data.Aeson.Encode.Pretty       (encodePretty)
 import qualified Data.ByteString.Lazy           as LBS
 import qualified Data.Map                       as Map
-import           Network.AWS.CloudWatchLogs
 import           Network.AWS.Data.Body          (toBody)
 import           Network.AWS.S3
 import           Protolude                      hiding (FilePath, getAll)
 import           Qi.CLI.Dispatcher.S3           as S3 (clearBuckets)
-import           Qi.Config.AWS                  (getAll, getById, getName,
-                                                 getPhysicalName, namePrefix)
+import           Qi.Config.AWS                  (getAll, getName, namePrefix)
 import           Qi.Config.AWS.Lambda           (Lambda)
 import qualified Qi.Config.AWS.Lambda.Accessors as Lbd
 import           Qi.Config.AWS.S3               (S3Key (S3Key), s3Object)
@@ -147,17 +144,4 @@ cycleStack template content = do
   createCfStack template
   say "all done!"
 
-
-
-printLogs
-  :: Members '[ GenEff, ConfigEff ] effs
-  => Text
-  -> Eff effs ()
-printLogs lbdName = do
-  config <- getConfig
-  let lbdId = Lbd.getIdByName config lbdName
-      lbd   = getById config lbdId :: Lambda
-      groupName = "/aws/lambda/" <> show (getPhysicalName config lbd)
-  res <- amazonka cloudWatchLogs $ filterLogEvents groupName
-  traverse_ say . catMaybes $ (^.fleMessage) <$> res ^. flersEvents
 

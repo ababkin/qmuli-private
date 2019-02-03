@@ -25,7 +25,7 @@ data Command =
   | CfDestroy
   | CfCycle
   | LbdUpdate
-  | LbdLogs Text
+  -- | LbdLogs Text
 
 
 optionsSpec :: ParserInfo Options
@@ -116,19 +116,13 @@ lbdCmd =
   $ info lbdUpdateParser
   $ fullDesc <> progDesc "Perform Lambda operations"
   where
-    lbdUpdateParser = hsubparser (lbdUpdate <> lbdLogs)
+    lbdUpdateParser = hsubparser lbdUpdate
 
     lbdUpdate :: Mod CommandFields Command
     lbdUpdate =
         command "update"
       $ info (pure LbdUpdate)
       $ fullDesc <> progDesc "Update Lambda"
-
-    lbdLogs :: Mod CommandFields Command
-    lbdLogs =
-        command "logs"
-      $ info (LbdLogs <$> lambdaNameOption)
-      $ fullDesc <> progDesc "Get Lambda logs"
 
 
 lambdaNameOption :: Parser Text

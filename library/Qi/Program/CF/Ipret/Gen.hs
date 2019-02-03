@@ -1,11 +1,7 @@
 {-# LANGUAGE DataKinds                  #-}
-{-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE LambdaCase                 #-}
-{-# LANGUAGE NamedFieldPuns             #-}
 {-# LANGUAGE OverloadedLists            #-}
-{-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE TypeOperators              #-}
 
 module Qi.Program.CF.Ipret.Gen (run) where
@@ -29,7 +25,6 @@ import           Network.AWS.S3             (BucketName (BucketName),
                                              ObjectKey (ObjectKey))
 import           Protolude                  hiding ((<&>))
 import           Qi.Config.AWS
-import           Qi.Config.AWS.CF
 import           Qi.Config.AWS.S3
 import           Qi.Program.CF.Lang         (AbsentDirective (..), CfEff (..),
                                              StackDescription (..),

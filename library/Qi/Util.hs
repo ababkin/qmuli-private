@@ -16,62 +16,6 @@ import           System.Console.ANSI
 import qualified System.Process             as P
 
 
-{-
-success
-  :: Value
-  -> LambdaProgram LBS.ByteString
-success v =
-  respond 200 $ case v of
-    String _ -> object [ ("message", v) ]
-    _        -> v
-
-created :: Value -> LambdaProgram LBS.ByteString
-created = respond 201
-
-argumentsError :: Text -> LambdaProgram LBS.ByteString
-argumentsError = respond 400 . String
-
-notFoundError :: Text -> LambdaProgram LBS.ByteString
-notFoundError = respond 404 . String
-
-internalError :: Text -> LambdaProgram LBS.ByteString
-internalError = respond 500 . String
-
-
-respond
-  :: Int
-  -> Value
-  -> LambdaProgram LBS.ByteString
-respond status content =
-  return . encode $ object [
-      ("status", Number $ fromIntegral status)
-    , ("body", content)
-    ]
-
-
-result
-  :: ([Char] -> b)
-  -> (a -> b)
-  -> Result a
-  -> b
-result f g r =
-  case r of
-    Error err -> f err
-    Success x -> g x
-
-withSuccess
-  :: Int
-  -> LambdaProgram LBS.ByteString
-  -> LambdaProgram LBS.ByteString
-withSuccess code f =
-  case code of
-    200         -> f
-    unexpected  ->
-      internalError $ "Error: unexpected response status: " <> show unexpected
-
--}
-
-
 printSuccess
   :: MonadIO m
   => Text

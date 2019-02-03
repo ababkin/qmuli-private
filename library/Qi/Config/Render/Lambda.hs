@@ -1,17 +1,13 @@
-{-# LANGUAGE NamedFieldPuns    #-}
-{-# LANGUAGE OverloadedLists   #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedLists #-}
 
 module Qi.Config.Render.Lambda (toResources) where
 
 import           Protolude                      hiding (getAll)
-import           Stratosphere
-
 import           Qi.Config.AWS
-{- import           Qi.Config.AWS.DDB -}
 import           Qi.Config.AWS.Lambda           hiding (lbdName)
 import           Qi.Config.AWS.Lambda.Accessors
 import qualified Qi.Config.Render.Role          as Role
+import           Stratosphere
 
 
 toResources :: Config -> Resources
@@ -35,10 +31,6 @@ toResources config = foldMap toAllLambdaResources $ getAll config
             principal = case lbd of
               GenericLambda{}  -> "lambda.amazonaws.com"
               S3BucketLambda{} -> "s3.amazonaws.com"
-              {- ApiLambda{}       -> "apigateway.amazonaws.com" -}
-              -- CfCustomLambda{} -> "*" -- TODO: not sure whether we even need the permission for CF Custom Resource
-              CwEventLambda{}  -> "events.amazonaws.com"
-              {- DdbStreamLambda{} -> "dynamodb.amazonaws.com" -}
 
         lambdaResource = (
           resource (unLogicalName lbdName) $

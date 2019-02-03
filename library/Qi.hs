@@ -95,16 +95,9 @@ withConfig configProgram = do
 
         LbdUpdate -> updateLambdas
 
-        LbdLogs name -> printLogs name
+        -- LbdLogs name -> printLogs name
 
   where
-
-    {- loop -}
-      {- :: Config -}
-      {- -> Text -}
-      {- -> (Text, Int) -}
-      {- -> Text -}
-      {- -> IO () -}
     loop config lbdName runLambda endpoint = loop'
       where
         loop' = do
@@ -143,30 +136,3 @@ withConfig configProgram = do
               either  (reportBadArgument "S3")
                       _lbdS3BucketLambdaProgram
                       $ parseEither (S3Event.parse config) =<< eitherDecode (toS req)
-
-            -- CfCustomLambda{ _lbdCfCustomLambdaProgram } ->
-            --   either  (reportBadArgument "CfCustom")
-            --           _lbdCfCustomLambdaProgram
-            --           $ eitherDecode (toS req)
-
-            CwEventLambda{ _lbdCwEventLambdaProgram } ->
-              either  (reportBadArgument "CW")
-                      _lbdCwEventLambdaProgram
-                      $ eitherDecode (toS req)
-
-
-
-
-
-
-{-
-    parseLambdaEvent ApiLambda{_lbdApiMethodLambdaProgram} eventJson =
-      _lbdApiMethodLambdaProgram <$> (parseEither (ApiMethodEvent.parse config) =<< eitherDecode (toS eventJson))
-
-
-    parseLambdaEvent DdbStreamLambda{_lbdDdbStreamLambdaProgram} eventJson =
-      _lbdDdbStreamLambdaProgram <$> (eitherDecode (toS eventJson) :: Either [Char] DdbStreamEvent)
-
--}
-
-
