@@ -23,15 +23,12 @@ import           Network.AWS.Data.Body          (toBody)
 import           Network.AWS.S3
 import           Protolude                      hiding (FilePath, getAll)
 import           Qi.CLI.Dispatcher.S3           as S3 (clearBuckets)
-import           Qi.Config.AWS                  (Config, getAll, getName,
+import           Qi.Config.AWS                  (getAll, getById, getName,
                                                  getPhysicalName, namePrefix)
-import           Qi.Config.AWS                  (getById)
 import           Qi.Config.AWS.Lambda           (Lambda)
 import qualified Qi.Config.AWS.Lambda.Accessors as Lbd
 import           Qi.Config.AWS.S3               (S3Key (S3Key), s3Object)
 import qualified Qi.Config.AWS.S3.Accessors     as S3
-import qualified Qi.Config.CfTemplate           as CF
-import           Qi.Config.Identifier           (LambdaId)
 import           Qi.Program.CF.Lang
 import           Qi.Program.Config.Lang         (ConfigEff, getConfig)
 import           Qi.Program.Gen.Lang
@@ -45,7 +42,7 @@ deployApp
   => LBS.ByteString
   -> LBS.ByteString
   -> Eff effs ()
-deployApp template content = do
+deployApp _template content = do
   say "deploying the app..."
   config <- getConfig
   let appName     = config ^. namePrefix

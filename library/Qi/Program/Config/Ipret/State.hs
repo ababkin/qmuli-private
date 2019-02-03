@@ -103,17 +103,17 @@ run = interpret (\case
       modify (sqsConfig . sqsQueues %~ SHM.insert id SqsQueue{ _sqsQueueName = name })
 
 
--- Custom
-  RegCustomResource name programFunc profile -> do
-    id <- getNextId
-    let customResource = CfCustomResource id
-        (newCustomId, cfConfigModifier) = CustomResource.insert customResource
-        lbd = CfCustomLambda name profile programFunc
+-- -- Custom
+--   RegCustomResource name programFunc profile -> do
+--     id <- getNextId
+--     let customResource = CfCustomResource id
+--         (newCustomId, cfConfigModifier) = CustomResource.insert customResource
+--         lbd = CfCustomLambda name profile programFunc
 
-    insertLambda id name lbd
+--     insertLambda id name lbd
 
-    modify $ cfConfig %~ cfConfigModifier
-    pure newCustomId
+--     modify $ cfConfig %~ cfConfigModifier
+--     pure newCustomId
 
 
 -- CloudWatch

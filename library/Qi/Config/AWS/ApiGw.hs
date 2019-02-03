@@ -26,8 +26,8 @@ data RequestParams = RequestParams {
 
 data RequestBody =
     EmptyBody
-  | PlainTextBody { unPlainTextBody :: Text }
-  | JsonBody { unJsonBody :: Value }
+  | PlainTextBody Text
+  | JsonBody Value
   deriving (Eq, Show)
 
 data ApiMethodEvent = ApiMethodEvent {
@@ -87,6 +87,11 @@ data ApiAuthorizer = ApiAuthorizer {
   , _aaApiId     :: ApiId
   }
   deriving (Eq, Show)
+
+
+-- some other comment
+
+
 
 data ApiResource = ApiResource {
     _arName          :: Text

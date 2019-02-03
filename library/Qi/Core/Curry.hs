@@ -12,6 +12,7 @@ import           Protolude
 (.::) = (.:) . (.)
 
 -- | Curry `f x y z z' = g $ h x y z z'` to `f = g .::: h`
+-- | Curry `f x y z z' = g $ h x y z z'` to `f = g .::: h`
 (.:::) :: (e -> f) -> (a -> b -> c -> d -> e) -> a -> b -> c -> d -> f
 (.:::) = (.::) . (.)
 

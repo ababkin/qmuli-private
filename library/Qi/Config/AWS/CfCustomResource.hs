@@ -33,7 +33,7 @@ import           Qi.Config.AWS.CfCustomResource.Types
 import           Qi.Program.Gen.Lang                  (amazonka, http, say)
 
 
-type CfCustomResourceLambdaProgram effs = CfCustomResourceEvent -> Eff effs LBS.ByteString
+-- type CfCustomResourceLambdaProgram effs = CfCustomResourceEvent -> Eff effs LBS.ByteString
 
 
 {-

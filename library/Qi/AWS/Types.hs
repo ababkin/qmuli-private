@@ -12,11 +12,6 @@ import           Protolude
 import           Qi.AWS.Cognito
 
 
-newtype Arn = Arn Text
-  deriving (Eq, Show, Read, Generic)
-  deriving newtype (ToJSON, FromJSON)
-
-
 data AwsMode = RealDeal | LocalStack
   deriving Eq
 

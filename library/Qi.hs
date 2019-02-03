@@ -144,10 +144,10 @@ withConfig configProgram = do
                       _lbdS3BucketLambdaProgram
                       $ parseEither (S3Event.parse config) =<< eitherDecode (toS req)
 
-            CfCustomLambda{ _lbdCfCustomLambdaProgram } ->
-              either  (reportBadArgument "CfCustom")
-                      _lbdCfCustomLambdaProgram
-                      $ eitherDecode (toS req)
+            -- CfCustomLambda{ _lbdCfCustomLambdaProgram } ->
+            --   either  (reportBadArgument "CfCustom")
+            --           _lbdCfCustomLambdaProgram
+            --           $ eitherDecode (toS req)
 
             CwEventLambda{ _lbdCwEventLambdaProgram } ->
               either  (reportBadArgument "CW")

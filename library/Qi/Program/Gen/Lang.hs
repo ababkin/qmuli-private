@@ -10,20 +10,18 @@
 module Qi.Program.Gen.Lang where
 
 import           Control.Monad.Freer
-import qualified Control.Monad.Trans.AWS              as AWS (send)
-import           Data.Aeson                           (FromJSON, ToJSON, Value)
-import qualified Data.ByteString                      as BS
-import qualified Data.ByteString.Lazy                 as LBS
-import           Data.Time.Clock                      (UTCTime)
-import           Network.AWS                          hiding (Request, Response,
-                                                       send)
-import           Network.AWS.Data.Body                (RsBody (..))
+import qualified Control.Monad.Trans.AWS as AWS (send)
+import           Data.Aeson              (FromJSON, ToJSON, Value)
+import qualified Data.ByteString         as BS
+import qualified Data.ByteString.Lazy    as LBS
+import           Data.Time.Clock         (UTCTime)
+import           Network.AWS             hiding (Request, Response, send)
+import           Network.AWS.Data.Body   (RsBody (..))
 import           Network.HTTP.Client
 import           Protolude
-import           Qi.Config.AWS.CfCustomResource.Types (CfCustomResourceEvent)
+-- import           Qi.Config.AWS.CfCustomResource.Types (CfCustomResourceEvent)
 import           Qi.Core.Curry
-import           Servant.Client                       (BaseUrl, ClientM,
-                                                       ServantError)
+import           Servant.Client          (BaseUrl, ClientM, ServantError)
 
 
 {- type CfCustomResourceLambdaProgram effs = CfCustomResourceEvent -> Eff effs LBS.ByteString -}

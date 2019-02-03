@@ -11,25 +11,25 @@ module Qi.Config.AWS.Lambda where
 
 import           Control.Lens
 import           Control.Monad.Freer
-import           Data.Aeson                           (FromJSON, ToJSON)
-import qualified Data.ByteString.Lazy.Char8           as LBS
-import           Data.Default                         (Default, def)
-import           Data.HashMap.Strict                  (HashMap)
-import qualified Data.HashMap.Strict                  as SHM
-import           Data.Proxy                           (Proxy)
-import           Data.Text                            (Text)
-import           GHC.Show                             (Show (..))
-import           Protolude                            as P
-import           Qi.Config.AWS.ApiGw                  (ApiMethodEvent)
-import           Qi.Config.AWS.CfCustomResource       (CfCustomResourceLambdaProgram)
-import           Qi.Config.AWS.CfCustomResource.Types (CfCustomResourceEvent)
-import           Qi.Config.AWS.CW                     (CwEvent, CwLambdaProgram)
-import           Qi.Config.AWS.DDB                    (DdbStreamEvent)
-import           Qi.Config.AWS.S3                     (S3Event)
+import           Data.Aeson                 (FromJSON, ToJSON)
+import qualified Data.ByteString.Lazy.Char8 as LBS
+import           Data.Default               (Default, def)
+import           Data.HashMap.Strict        (HashMap)
+import qualified Data.HashMap.Strict        as SHM
+import           Data.Proxy                 (Proxy)
+import           Data.Text                  (Text)
+import           GHC.Show                   (Show (..))
+import           Protolude                  as P
+import           Qi.Config.AWS.ApiGw        (ApiMethodEvent)
+-- import           Qi.Config.AWS.CfCustomResource       (CfCustomResourceLambdaProgram)
+-- import           Qi.Config.AWS.CfCustomResource.Types (CfCustomResourceEvent)
+import           Qi.Config.AWS.CW           (CwEvent, CwLambdaProgram)
+import           Qi.Config.AWS.DDB          (DdbStreamEvent)
+import           Qi.Config.AWS.S3           (S3Event)
 import           Qi.Config.Identifier
 import           Qi.Program.Gen.Lang
 import           Qi.Program.Gen.Lang
-import           Qi.Program.S3.Lang                   (S3Eff, S3LambdaProgram)
+import           Qi.Program.S3.Lang         (S3Eff, S3LambdaProgram)
 import           Stratosphere
 
 
@@ -72,11 +72,11 @@ data Lambda =
   , _lbdApiMethodLambdaProgram :: ApiLambdaProgram
   }
 -}
-  | CfCustomLambda {
-    _lbdName                  :: Text
-  , _lbdProfile               :: LambdaProfile
-  , _lbdCfCustomLambdaProgram :: forall effs . (Member GenEff effs) => CfCustomResourceLambdaProgram effs
-  }
+  -- | CfCustomLambda {
+  --   _lbdName                  :: Text
+  -- , _lbdProfile               :: LambdaProfile
+  -- , _lbdCfCustomLambdaProgram :: forall effs . (Member GenEff effs) => CfCustomResourceLambdaProgram effs
+  -- }
   | CwEventLambda {
     _lbdName                 :: Text
   , _lbdProfile              :: LambdaProfile
@@ -96,7 +96,7 @@ instance Eq Lambda where
 instance Show Lambda where
   show GenericLambda{}  = "GenericLambda"
   show S3BucketLambda{} = "S3BucketLambda"
-  show CfCustomLambda{} = "CfCustomLambda"
+  -- show CfCustomLambda{} = "CfCustomLambda"
   show CwEventLambda{}  = "CwEventLambda"
 
 data LambdaPermission
