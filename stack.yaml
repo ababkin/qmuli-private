@@ -1,4 +1,4 @@
-resolver: lts-13.0
+resolver: lts-13.6
 
 packages:
 - '.'
@@ -17,7 +17,7 @@ packages:
     commit: e7077512c08f58a8e0a5e6448b6d73c16de46e8d
     subdirs:
     - amazonka
-    - amazonka-lex-models
+    # - amazonka-lex-models
     - core
   extra-dep: true
 
