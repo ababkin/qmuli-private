@@ -2,29 +2,22 @@
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE QuasiQuotes                #-}
-{-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE TypeOperators              #-}
 
 module Qi.Program.Gen.Ipret.IO  where
 
 import           Control.Lens                  hiding ((.=))
 import           Control.Monad.Freer           hiding (run)
-import           Control.Monad.Trans.AWS       (AWST, runAWST)
+import           Control.Monad.Trans.AWS       (runAWST)
 import qualified Control.Monad.Trans.AWS       as AWS (send)
-import           Data.Aeson                    (FromJSON, ToJSON, Value (..),
-                                                decode, encode, object, (.=))
-import qualified Data.ByteString               as BS
+import           Data.Aeson
 import qualified Data.ByteString.Lazy          as LBS
-import qualified Data.ByteString.Lazy.Builder  as Build
 import           Data.Conduit.Binary           (sinkLbs)
 import qualified Data.Time.Clock               as C
 import           Network.AWS                   hiding (Request, Response, send)
-import           Network.AWS.S3                (s3)
 import           Network.AWS.Types             (Service (..))
-import           Network.HTTP.Client           (ManagerSettings, Request,
-                                                Response, httpLbs, newManager)
+import           Network.HTTP.Client           (httpLbs, newManager)
 import           Protolude                     hiding ((<&>))
 import           Qi.Amazonka                   (currentRegion)
 import           Qi.AWS.Types                  (AwsMode (..))
@@ -32,16 +25,14 @@ import           Qi.Config.AWS                 (namePrefix)
 import           Qi.Program.Config.Lang        (ConfigEff, getConfig)
 import           Qi.Program.Gen.Lang           (GenEff (..))
 import           Qi.Util                       (callProcess, printPending)
-import           Servant.Client                (BaseUrl, ClientM, ServantError,
-                                                mkClientEnv, runClientM)
+import           Servant.Client    hiding (Http)
 import           System.Build                  (BuildArgs (SimpleTarget),
                                                 stackInDocker)
 import           System.Directory              (createDirectoryIfMissing,
                                                 renameFile)
 import           System.Docker                 (ImageName (ImageName))
 import           System.Environment.Executable (splitExecutablePath)
-import           System.IO                     (BufferMode (LineBuffering),
-                                                hSetBuffering, stderr, stdout)
+import           System.IO                     (stderr)
 import           System.Posix.Files
 import           System.Posix.Types            (FileMode)
 

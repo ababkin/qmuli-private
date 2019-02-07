@@ -17,8 +17,6 @@ import           Qi.AWS.Runtime
 import           Qi.AWS.Types
 import           Qi.CLI.Dispatcher
 import           Qi.Config.AWS
-{- import           Qi.Config.AWS.CW -}
-{- import           Qi.Config.AWS.DDB -}
 import           Qi.Config.AWS.Lambda           hiding (lbdName)
 import qualified Qi.Config.AWS.Lambda.Accessors as Lbd
 import           Qi.Config.AWS.S3
