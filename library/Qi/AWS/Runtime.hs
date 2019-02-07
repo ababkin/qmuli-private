@@ -2,14 +2,20 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell     #-}
 
-module Qi.AWS.Runtime where
-
-import           Protolude             hiding (get, try)
+module Qi.AWS.Runtime (
+    Response (..)
+  , ErrorCode(ErrorCode)
+  , getEndpoint
+  , getWithRetries
+  , HandlerRequest(..)
+  , respond
+  , HandlerResponse(..)
+  ) where
 
 import           Control.Monad.Catch   (MonadCatch, MonadThrow, throwM, try)
-import           Data.Aeson
+import           Protolude             hiding (get, try)
+-- import           Data.Aeson
 import           Data.Default.Class    (def)
-import           Data.Maybe            (fromJust)
 import qualified Data.Text             as Text
 import qualified Data.Text.Encoding    as TextEncoding
 import           Data.Time.Clock
@@ -31,33 +37,21 @@ data HandlerRequest = HandlerRequest
 
 ----------------------------------------------------------------
 data HandlerResponse
-  = SuccessHandlerResponse { mPayload     :: Text
-                           , mContentType :: Maybe Text }
-  | FailureHandlerResponse { mErrorMsg  :: Text
-                           , mErrorType :: Text }
+  = SuccessHandlerResponse  Text (Maybe Text)
+  | FailureHandlerResponse Text Text
 
-isSuccess :: HandlerResponse -> Bool
-isSuccess SuccessHandlerResponse {} = True
-isSuccess FailureHandlerResponse {} = False
 
-getPayload :: HandlerResponse -> Text
-getPayload rsp@SuccessHandlerResponse {} = mPayload rsp
-getPayload rsp@FailureHandlerResponse {} = toS $ encode v
-  where
-    v :: Value
-    v =
-      object
-        [ ("errorMessage", String (mErrorMsg rsp))
-        , ("errorType", String (mErrorType rsp))
-        , ("stackTrace", Array empty)
-        ]
-
-mkSuccess :: Text -> Text -> HandlerResponse
-mkSuccess p ct = SuccessHandlerResponse {mPayload = p, mContentType = Just ct}
-
-mkFailure :: Text -> Text -> HandlerResponse
-mkFailure errorMsg errorType =
-  FailureHandlerResponse {mErrorMsg = errorMsg, mErrorType = errorType}
+-- getPayload :: HandlerResponse -> Text
+-- getPayload (SuccessHandlerResponse pay _) = pay
+-- getPayload (FailureHandlerResponse errMsg errType) = toS $ encode v
+--   where
+--     v :: Value
+--     v =
+--       object
+--         [ ("errorMessage", String errMsg)
+--         , ("errorType", String errType)
+--         , ("stackTrace", Array empty)
+--         ]
 
 ----------------------------------------------------------------
 
@@ -83,7 +77,7 @@ isSuccessCode code = code >= 200 && code <= 299
 ----------------------------------------------------------------
 
 getEndpoint
-  :: (MonadIO m, MonadThrow m, MonadCatch m)
+  :: (MonadIO m)
   => m (Either Text (Text, Int))
 getEndpoint = liftIO $ do
   maybe
@@ -193,12 +187,12 @@ respond (host, port) reqId handlerRsp = do
   rsp <- doPost url port reqId handlerRsp
   void $ handleResponse reqId rsp
   where
-    handleResponse reqId (SuccessResponse _) = do
+    handleResponse _reqId (SuccessResponse _) = do
       return True
     -- TODO: Improve handling for this scenario by reporting it to the runtime/init/error endpoint
     -- See https://github.com/awslabs/aws-lambda-rust-runtime/blob/ad28790312219fb63f26170ae0d8be697fc1f7f2/lambda-runtime/src/runtime.rs#L12 fail_init
     -- Also see https://github.com/awslabs/aws-lambda-rust-runtime/blob/master/lambda-runtime-client/src/client.rs
-    handleResponse reqId (ErrorResponse code) = do
+    handleResponse _reqId (ErrorResponse _code) = do
       {- $(logWarn) -}
         {- ("HTTP Request for invocation" <> reqId <> -}
          {- "was not successful. HTTP response code: " <> -}
@@ -212,14 +206,16 @@ doPost
   -> Text
   -> HandlerResponse
   -> m (Response ())
-doPost url port reqId handlerRsp = do
+  -- TODO: what if I want to post Failure response?
+doPost _url _port _reqId (FailureHandlerResponse _ _) = panic "unexpected call to doPost with FailureHandlerResponse"
+doPost url port _reqId (SuccessHandlerResponse pay contType) = do
   Req.runReq def $ do
     let payload =
-          TextEncoding.encodeUtf8 . getPayload $ handlerRsp
+          TextEncoding.encodeUtf8 pay
     let contentTypeHeader =
           Req.header "content-type" $
           TextEncoding.encodeUtf8 $
-          maybe "text/html" identity (mContentType handlerRsp)
+          fromMaybe "text/html" contType
     let options =
           contentTypeHeader <> Req.port port <> Req.responseTimeout 3000000
     rsp <-

@@ -1,7 +1,7 @@
 {-# LANGUAGE NamedFieldPuns    #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Qi.Options where
+module Qi.CLI.Options where
 
 import           Options.Applicative
 import           Protolude           hiding (runState)
