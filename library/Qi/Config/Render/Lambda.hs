@@ -2,7 +2,9 @@
 
 module Qi.Config.Render.Lambda (toResources) where
 
-import           Protolude                      hiding (getAll)
+import           Protolude                      hiding (all)
+import           Qi.AWS.Resource
+import           Qi.AWS.Types
 import           Qi.Config.AWS
 import           Qi.Config.AWS.Lambda           hiding (lbdName)
 import           Qi.Config.AWS.Lambda.Accessors
@@ -11,21 +13,21 @@ import           Stratosphere
 
 
 toResources :: Config -> Resources
-toResources config = foldMap toAllLambdaResources $ getAll config
+toResources config = foldMap toAllLambdaResources $ all config
   where
     toAllLambdaResources :: Lambda -> Resources
     toAllLambdaResources lbd = Resources $ [lambdaPermissionResource, lambdaResource]
 
       where
-        lbdName = getLogicalName config lbd
-        lbdPermName = getPermissionLogicalName config lbd
+        lbdLogicalId = logicalId config lbd
+        lbdPermissionLogicalId = getPermissionLogicalId lbd
 
         lambdaPermissionResource =
-          resource (unLogicalName lbdPermName) $
+          resource lbdPermissionLogicalId $
             LambdaPermissionProperties $
             lambdaPermission
               "lambda:*"
-              (GetAtt (unLogicalName lbdName) "Arn")
+              (GetAtt (unLogicalId lbdLogicalId) "Arn")
               principal
           where
             principal = case lbd of
@@ -33,14 +35,14 @@ toResources config = foldMap toAllLambdaResources $ getAll config
               S3BucketLambda{} -> "s3.amazonaws.com"
 
         lambdaResource = (
-          resource (unLogicalName lbdName) $
+          resource (unLogicalId lbdLogicalId) $
             LambdaFunctionProperties $
             lambdaFunction
               lbdCode
               "index.handler"
               (GetAtt Role.lambdaBasicExecutionIAMRoleLogicalName "Arn")
               (Literal $ OtherRuntime "provided")
-            & lfFunctionName  ?~ Literal (unPhysicalName $ getPhysicalName config lbd)
+            & lfFunctionName  ?~ Literal (unPhysicalId $ physicalId config lbd)
             & lfMemorySize    ?~ Literal memorySize
             & lfTimeout       ?~ Literal timeOut
           )

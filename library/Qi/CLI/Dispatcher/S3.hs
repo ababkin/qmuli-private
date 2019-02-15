@@ -8,7 +8,9 @@ module Qi.CLI.Dispatcher.S3 where
 
 import           Control.Lens
 import           Control.Monad.Freer    hiding (send)
-import           Protolude              hiding (getAll)
+import           Protolude              hiding (all)
+import           Qi.AWS.Resource
+import           Qi.AWS.Types
 import           Qi.Config.AWS
 import           Qi.Config.AWS.S3       (S3Bucket, s3bName)
 import           Qi.Program.Config.Lang
@@ -21,7 +23,8 @@ clearBuckets
   => Eff effs ()
 clearBuckets  = do
   config <- getConfig
-  let bucketIds = map fst $ getAllWithIds config
+  let bucketIds =
+                map (logicalId config) (all config :: [ S3Bucket ])
   say "destroying buckets..."
   for_ bucketIds $ \bucketId -> do
     say $ "destroying bucket: '" <> (getById config bucketId) ^. s3bName <> "'"

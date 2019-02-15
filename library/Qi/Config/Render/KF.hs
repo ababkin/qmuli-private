@@ -1,12 +1,12 @@
-{-# LANGUAGE NamedFieldPuns      #-}
 {-# LANGUAGE OverloadedLists     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Qi.Config.Render.KF (toResources) where
 
 import           Control.Lens
-import           Protolude        hiding (getAll)
+import           Protolude        hiding (all)
 import           Qi.AWS.Resource
+import           Qi.AWS.Types
 import           Qi.Config.AWS
 import           Qi.Config.AWS.KF
 import           Qi.Config.Types  (ResourceExistence (AlreadyExists))

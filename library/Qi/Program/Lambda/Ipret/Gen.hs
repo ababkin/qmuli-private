@@ -22,6 +22,7 @@ import           Protolude              hiding ((<&>))
 import           Qi.AWS.Resource
 import           Qi.AWS.Types
 import           Qi.Config.AWS
+import           Qi.Config.AWS.Lambda
 import           Qi.Config.AWS.S3
 import           Qi.Program.Config.Lang (ConfigEff, getConfig)
 import           Qi.Program.Gen.Lang
@@ -46,7 +47,7 @@ run = interpret (\case
   Update id S3Object{ _s3oBucketId, _s3oKey = S3Key s3Key } -> do
     config  <- getConfig
     let pid = getLambdaPhysicalId config id
-        bucketPid = physicalId config $ getById config _s3oBucketId
+        bucketPid = physicalId config (getById config _s3oBucketId :: S3Bucket)
     void . amazonka lambda $ updateFunctionCode (unPhysicalId pid)
                         & uS3Bucket ?~ unPhysicalId bucketPid
                         & uS3Key    ?~ s3Key
@@ -55,4 +56,9 @@ run = interpret (\case
   )
 
   where
-    getLambdaPhysicalId config = getPhysicalId config . getById config
+    -- getLambdaPhysicalId :: Config -> LogicalId (ResourceType Lambda) -> PhysicalId (ResourceType Lambda)
+    getLambdaPhysicalId config lid =
+        let
+          lambda :: Lambda = getById config lid
+        in
+          physicalId config lambda

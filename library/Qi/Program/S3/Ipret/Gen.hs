@@ -8,6 +8,7 @@
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
+{-# LANGUAGE KindSignatures              #-}
 
 module Qi.Program.S3.Ipret.Gen (run) where
 
@@ -67,15 +68,15 @@ run = interpret (\case
     void $ amazonka s3 $ putObject bucketName objKey (toBody payload) & poACL ?~ OPublicReadWrite
 
 
-  ListObjects id maybeToken -> do
+  ListObjects bucketId maybeToken -> do
     config <- getConfig
-    let bucketName = getBucketName config _s3oBucketId
+    let bucketName = getBucketName config bucketId
     r <- amazonka s3 $ case maybeToken of
       Nothing -> -- first pagination call
         listObjectsV2 bucketName
       Just (ListToken token) ->
         listObjectsV2 bucketName & lovContinuationToken ?~ token
-    let objs = (\o -> S3Object id $ S3Key . toText $ o ^. oKey) <$> (r ^. lovrsContents)
+    let objs = (\o -> S3Object bucketId $ S3Key . toText $ o ^. oKey) <$> (r ^. lovrsContents)
 
     pure $ (objs, ListToken <$> r ^. lovrsNextContinuationToken)
 
@@ -90,11 +91,10 @@ run = interpret (\case
   DeleteObjects s3objs -> do
     config <- getConfig
     let dict = Map.toList . Map.fromListWith (<>) $ toPair <$> s3objs
-        bucketName = getBucketName config _s3oBucketId
 
         toPair :: S3Object -> (BucketName, [ObjectIdentifier])
         toPair s3Obj@S3Object{_s3oBucketId, _s3oKey = S3Key (ObjectKey -> objKey)} =
-          ( bucketName
+          ( getBucketName config _s3oBucketId
           , [objectIdentifier objKey]
           )
 
@@ -105,4 +105,10 @@ run = interpret (\case
 
 
   where
-    getBucketName config = BucketName . (unPhysicalId :: PhysicalId 'S3BucketResource -> Text) . physicalId config . getById config
+    -- getBucketName :: Config -> LogicalId (ResourceType S3Bucket)-> BucketName
+    getBucketName config lid =
+      let
+        bucket :: S3Bucket = getById config lid
+        pid :: PhysicalId 'S3BucketResource = physicalId config bucket
+      in
+        BucketName $ unPhysicalId pid

@@ -25,6 +25,7 @@ data Config = Config {
     _namePrefix :: Text
   , _s3Config   :: S3Config
   , _lbdConfig  :: LambdaConfig
+  , _kfConfig   :: KfConfig
 }
   deriving (Eq, Show)
 
@@ -33,6 +34,7 @@ instance Default Config where
       _namePrefix   = "qmuli"
     , _s3Config     = def
     , _lbdConfig    = def
+    , _kfConfig  = def
   }
 
 makeLenses ''Config

@@ -9,8 +9,9 @@
 module Qi.AWS.Types where
 
 import           Data.Aeson
-import qualified Data.Text   as T
-import           Network.AWS (Logger)
+import           Data.Hashable (Hashable)
+import qualified Data.Text     as T
+import           Network.AWS   (Logger)
 import           Protolude
 
 
@@ -33,7 +34,7 @@ data AwsResourceType =
 -- you reference the logical IDs to associate the block stores with the instance.
 newtype LogicalId (r :: AwsResourceType) = LogicalId { unLogicalId :: Text }
   deriving Eq
-  deriving newtype (Show, ToJSON, FromJSON)
+  deriving newtype (Show, ToJSON, FromJSON, Hashable)
 
 newtype PhysicalId (r :: AwsResourceType) = PhysicalId { unPhysicalId :: Text }
   deriving Eq

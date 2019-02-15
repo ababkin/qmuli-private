@@ -21,6 +21,9 @@ import           Protolude            hiding (show)
 import qualified Protolude            as P
 import           Qi.AWS.Types
 import           Qi.Config.AWS
+import Qi.Config.AWS.S3
+import Qi.Config.AWS.Lambda
+import Qi.Config.AWS.KF
 
 
 class (Show (LogicalId (ResourceType r)), Hashable (LogicalId (ResourceType r))) => AwsResource r where
@@ -32,23 +35,22 @@ class (Show (LogicalId (ResourceType r)), Hashable (LogicalId (ResourceType r)))
     -> Text
 
   name
-    :: Config
-    -> r
+    :: r
     -> Text
 
   mapping
     :: Config
     -> SHM.HashMap (LogicalId (ResourceType r)) r
 
-  -- getAllWithIds
-  --   :: Config
-  --   -> [(rid, r)]
-  -- getAllWithIds = SHM.toList . getMap
-
   all
     :: Config
     -> [ r ]
   all = SHM.elems . mapping
+
+  -- allLogicalIds
+  --   :: Config
+  --   -> [ LogicalId (ResourceType r) ]
+  -- allLogicalIds = SHM.keys . mapping
 
   getById
     :: Config
@@ -63,51 +65,43 @@ class (Show (LogicalId (ResourceType r)), Hashable (LogicalId (ResourceType r)))
     :: Config
     -> r
     -> LogicalId (ResourceType r)
-  logicalId config r =
-    LogicalId $ makeAlphaNumeric (name config r) <> typeName r
+  logicalId _config r =
+    LogicalId $ makeAlphaNumeric (name r) <> typeName r
 
   physicalId
     :: Config
     -> r
     -> PhysicalId (ResourceType r)
-  -- getPhysicalName config r =
-  --   PhysicalName $ makeAlphaNumeric (getName config r) `underscoreNamePrefixWith` config
-
-  -- getLogicalNameFromId
-  --   :: Config
-  --   -> rid
-  --   -> LogicalName r
-  -- getLogicalNameFromId config rid =
-  --   getLogicalName config $ getById config rid
-
-  {- class Conv a b where -}
-    {- conv :: Config -> a -> b -}
-
-    {- instance Conv rid r where -}
-      {- conv = getById -}
-
-    {- instance Conv rid (PhysicalName r) where -}
-      {- conv config = getPhysicalName config . getById config -}
 
 
+type LambdaId = LogicalId (ResourceType Lambda)
+instance AwsResource Lambda where
+  type ResourceType Lambda = 'LambdaResource
 
--- instance CfResource Lambda LambdaId where
---   rNameSuffix = const "Lambda"
---   getName _ = (^. lbdName)
---   getMap = (^. lbdConfig . lbdIdToLambda)
-
-
--- instance CfResource S3Bucket S3BucketId where
---   rNameSuffix = const "S3Bucket"
---   getName _ = (^. s3bName)
---   getMap = (^. s3Config . s3IdToBucket)
---   getPhysicalName config r =
---     PhysicalName $ makeAlphaNumeric (getName config r) `dotNamePrefixWith` config
+  typeName = const "Lambda"
+  name = (^. lbdName)
+  mapping = (^. lbdConfig . lbdIdToLambda)
+  physicalId config r =
+    PhysicalId $ makeAlphaNumeric (name r) `underscoreNamePrefixWith` config
 
 
--- instance CfResource Kf KfId where
---   rNameSuffix = const "Kf"
---   getName _ = (^. kfName)
---   getMap = (^. kfConfig . kfIdToKf)
---   getPhysicalName config r =
---     PhysicalName $ makeAlphaNumeric (getName config r) `dotNamePrefixWith` config
+type KfId = LogicalId (ResourceType Kf)
+instance AwsResource Kf where
+  type ResourceType Kf = 'KinesisFirehoseResource
+
+  typeName = const "Kf"
+  name = (^. kfName)
+  mapping = (^. kfConfig . kfIdToKf)
+  physicalId config r =
+    PhysicalId $ makeAlphaNumeric (name r) `dotNamePrefixWith` config
+
+
+type S3BucketId = LogicalId (ResourceType S3Bucket)
+instance AwsResource S3Bucket where
+  type ResourceType S3Bucket = 'S3BucketResource
+
+  typeName = const "S3Bucket"
+  name = (^. s3bName)
+  mapping = (^. s3Config . s3IdToBucket)
+  physicalId config r =
+    PhysicalId $ makeAlphaNumeric (name r) `dotNamePrefixWith` config

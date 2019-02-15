@@ -22,8 +22,9 @@ import qualified Data.HashMap.Strict       as SHM
 import           Data.Proxy                (Proxy (Proxy))
 import           Protolude                 hiding (State, get, gets, modify,
                                             runState)
+import           Qi.AWS.Resource
 import           Qi.Config.AWS
-import           Qi.Config.AWS.Lambda
+import           Qi.Config.AWS.Lambda      hiding (LambdaId)
 import           Qi.Config.AWS.S3
 import           Qi.Program.Config.Lang    (ConfigEff (..))
 
@@ -36,46 +37,37 @@ run = interpret (\case
 
   GetConfig -> get
 
--- get a resource-specific identifier based on the next autoincremented numeric id
--- while keeping the autoincrement state in the global Config
-  {- GetNextId -> getNextId -}
-
-
   RegGenericLambda inProxy outProxy name f profile -> do
       -- let lbd = GenericLambda name profile inProxy outProxy f
-      -- insertLambda id name lbd
-      panic "unimplemented"
+      insertLambda id name lbd
 
 -- S3
   RegS3Bucket name profile -> do
-      -- let newBucket = def & s3bName .~ name
-      --                     & s3bProfile .~ profile
-      --     insertIdToBucket = s3IdToBucket %~ SHM.insert id newBucket
-      --     insertNameToId = s3NameToId %~ SHM.insert name id
+      let newBucket = def & s3bName .~ name
+                          & s3bProfile .~ profile
+          insertIdToBucket = s3IdToBucket %~ SHM.insert id newBucket
+          insertNameToId = s3NameToId %~ SHM.insert name id
 
-      -- modify (s3Config %~ insertNameToId . insertIdToBucket)
-      panic "unimplemented"
+      modify (s3Config %~ insertNameToId . insertIdToBucket)
 
 
   RegS3BucketLambda name bucketId f profile -> do
-      -- let lbd = S3BucketLambda name profile f
-      --     modifyBucket = s3bEventConfigs %~ ((S3EventConfig S3ObjectCreatedAll id):)
-      -- modify (s3Config . s3IdToBucket %~ SHM.adjust modifyBucket bucketId)
+      let lbd = S3BucketLambda name profile f
+          modifyBucket = s3bEventConfigs %~ ((S3EventConfig S3ObjectCreatedAll id):)
+      modify (s3Config . s3IdToBucket %~ SHM.adjust modifyBucket bucketId)
 
-      -- insertLambda id name lbd
-      panic "unimplemented"
+      insertLambda id name lbd
   )
 
-  -- where
+  where
 
-  --   insertLambda
-  --     :: LambdaId
-  --     -> Text
-  --     -> Lambda
-  --     -> Eff effs ()
-  --   insertLambda id name lbd = do
+    insertLambda
+      :: LambdaId
+      -> Text
+      -> Lambda
+      -> Eff effs ()
+    insertLambda id name lbd = do
 
-  --     let insertIdToLambda  = lbdIdToLambda %~ SHM.insert id lbd
-  --         insertNameToId    = lbdNameToId   %~ SHM.insert name id
+      let insertIdToLambda  = lbdIdToLambda %~ SHM.insert id lbd
 
-  --     void $ modify (lbdConfig %~ insertNameToId . insertIdToLambda)
+      void $ modify (lbdConfig %~ insertNameToId . insertIdToLambda)

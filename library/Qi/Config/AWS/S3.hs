@@ -5,7 +5,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
-module Qi.Config.AWS.S3 where
+module Qi.Config.AWS.S3 (
+    S3Config (..)
+  , S3Bucket (..)
+  , S3BucketProfile (..)
+  , S3Key (..)
+  , S3Object (..)
+  , S3Event (..)
+  , s3bName
+  , s3IdToBucket
+  ) where
 
 import           Control.Lens
 import           Data.Aeson          (FromJSON, ToJSON)
@@ -15,6 +24,7 @@ import qualified Data.HashMap.Strict as SHM
 import           GHC.Show            (Show (..))
 import           Protolude
 import           Qi.AWS.Types
+-- import           Qi.AWS.Resource
 import           Qi.Config.Types
 
 
@@ -96,11 +106,3 @@ makeLenses ''S3Event
 makeLenses ''S3Config
 
 
--- instance AwsResource 'S3BucketResource where
---   type ir = S3Config
-
---   typeName = const "S3Bucket"
---   name _ = (^. s3bName)
---   mapping = (^. s3Config . s3IdToBucket)
---   physicalId config r =
---     PhysicalName $ makeAlphaNumeric (name config r) `dotNamePrefixWith` config

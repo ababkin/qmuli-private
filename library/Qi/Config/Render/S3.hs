@@ -5,7 +5,9 @@
 module Qi.Config.Render.S3 (toResources) where
 
 import           Control.Lens
-import           Protolude                      hiding (getAll)
+import           Protolude                      hiding (all)
+import           Qi.AWS.Resource
+import           Qi.AWS.Types
 import           Qi.Config.AWS
 import qualified Qi.Config.AWS.Lambda.Accessors as L
 import           Qi.Config.AWS.S3               (S3Bucket (..),
@@ -32,29 +34,30 @@ toResources
   -> Resources
 toResources config = Resources $ toResource <$> buckets
   where
-    buckets = filter (\s3b -> s3b ^. s3bProfile . s3bpExistence /= AlreadyExists) $ getAll config
+    buckets = filter (\s3b -> s3b ^. s3bProfile . s3bpExistence /= AlreadyExists) $ all config
 
     toResource bucket = (
-      S.resource (unLogicalName lname) $
+      S.resource (unLogicalId bucketId) $
         S3BucketProperties $ S.s3Bucket
-          & S.sbBucketName    ?~ Literal (unPhysicalName bucketName)
+          & S.sbBucketName    ?~ Literal (unPhysicalId pBucketId)
           & S.sbAccessControl ?~ Literal PublicReadWrite
           & S.sbNotificationConfiguration ?~ lbdConfigs
       )
       & S.resourceDependsOn ?~ reqs
 
       where
-        lname = getLogicalName config bucket
-        bucketName = getPhysicalName config bucket
+        bucketId = logicalId config bucket
+        pBucketId = physicalId config bucket
         eventConfigs = bucket ^. s3bEventConfigs
 
         reqs = concat $
-          (\lec ->
+          (\eventConfig ->
             let
-              lbd = getById config (lec ^. lbdId)
+              eventLambdaLogicalId = eventConfig ^. lbdId
+              lbd = getById config eventLambdaLogicalId
             in
-            [ unLogicalName $ L.getPermissionLogicalName config lbd
-            , unLogicalName $ getLogicalName config lbd
+            [ L.getPermissionLogicalId lbd
+            , unLogicalId eventLambdaLogicalId
             ]
           ) <$> eventConfigs
 
@@ -65,4 +68,4 @@ toResources config = Resources $ toResource <$> buckets
         lbdConfig s3EventConfig =
           S.s3BucketLambdaConfiguration
             (Literal . show $ s3EventConfig ^. event)
-            (GetAtt (unLogicalName . getLogicalNameFromId config $ s3EventConfig ^. lbdId) "Arn")
+            (GetAtt (unLogicalId $ s3EventConfig ^. lbdId) "Arn")

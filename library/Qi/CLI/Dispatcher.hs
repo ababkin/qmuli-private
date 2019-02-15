@@ -10,9 +10,8 @@ import qualified Data.ByteString.Lazy           as LBS
 import qualified Data.Map                       as Map
 import           Network.AWS.Data.Body          (toBody)
 import           Network.AWS.S3
-import           Protolude                      hiding (FilePath, getAll, State, runState)
+import           Protolude                      hiding (FilePath, all, State, runState)
 import           Qi.CLI.Dispatcher.S3           as S3 (clearBuckets)
-import qualified Qi.Config.AWS.S3.Accessors     as S3
 import           Qi.Program.CF.Lang
 import           Qi.Program.Config.Lang         (getConfig)
 import           Qi.Program.Gen.Lang
@@ -27,6 +26,8 @@ import qualified Qi.Config.AWS.S3.Event         as S3Event
 import qualified Qi.Config.CfTemplate           as CF
 import           Qi.Config.Types                (ResourceExistence (AlreadyExists))
 import           Qi.CLI.Options
+import           Qi.AWS.Types
+import           Qi.AWS.Resource
 import qualified Qi.Program.Config.Ipret.State  as Config
 import           Qi.Program.Config.Lang         (ConfigEff, s3Bucket)
 import qualified Qi.Program.Gen.Lang            as Gen
@@ -128,7 +129,7 @@ withConfig configProgram = do
 
 
     lbdHandler config name req =
-          let id = Lbd.getIdByName config name
+          let id = LogicalId name
               reportBadArgument lbdType err =
                 panic $ "Could not parse event: '" <> toS req <>
                   "', for lambda type: '" <> lbdType <> "' error was: '" <> toS err <> "'"
@@ -208,11 +209,10 @@ updateLambdas
   => Eff effs ()
 updateLambdas = do
   config <- getConfig
-  let lbdS3Obj    = s3Object (S3.getIdByName config "app") $ S3Key "lambda.zip"
+  let lbdS3Obj = s3Object (LogicalId "app") $ S3Key "lambda.zip"
 
   say "updating the lambdas..."
-  traverse_ ((`Lbd.update` lbdS3Obj) . Lbd.getIdByName config . getName config)
-    (getAll config :: [ Lambda ])
+  traverse_ ((`Lbd.update` lbdS3Obj) . logicalId config) (all config :: [ Lambda ])
 
 
 describeCfStack
