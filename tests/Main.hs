@@ -9,7 +9,6 @@ import qualified Qi.Test.CF.CustomResource        as CF.CustomResource
 {- import qualified Qi.Test.Config.DDB.Stream                as DDB.Stream -}
 import qualified Qi.Test.CLI.Deploy               as Deploy
 import qualified Qi.Test.Config.Eff               as ConfigEff
-import qualified Qi.Test.Config.Identifier        as Id
 import           Qi.Test.Integration.SimpleS3Copy as SimpleS3Copy
 {- import           Test.Tasty -}
 {- import           Test.Tasty.Hspec -}
@@ -20,7 +19,6 @@ main :: IO ()
 main = hspec $ do
   SimpleS3Copy.spec
   ConfigEff.spec
-  Id.spec
   CF.CustomResource.spec
   Deploy.spec
 

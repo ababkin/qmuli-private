@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds         #-}
 {-# LANGUAGE DeriveAnyClass    #-}
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE NamedFieldPuns    #-}
@@ -7,25 +8,26 @@
 module Qi.Config.AWS.S3 where
 
 import           Control.Lens
-import           Data.Aeson           (FromJSON, ToJSON)
-import           Data.Default         (Default, def)
-import           Data.HashMap.Strict  (HashMap)
-import qualified Data.HashMap.Strict  as SHM
-import           GHC.Show             (Show (..))
+import           Data.Aeson          (FromJSON, ToJSON)
+import           Data.Default        (Default, def)
+import           Data.HashMap.Strict (HashMap)
+import qualified Data.HashMap.Strict as SHM
+import           GHC.Show            (Show (..))
 import           Protolude
-import           Qi.Config.Identifier
+import           Qi.AWS.Types
 import           Qi.Config.Types
 
 
+type S3BucketId = LogicalId 'S3BucketResource
+type LambdaId = LogicalId 'LambdaResource
+
 data S3Config = S3Config {
     _s3IdToBucket :: HashMap S3BucketId S3Bucket
-  , _s3NameToId   :: HashMap Text S3BucketId
   }
   deriving (Eq, Show)
 instance Default S3Config where
   def = S3Config {
       _s3IdToBucket     = SHM.empty
-    , _s3NameToId = SHM.empty
     }
 
 data S3Bucket = S3Bucket {
@@ -94,4 +96,11 @@ makeLenses ''S3Event
 makeLenses ''S3Config
 
 
+-- instance AwsResource 'S3BucketResource where
+--   type ir = S3Config
 
+--   typeName = const "S3Bucket"
+--   name _ = (^. s3bName)
+--   mapping = (^. s3Config . s3IdToBucket)
+--   physicalId config r =
+--     PhysicalName $ makeAlphaNumeric (name config r) `dotNamePrefixWith` config

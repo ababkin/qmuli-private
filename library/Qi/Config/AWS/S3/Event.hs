@@ -4,15 +4,15 @@
 module Qi.Config.AWS.S3.Event where
 
 import           Control.Lens
-import           Control.Monad.Fail         (fail)
+import           Control.Monad.Fail (fail)
 import           Data.Aeson
 import           Data.Aeson.Types
 import           Data.Hashable
-import qualified Data.Text                  as T
+import qualified Data.Text          as T
 import           Protolude
+import           Qi.AWS.Types
 import           Qi.Config.AWS
 import           Qi.Config.AWS.S3
-import           Qi.Config.AWS.S3.Accessors
 
 
 parse
@@ -28,7 +28,7 @@ parse config = withObject "S3Event" $ \o -> do
       s3          <- record .: "s3"
       bucketName  <- (.: "name") =<< s3 .: "bucket"
       key         <- (.: "key")  =<< s3 .: "object"
-      pure . S3Event $ S3Object (getIdByName config $ removeDotNamePrefix bucketName) (S3Key key)
+      pure . S3Event $ S3Object (LogicalId $ removeDotNamePrefix bucketName) (S3Key key)
 
 removeDotNamePrefix
   :: Text

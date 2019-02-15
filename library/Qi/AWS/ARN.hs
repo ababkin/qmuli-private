@@ -20,6 +20,7 @@ import           Network.AWS        (Logger)
 import           Protolude
 import           Qi.Config.AWS.S3
 
+
 class ArnToken a where
   toToken :: a -> Text
   fromToken :: Text -> Maybe a

@@ -32,9 +32,7 @@ import           Data.Map                   (Map)
 import           Network.AWS.CloudFormation (StackStatus (..))
 import           Network.AWS.S3.Types       (ETag)
 import           Protolude
--- import           Qi.Config.AWS.CF
 import           Qi.Config.AWS.S3
-import           Qi.Config.Identifier
 import           Qi.Core.Curry
 import           Qi.Program.Gen.Lang
 

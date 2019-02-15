@@ -19,13 +19,16 @@ import           Network.AWS.Lambda     (InvocationType (Event),
                                          uS3Bucket, uS3Key, updateFunctionCode)
 import           Network.AWS.S3         (ObjectKey (ObjectKey))
 import           Protolude              hiding ((<&>))
+import           Qi.AWS.Resource
+import           Qi.AWS.Types
 import           Qi.Config.AWS
 import           Qi.Config.AWS.S3
-import           Qi.Config.Identifier   (LambdaId)
 import           Qi.Program.Config.Lang (ConfigEff, getConfig)
 import           Qi.Program.Gen.Lang
 import           Qi.Program.Lambda.Lang (LambdaEff (..))
 
+
+type LambdaId = LogicalId 'LambdaResource
 
 run
   :: forall effs a
@@ -35,18 +38,21 @@ run = interpret (\case
 
   Invoke id payload -> do
     config  <- getConfig
-    let pname = getPhysicalName config $ getById config id
-    void . amazonka lambda $ invoke (unPhysicalName pname) (toS $ encode payload)
+    let pid = getLambdaPhysicalId config id
+    void . amazonka lambda $ invoke (unPhysicalId pid) (toS $ encode payload)
                         & iInvocationType ?~ Event
 
 
   Update id S3Object{ _s3oBucketId, _s3oKey = S3Key s3Key } -> do
     config  <- getConfig
-    let pname = getPhysicalName config $ getById config id
-        bucketName = getPhysicalName config $ getById config _s3oBucketId
-    void . amazonka lambda $ updateFunctionCode (unPhysicalName pname)
-                        & uS3Bucket ?~ unPhysicalName bucketName
+    let pid = getLambdaPhysicalId config id
+        bucketPid = physicalId config $ getById config _s3oBucketId
+    void . amazonka lambda $ updateFunctionCode (unPhysicalId pid)
+                        & uS3Bucket ?~ unPhysicalId bucketPid
                         & uS3Key    ?~ s3Key
 
 
   )
+
+  where
+    getLambdaPhysicalId config = getPhysicalId config . getById config

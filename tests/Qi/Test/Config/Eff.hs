@@ -12,7 +12,6 @@ import           Protolude                     hiding (State, get, put,
 import           Qi.AWS.Types                  (AwsMode (LocalStack))
 import           Qi.Config.AWS
 import           Qi.Config.AWS.S3
-import           Qi.Config.Identifier
 import qualified Qi.Program.Config.Ipret.State as Config
 import           Qi.Program.Config.Lang
 import qualified Qi.Program.Wiring.IO          as IO

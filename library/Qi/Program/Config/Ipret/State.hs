@@ -25,7 +25,6 @@ import           Protolude                 hiding (State, get, gets, modify,
 import           Qi.Config.AWS
 import           Qi.Config.AWS.Lambda
 import           Qi.Config.AWS.S3
-import           Qi.Config.Identifier
 import           Qi.Program.Config.Lang    (ConfigEff (..))
 
 
@@ -42,59 +41,41 @@ run = interpret (\case
   {- GetNextId -> getNextId -}
 
 
-  RegGenericLambda inProxy outProxy name f profile ->
-    withNextId (Proxy :: Proxy LambdaId) $ \id -> do
-      let lbd = GenericLambda name profile inProxy outProxy f
-      insertLambda id name lbd
+  RegGenericLambda inProxy outProxy name f profile -> do
+      -- let lbd = GenericLambda name profile inProxy outProxy f
+      -- insertLambda id name lbd
+      panic "unimplemented"
 
 -- S3
   RegS3Bucket name profile -> do
-    withNextId (Proxy :: Proxy S3BucketId) $ \id -> do
-      let newBucket = def & s3bName .~ name
-                          & s3bProfile .~ profile
-          insertIdToBucket = s3IdToBucket %~ SHM.insert id newBucket
-          insertNameToId = s3NameToId %~ SHM.insert name id
+      -- let newBucket = def & s3bName .~ name
+      --                     & s3bProfile .~ profile
+      --     insertIdToBucket = s3IdToBucket %~ SHM.insert id newBucket
+      --     insertNameToId = s3NameToId %~ SHM.insert name id
 
-      modify (s3Config %~ insertNameToId . insertIdToBucket)
+      -- modify (s3Config %~ insertNameToId . insertIdToBucket)
+      panic "unimplemented"
 
 
-  RegS3BucketLambda name bucketId f profile ->
-    withNextId (Proxy :: Proxy LambdaId) $ \id -> do
-      let lbd = S3BucketLambda name profile f
-          modifyBucket = s3bEventConfigs %~ ((S3EventConfig S3ObjectCreatedAll id):)
-      modify (s3Config . s3IdToBucket %~ SHM.adjust modifyBucket bucketId)
+  RegS3BucketLambda name bucketId f profile -> do
+      -- let lbd = S3BucketLambda name profile f
+      --     modifyBucket = s3bEventConfigs %~ ((S3EventConfig S3ObjectCreatedAll id):)
+      -- modify (s3Config . s3IdToBucket %~ SHM.adjust modifyBucket bucketId)
 
-      insertLambda id name lbd
+      -- insertLambda id name lbd
+      panic "unimplemented"
   )
 
-  where
-    getNextId
-      :: FromInt id
-      => Eff effs id
-    getNextId = do
-      id <- gets (fromInt . (^. nextId))
-      modify (nextId %~ (+1))
-      pure id
+  -- where
 
-    withNextId
-      :: FromInt id
-      => Proxy id
-      -> (id -> Eff effs c)
-      -> Eff effs id
-    withNextId _ f = do
-      id <- gets (fromInt . (^. nextId))
-      modify (nextId %~ (+1))
-      f id
-      pure id
+  --   insertLambda
+  --     :: LambdaId
+  --     -> Text
+  --     -> Lambda
+  --     -> Eff effs ()
+  --   insertLambda id name lbd = do
 
-    insertLambda
-      :: LambdaId
-      -> Text
-      -> Lambda
-      -> Eff effs ()
-    insertLambda id name lbd = do
+  --     let insertIdToLambda  = lbdIdToLambda %~ SHM.insert id lbd
+  --         insertNameToId    = lbdNameToId   %~ SHM.insert name id
 
-      let insertIdToLambda  = lbdIdToLambda %~ SHM.insert id lbd
-          insertNameToId    = lbdNameToId   %~ SHM.insert name id
-
-      void $ modify (lbdConfig %~ insertNameToId . insertIdToLambda)
+  --     void $ modify (lbdConfig %~ insertNameToId . insertIdToLambda)

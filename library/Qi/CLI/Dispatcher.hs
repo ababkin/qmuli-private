@@ -1,6 +1,4 @@
 {-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE FlexibleContexts  #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Qi.CLI.Dispatcher (withConfig) where
 

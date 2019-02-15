@@ -13,17 +13,19 @@ import           Protolude
 import           Qi.Config.AWS              (Config)
 import           Qi.Config.AWS.Lambda       (LambdaProfile)
 import           Qi.Config.AWS.S3           (S3BucketProfile)
-import           Qi.Config.Identifier
 import           Qi.Core.Curry
 import           Qi.Program.Gen.Lang
 import           Qi.Program.S3.Lang
+import           Qi.AWS.Types
 
+
+type LambdaId = LogicalId 'LambdaResource
+type S3BucketId = LogicalId 'S3BucketResource
 
 data ConfigEff r where
 
   GetConfig
     :: ConfigEff Config
-
 
   RegGenericLambda
     :: forall a b

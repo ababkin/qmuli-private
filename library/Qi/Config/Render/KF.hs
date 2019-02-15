@@ -6,6 +6,7 @@ module Qi.Config.Render.KF (toResources) where
 
 import           Control.Lens
 import           Protolude        hiding (getAll)
+import           Qi.AWS.Resource
 import           Qi.Config.AWS
 import           Qi.Config.AWS.KF
 import           Qi.Config.Types  (ResourceExistence (AlreadyExists))
@@ -26,12 +27,12 @@ toResources
   -> Resources
 toResources config = Resources $ toResource <$> kfs
   where
-    kfs = getAll config
+    kfs = all config
 
     toResource (kf :: Kf) = (
-      S.resource (unLogicalName lname) $
+      S.resource (unLogicalId lid) $
         KinesisFirehoseDeliveryStreamProperties $ S.kinesisFirehoseDeliveryStream
-          & S.kfdsDeliveryStreamName ?~ Literal (unPhysicalName pname)
+          & S.kfdsDeliveryStreamName ?~ Literal (unPhysicalId pid)
           & S.kfdsDeliveryStreamType ?~ Literal "DirectPut"
           & S.kfdsS3DestinationConfiguration ?~ s3Dest
           {- & S.kfdsExtendedS3DestinationConfiguration ?~ lbdConfigs -}
@@ -40,8 +41,8 @@ toResources config = Resources $ toResource <$> kfs
       {- & S.resourceDependsOn ?~ reqs -}
 
       where
-        lname = getLogicalName config kf
-        pname = getPhysicalName config kf
+        lid = logicalId config kf
+        pid = physicalId config kf
 
         s3Dest = S.kinesisFirehoseDeliveryStreamS3DestinationConfiguration
                   bucketARNarg

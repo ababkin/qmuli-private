@@ -18,21 +18,21 @@ import           Data.Text                  (Text)
 import           GHC.Show                   (Show (..))
 import           Protolude                  as P
 import           Qi.Config.AWS.S3           (S3Event)
-import           Qi.Config.Identifier
 import           Qi.Program.Gen.Lang
 import           Qi.Program.S3.Lang         (S3Eff, S3LambdaProgram)
 import           Stratosphere
+import           Qi.AWS.Types
 
+
+type LambdaId = LogicalId 'LambdaResource
 
 data LambdaConfig = LambdaConfig {
     _lbdIdToLambda :: HashMap LambdaId Lambda
-  , _lbdNameToId   :: HashMap Text LambdaId
   }
   deriving (Eq, Show)
 instance Default LambdaConfig where
   def = LambdaConfig {
     _lbdIdToLambda  = SHM.empty
-  , _lbdNameToId    = SHM.empty
   }
 
 

@@ -11,12 +11,14 @@
 module Qi.Program.Lambda.Lang where
 
 import           Control.Monad.Freer
-import           Data.Aeson           (ToJSON)
+import           Data.Aeson          (ToJSON)
 import           Protolude
-import           Qi.Config.AWS.S3     (S3Object)
-import           Qi.Config.Identifier (LambdaId)
+import           Qi.AWS.Types
+import           Qi.Config.AWS.S3    (S3Object)
 import           Qi.Core.Curry
 
+
+type LambdaId = LogicalId 'LambdaResource
 
 data LambdaEff r where
 

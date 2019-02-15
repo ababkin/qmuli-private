@@ -9,10 +9,8 @@ module Qi.CLI.Dispatcher.S3 where
 import           Control.Lens
 import           Control.Monad.Freer    hiding (send)
 import           Protolude              hiding (getAll)
-import           Qi.Config.AWS          (Config, getAll, getAllWithIds, getById,
-                                         getPhysicalName, namePrefix)
+import           Qi.Config.AWS
 import           Qi.Config.AWS.S3       (S3Bucket, s3bName)
-import           Qi.Config.Identifier   (S3BucketId)
 import           Qi.Program.Config.Lang
 import           Qi.Program.Gen.Lang
 import           Qi.Program.S3.Lang
