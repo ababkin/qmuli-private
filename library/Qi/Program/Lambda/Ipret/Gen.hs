@@ -21,9 +21,9 @@ import           Network.AWS.S3         (ObjectKey (ObjectKey))
 import           Protolude              hiding ((<&>))
 import           Qi.AWS.Resource
 import           Qi.AWS.Types
-import           Qi.Config.AWS
-import           Qi.Config.AWS.Lambda
-import           Qi.Config.AWS.S3
+import           Qi.Config
+import           Qi.AWS.Lambda
+import           Qi.AWS.S3
 import           Qi.Program.Config.Lang (ConfigEff, getConfig)
 import           Qi.Program.Gen.Lang
 import           Qi.Program.Lambda.Lang (LambdaEff (..))

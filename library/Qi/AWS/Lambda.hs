@@ -4,7 +4,7 @@
 {-# LANGUAGE RankNTypes                #-}
 {-# LANGUAGE TemplateHaskell           #-}
 
-module Qi.Config.AWS.Lambda where
+module Qi.AWS.Lambda where
 
 import           Control.Lens
 import           Control.Monad.Freer
@@ -17,7 +17,7 @@ import           Data.Proxy                 (Proxy)
 import           Data.Text                  (Text)
 import           GHC.Show                   (Show (..))
 import           Protolude                  as P
-import           Qi.Config.AWS.S3           (S3Event)
+import           Qi.AWS.S3           (S3Event)
 import           Qi.Program.Gen.Lang
 import           Qi.Program.S3.Lang         (S3Eff, S3LambdaProgram)
 import           Stratosphere

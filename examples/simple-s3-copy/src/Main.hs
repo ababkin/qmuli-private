@@ -13,9 +13,9 @@ import           Control.Monad.Freer
 import           Data.Default           (def)
 import           Protolude
 import           Qi                     (withConfig)
+import           Qi.AWS.Lambda          (LambdaMemorySize (..), lpMemorySize)
 import           Qi.AWS.Resource        (S3BucketId)
-import           Qi.Config.AWS.Lambda   (LambdaMemorySize (..), lpMemorySize)
-import           Qi.Config.AWS.S3       (s3eObject, s3oBucketId)
+import           Qi.AWS.S3              (s3eObject, s3oBucketId)
 import           Qi.Program.Config.Lang (s3Bucket, s3BucketLambda)
 import           Qi.Program.Gen.Lang    (GenEff, say)
 import           Qi.Program.S3.Lang     (S3Eff, S3LambdaProgram, getContent,

@@ -18,10 +18,10 @@ import           GHC.Show             (Show (..))
 import           Protolude            hiding (show)
 import qualified Protolude            as P
 import           Qi.AWS.Types
-import           Qi.Config.AWS
-import Qi.Config.AWS.S3
-import Qi.Config.AWS.Lambda
-import Qi.Config.AWS.KF
+import           Qi.Config
+import Qi.AWS.S3
+import Qi.AWS.Lambda
+import Qi.AWS.KF
 
 
 class (Show (LogicalId (ResourceType r)), Hashable (LogicalId (ResourceType r))) => AwsResource r where

@@ -1,9 +1,6 @@
-{-# LANGUAGE DataKinds                  #-}
-{-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedLists            #-}
-{-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE TypeSynonymInstances       #-}
 
 module Qi.Program.Wiring.IO  where
@@ -11,8 +8,9 @@ module Qi.Program.Wiring.IO  where
 import           Control.Monad.Freer
 import           Control.Monad.Freer.State
 import           Protolude                     hiding (State, runState, (<&>))
-import           Qi.AWS.Types                  (AwsMode (..), MkAwsLogger)
-import           Qi.Config.AWS
+import           Qi.AWS.Logger                 (Logger)
+import           Qi.AWS.Types                  (AwsMode (..))
+import           Qi.Config
 import qualified Qi.Program.CF.Ipret.Gen       as CF
 import           Qi.Program.CF.Lang            (CfEff)
 import qualified Qi.Program.Config.Ipret.State as Config
@@ -28,7 +26,7 @@ import           Qi.Program.S3.Lang            (S3Eff)
 run
   :: Config
   -> AwsMode
-  -> MkAwsLogger
+  -> IO Logger
   -> (Eff '[CfEff, S3Eff, LambdaEff, GenEff, ConfigEff, State Config, IO] a -> IO a)
 run config awsMode mkLogger =
     runM

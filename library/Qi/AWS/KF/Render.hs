@@ -1,15 +1,13 @@
 {-# LANGUAGE OverloadedLists     #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 
-module Qi.Config.Render.KF (toResources) where
+module Qi.AWS.KF.Render (toResources) where
 
 import           Control.Lens
 import           Protolude        hiding (all)
 import           Qi.AWS.Resource
 import           Qi.AWS.Types
-import           Qi.Config.AWS
-import           Qi.Config.AWS.KF
-import           Qi.Config.Types  (ResourceExistence (AlreadyExists))
+import           Qi.Config
+import           Qi.AWS.KF
 import           Stratosphere     (ResourceProperties (KinesisFirehoseDeliveryStreamProperties),
                                    Resources (Resources), Val (GetAtt, Literal))
 import qualified Stratosphere     as S (kfdsDeliveryStreamName,

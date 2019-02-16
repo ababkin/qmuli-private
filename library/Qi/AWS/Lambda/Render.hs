@@ -1,14 +1,14 @@
 {-# LANGUAGE OverloadedLists #-}
 
-module Qi.Config.Render.Lambda (toResources) where
+module Qi.AWS.Lambda.Render (toResources) where
 
-import           Protolude                      hiding (all)
+import           Protolude               hiding (all)
+import qualified Qi.AWS.IAMRole.Render   as Role
+import           Qi.AWS.Lambda           hiding (lbdName)
+import           Qi.AWS.Lambda.Accessors
 import           Qi.AWS.Resource
 import           Qi.AWS.Types
-import           Qi.Config.AWS
-import           Qi.Config.AWS.Lambda           hiding (lbdName)
-import           Qi.Config.AWS.Lambda.Accessors
-import qualified Qi.Config.Render.Role          as Role
+import           Qi.Config
 import           Stratosphere
 
 

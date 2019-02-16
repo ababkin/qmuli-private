@@ -1,6 +1,3 @@
-{-# LANGUAGE NamedFieldPuns    #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 module Qi.CLI.Options where
 
 import           Options.Applicative

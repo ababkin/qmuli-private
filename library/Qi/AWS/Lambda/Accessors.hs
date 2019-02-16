@@ -1,8 +1,8 @@
-module Qi.Config.AWS.Lambda.Accessors where
+module Qi.AWS.Lambda.Accessors where
 
 import           Protolude
+import           Qi.AWS.Lambda
 import           Qi.AWS.Resource
-import           Qi.Config.AWS.Lambda
 
 
 getPermissionLogicalId

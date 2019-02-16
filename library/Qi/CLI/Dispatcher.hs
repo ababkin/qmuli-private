@@ -1,5 +1,3 @@
-{-# LANGUAGE DataKinds         #-}
-
 module Qi.CLI.Dispatcher (withConfig) where
 
 import           Data.Aeson                     (eitherDecode, encode)
@@ -18,13 +16,12 @@ import           Qi.Program.Gen.Lang
 import           Qi.Program.Lambda.Lang         (LambdaEff)
 import qualified Qi.Program.Lambda.Lang         as Lbd
 import           Qi.Program.S3.Lang
-import           Qi.Config.AWS
-import           Qi.Config.AWS.Lambda           hiding (lbdName)
-import qualified Qi.Config.AWS.Lambda.Accessors as Lbd
-import           Qi.Config.AWS.S3
-import qualified Qi.Config.AWS.S3.Event         as S3Event
-import qualified Qi.Config.CfTemplate           as CF
-import           Qi.Config.Types                (ResourceExistence (AlreadyExists))
+import           Qi.Config
+import           Qi.AWS.Lambda           hiding (lbdName)
+import qualified Qi.AWS.Lambda.Accessors as Lbd
+import           Qi.AWS.S3
+import qualified Qi.AWS.S3.Event         as S3Event
+import qualified Qi.AWS.Render           as CF
 import           Qi.CLI.Options
 import           Qi.AWS.Types
 import           Qi.AWS.Resource hiding (name)

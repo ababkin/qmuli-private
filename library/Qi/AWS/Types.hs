@@ -1,4 +1,3 @@
-{-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveAnyClass             #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE DerivingStrategies         #-}
@@ -6,19 +5,21 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures             #-}
 
-module Qi.AWS.Types where
+module Qi.AWS.Types ( AwsMode (..)
+                    , AwsResourceType (..)
+                    , LogicalId (..)
+                    , PhysicalId (..)
+                    , ResourceExistence (..)
+                    )
+                     where
 
 import           Data.Aeson
 import           Data.Hashable (Hashable)
-import qualified Data.Text     as T
-import           Network.AWS   (Logger)
 import           Protolude
 
 
 data AwsMode = RealDeal | LocalStack
   deriving Eq
-
-type MkAwsLogger = IO Logger
 
 
 data AwsResourceType =
@@ -27,6 +28,8 @@ data AwsResourceType =
   | LambdaResource
   deriving (Eq, Show)
 
+data ResourceExistence = AlreadyExists | ShouldCreate
+  deriving (Eq, Show)
 
 -- The logical ID must be alphanumeric (A-Za-z0-9) and unique within the template.
 -- Use the logical name to reference the resource in other parts of the template.

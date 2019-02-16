@@ -1,7 +1,7 @@
 {-# LANGUAGE NamedFieldPuns    #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Qi.Config.AWS.S3.Event where
+module Qi.AWS.S3.Event where
 
 import           Control.Lens
 import           Control.Monad.Fail (fail)
@@ -10,9 +10,9 @@ import           Data.Aeson.Types
 import           Data.Hashable
 import qualified Data.Text          as T
 import           Protolude
+import           Qi.AWS.S3
 import           Qi.AWS.Types
-import           Qi.Config.AWS
-import           Qi.Config.AWS.S3
+import           Qi.Config
 
 
 parse

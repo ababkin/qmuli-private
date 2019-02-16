@@ -22,11 +22,11 @@ import qualified Data.HashMap.Strict       as SHM
 import           Data.Proxy                (Proxy (Proxy))
 import           Protolude                 hiding (State, get, gets, modify,
                                             runState)
+import           Qi.AWS.Lambda             hiding (LambdaId)
 import           Qi.AWS.Resource           hiding (name)
+import           Qi.AWS.S3
 import           Qi.AWS.Types              (LogicalId (..))
-import           Qi.Config.AWS
-import           Qi.Config.AWS.Lambda      hiding (LambdaId)
-import           Qi.Config.AWS.S3
+import           Qi.Config
 import           Qi.Program.Config.Lang    (ConfigEff (..))
 
 

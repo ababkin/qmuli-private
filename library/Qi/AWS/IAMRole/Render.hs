@@ -1,15 +1,14 @@
 {-# LANGUAGE OverloadedLists #-}
 
-module Qi.Config.Render.Role (
+module Qi.AWS.IAMRole.Render (
     toResources
   , lambdaBasicExecutionIAMRoleLogicalName
   ) where
 
-import           Data.Aeson    (Value (Array), object)
+import           Data.Aeson   (Value (Array), object)
 import           Protolude
+import           Qi.Config
 import           Stratosphere
-
-import           Qi.Config.AWS
 
 
 lambdaBasicExecutionIAMRoleLogicalName :: Text

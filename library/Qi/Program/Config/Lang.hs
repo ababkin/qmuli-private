@@ -10,9 +10,9 @@ import           Data.ByteString            (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as LBS
 import           Data.Default               (Default, def)
 import           Protolude
-import           Qi.Config.AWS              (Config)
-import           Qi.Config.AWS.Lambda       (LambdaProfile)
-import           Qi.Config.AWS.S3           (S3BucketProfile)
+import           Qi.Config              (Config)
+import           Qi.AWS.Lambda       (LambdaProfile)
+import           Qi.AWS.S3           (S3BucketProfile)
 import           Qi.Core.Curry
 import           Qi.Program.Gen.Lang
 import           Qi.Program.S3.Lang

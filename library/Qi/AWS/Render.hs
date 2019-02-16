@@ -1,12 +1,14 @@
-module Qi.Config.CfTemplate (render) where
+-- |
 
-import qualified Data.ByteString.Lazy    as LBS
+module Qi.AWS.Render where
+
+import qualified Data.ByteString.Lazy  as LBS
 import           Protolude
-import           Qi.Config.AWS
-import qualified Qi.Config.Render.KF     as KF
-import qualified Qi.Config.Render.Lambda as Lambda
-import qualified Qi.Config.Render.Role   as Role
-import qualified Qi.Config.Render.S3     as S3
+import qualified Qi.AWS.IAMRole.Render as Role
+import qualified Qi.AWS.KF.Render      as KF
+import qualified Qi.AWS.Lambda.Render  as Lambda
+import qualified Qi.AWS.S3.Render      as S3
+import           Qi.Config
 import           Stratosphere
 
 

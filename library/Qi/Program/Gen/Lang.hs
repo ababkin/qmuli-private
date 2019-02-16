@@ -19,12 +19,9 @@ import           Network.AWS             hiding (Request, Response, send)
 import           Network.AWS.Data.Body   (RsBody (..))
 import           Network.HTTP.Client
 import           Protolude
--- import           Qi.Config.AWS.CfCustomResource.Types (CfCustomResourceEvent)
 import           Qi.Core.Curry
 import           Servant.Client          (BaseUrl, ClientM, ServantError)
 
-
-{- type CfCustomResourceLambdaProgram effs = CfCustomResourceEvent -> Eff effs LBS.ByteString -}
 
 data GenEff r where
   GetAppName

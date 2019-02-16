@@ -2,31 +2,27 @@
 {-# LANGUAGE OverloadedLists   #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Qi.Config.Render.S3 (toResources) where
+module Qi.AWS.S3.Render (toResources) where
 
 import           Control.Lens
-import           Protolude                      hiding (all)
+import           Protolude               hiding (all)
+import qualified Qi.AWS.Lambda.Accessors as L
 import           Qi.AWS.Resource
+import           Qi.AWS.S3               (S3Bucket (..), S3EventConfig (..),
+                                          event, lbdId, s3bEventConfigs,
+                                          s3bProfile, s3bpExistence)
 import           Qi.AWS.Types
-import           Qi.Config.AWS
-import qualified Qi.Config.AWS.Lambda.Accessors as L
-import           Qi.Config.AWS.S3               (S3Bucket (..),
-                                                 S3EventConfig (..), event,
-                                                 lbdId, s3bEventConfigs,
-                                                 s3bProfile, s3bpExistence)
-import           Qi.Config.Types                (ResourceExistence (AlreadyExists))
-import           Stratosphere                   (CannedACL (..), ResourceProperties (S3BucketProperties),
-                                                 Resources (Resources),
-                                                 Val (GetAtt, Literal))
-import qualified Stratosphere                   as S (resource,
-                                                      resourceDependsOn,
-                                                      s3Bucket,
-                                                      s3BucketLambdaConfiguration,
-                                                      s3BucketNotificationConfiguration,
-                                                      sbAccessControl,
-                                                      sbBucketName,
-                                                      sbNotificationConfiguration,
-                                                      sbncLambdaConfigurations)
+import           Qi.Config
+import           Stratosphere            (CannedACL (..), ResourceProperties (S3BucketProperties),
+                                          Resources (Resources),
+                                          Val (GetAtt, Literal))
+import qualified Stratosphere            as S (resource, resourceDependsOn,
+                                               s3Bucket,
+                                               s3BucketLambdaConfiguration,
+                                               s3BucketNotificationConfiguration,
+                                               sbAccessControl, sbBucketName,
+                                               sbNotificationConfiguration,
+                                               sbncLambdaConfigurations)
 
 
 toResources

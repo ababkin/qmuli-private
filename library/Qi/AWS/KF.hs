@@ -4,7 +4,7 @@
 {-# LANGUAGE NamedFieldPuns  #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Qi.Config.AWS.KF where
+module Qi.AWS.KF where
 
 import           Control.Lens
 import           Data.Aeson          (FromJSON, ToJSON)
@@ -14,7 +14,6 @@ import qualified Data.HashMap.Strict as SHM
 import           GHC.Show            (Show (..))
 import           Protolude
 import           Qi.AWS.Types
-import           Qi.Config.Types
 
 
 type KfId = LogicalId 'KinesisFirehoseResource

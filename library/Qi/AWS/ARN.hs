@@ -17,7 +17,7 @@ import           Control.Monad.Fail
 import           Data.Aeson
 import qualified Data.Text          as T
 import           Protolude
-import           Qi.Config.AWS.S3
+import           Qi.AWS.S3
 
 
 class ArnToken a where

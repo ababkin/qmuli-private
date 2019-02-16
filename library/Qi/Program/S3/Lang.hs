@@ -22,8 +22,8 @@ import           Control.Monad.Freer
 import qualified Data.ByteString.Lazy   as LBS
 import           Network.AWS.S3.Types   (ETag)
 import           Protolude
+import           Qi.AWS.S3
 import           Qi.AWS.Types
-import           Qi.Config.AWS.S3
 import           Qi.Core.Curry
 import           Qi.Program.Gen.Lang
 import           Qi.Program.S3.Internal (ListToken)

@@ -1,15 +1,18 @@
-module Qi.AWS.Logger where
+module Qi.AWS.Logger ( Logger
+                     , mkLambdaLogger
+                     , mkCliLogger
+                     ) where
 
 import           Data.Aeson                   (Value (..), encode, object, (.=))
 import qualified Data.ByteString.Lazy.Builder as Build
+import           Network.AWS                  (Logger)
 import           Protolude
-import           Qi.AWS.Types                 (MkAwsLogger)
 import           System.IO                    (BufferMode (LineBuffering),
                                                hSetBuffering, stderr)
 
 
 mkLambdaLogger
-  :: MkAwsLogger
+  :: IO Logger
 mkLambdaLogger = do
   hSetBuffering stderr LineBuffering
   pure $ \lvl b ->
@@ -17,7 +20,7 @@ mkLambdaLogger = do
 
 
 mkCliLogger
-  :: MkAwsLogger
+  :: IO Logger
 mkCliLogger = do
   hSetBuffering stderr LineBuffering
   pure $ \_lvl b ->

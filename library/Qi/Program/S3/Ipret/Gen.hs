@@ -18,8 +18,8 @@ import           Network.AWS.S3         hiding (bucket)
 import           Protolude              hiding ((<&>))
 import           Qi.AWS.Resource
 import           Qi.AWS.Types
-import           Qi.Config.AWS
-import           Qi.Config.AWS.S3
+import           Qi.Config
+import           Qi.AWS.S3
 import           Qi.Program.Config.Lang (ConfigEff, getConfig, s3Bucket)
 import           Qi.Program.Gen.Lang
 import           Qi.Program.S3.Internal (ListToken (ListToken))

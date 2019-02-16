@@ -1,12 +1,5 @@
-{-# LANGUAGE DataKinds                  #-}
-{-# LANGUAGE DeriveGeneric              #-}
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE LambdaCase                 #-}
-{-# LANGUAGE NamedFieldPuns             #-}
-{-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE TypeOperators              #-}
 
 module Qi.Program.CF.Lang (
@@ -32,7 +25,7 @@ import           Data.Map                   (Map)
 import           Network.AWS.CloudFormation (StackStatus (..))
 import           Network.AWS.S3.Types       (ETag)
 import           Protolude
-import           Qi.Config.AWS.S3
+import           Qi.AWS.S3
 import           Qi.Core.Curry
 import           Qi.Program.Gen.Lang
 

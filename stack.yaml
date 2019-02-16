@@ -1,4 +1,4 @@
-resolver: lts-13.6
+resolver: lts-13.7
 
 packages:
 - '.'
@@ -12,14 +12,14 @@ packages:
   #  commit: 4fc25d1b20007bef3b8b2924751fe0fc3033e1f5
   #extra-dep: true
 
-- location:
-    git: https://github.com/brendanhay/amazonka.git
-    commit: e7077512c08f58a8e0a5e6448b6d73c16de46e8d
-    subdirs:
-    - amazonka
-    # - amazonka-lex-models
-    - core
-  extra-dep: true
+# - location:
+#     git: https://github.com/brendanhay/amazonka.git
+#     commit: e7077512c08f58a8e0a5e6448b6d73c16de46e8d
+#     subdirs:
+#     - amazonka
+#     # - amazonka-lex-models
+#     - core
+#   extra-dep: true
 
 extra-deps: 
   - random-string-0.1.0.1

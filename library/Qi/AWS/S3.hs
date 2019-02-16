@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
-module Qi.Config.AWS.S3 (
+module Qi.AWS.S3 (
     S3Config (..)
   , S3Bucket (..)
   , S3BucketProfile (..)
@@ -14,6 +14,7 @@ module Qi.Config.AWS.S3 (
   , S3Event (..)
   , S3EventType (..)
   , S3EventConfig (..)
+  , mkS3BucketId
   , s3bName
   , s3IdToBucket
   , event
@@ -34,12 +35,15 @@ import qualified Data.HashMap.Strict as SHM
 import           GHC.Show            (Show (..))
 import           Protolude
 import           Qi.AWS.Types
-import           Qi.Config.Types
 
 
 type S3BucketId = LogicalId 'S3BucketResource
 type LambdaId = LogicalId 'LambdaResource
 
+mkS3BucketId :: Text -> S3BucketId
+mkS3BucketId t = LogicalId t
+
+-- | This represents config for the S3 resources
 data S3Config = S3Config {
     _s3IdToBucket :: HashMap S3BucketId S3Bucket
   }
@@ -49,6 +53,7 @@ instance Default S3Config where
       _s3IdToBucket     = SHM.empty
     }
 
+-- | Representation for a S3 Bucket resource
 data S3Bucket = S3Bucket {
     _s3bName         :: Text
   , _s3bProfile      :: S3BucketProfile
