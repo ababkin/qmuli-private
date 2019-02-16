@@ -209,7 +209,7 @@ updateLambdas
   => Eff effs ()
 updateLambdas = do
   config <- getConfig
-  let lbdS3Obj = s3Object (LogicalId "app") $ S3Key "lambda.zip"
+  let lbdS3Obj = S3Object (LogicalId "app") $ S3Key "lambda.zip"
 
   say "updating the lambdas..."
   traverse_ ((`Lbd.update` lbdS3Obj) . logicalId config) (all config :: [ Lambda ])

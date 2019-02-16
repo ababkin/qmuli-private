@@ -12,8 +12,17 @@ module Qi.Config.AWS.S3 (
   , S3Key (..)
   , S3Object (..)
   , S3Event (..)
+  , S3EventType (..)
+  , S3EventConfig (..)
   , s3bName
   , s3IdToBucket
+  , event
+  , lbdId
+  , s3bEventConfigs
+  , s3bProfile
+  , s3bpExistence
+  , s3eObject
+  , s3oBucketId
   ) where
 
 import           Control.Lens
@@ -24,7 +33,6 @@ import qualified Data.HashMap.Strict as SHM
 import           GHC.Show            (Show (..))
 import           Protolude
 import           Qi.AWS.Types
--- import           Qi.AWS.Resource
 import           Qi.Config.Types
 
 
@@ -78,12 +86,6 @@ data S3Object = S3Object {
   , _s3oKey      :: S3Key
   }
   deriving (Eq, Show, Generic, ToJSON, FromJSON)
-
-s3Object
-  :: S3BucketId
-  -> S3Key
-  -> S3Object
-s3Object = S3Object
 
 data S3Event = S3Event {
     _s3eObject :: S3Object

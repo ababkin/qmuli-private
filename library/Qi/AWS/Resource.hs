@@ -14,8 +14,6 @@ import           Data.Default         (Default, def)
 import           Data.Hashable        (Hashable)
 import qualified Data.HashMap.Strict  as SHM
 import           Data.Maybe           (fromMaybe)
-import           Data.Text            (Text)
-import qualified Data.Text            as T
 import           GHC.Show             (Show (..))
 import           Protolude            hiding (show)
 import qualified Protolude            as P
@@ -79,8 +77,8 @@ instance AwsResource Lambda where
   type ResourceType Lambda = 'LambdaResource
 
   typeName = const "Lambda"
-  name = (^. lbdName)
-  mapping = (^. lbdConfig . lbdIdToLambda)
+  name = view lbdName
+  mapping = view $ lbdConfig . lbdIdToLambda
   physicalId config r =
     PhysicalId $ makeAlphaNumeric (name r) `underscoreNamePrefixWith` config
 
@@ -90,8 +88,8 @@ instance AwsResource Kf where
   type ResourceType Kf = 'KinesisFirehoseResource
 
   typeName = const "Kf"
-  name = (^. kfName)
-  mapping = (^. kfConfig . kfIdToKf)
+  name = view kfName
+  mapping = view $ kfConfig . kfIdToKf
   physicalId config r =
     PhysicalId $ makeAlphaNumeric (name r) `dotNamePrefixWith` config
 
@@ -101,7 +99,7 @@ instance AwsResource S3Bucket where
   type ResourceType S3Bucket = 'S3BucketResource
 
   typeName = const "S3Bucket"
-  name = (^. s3bName)
-  mapping = (^. s3Config . s3IdToBucket)
+  name = view s3bName
+  mapping = view $ s3Config . s3IdToBucket
   physicalId config r =
     PhysicalId $ makeAlphaNumeric (name r) `dotNamePrefixWith` config

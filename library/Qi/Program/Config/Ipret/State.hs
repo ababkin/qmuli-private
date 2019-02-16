@@ -23,6 +23,7 @@ import           Data.Proxy                (Proxy (Proxy))
 import           Protolude                 hiding (State, get, gets, modify,
                                             runState)
 import           Qi.AWS.Resource
+import           Qi.AWS.Types              (LogicalId (..))
 import           Qi.Config.AWS
 import           Qi.Config.AWS.Lambda      hiding (LambdaId)
 import           Qi.Config.AWS.S3
@@ -38,36 +39,32 @@ run = interpret (\case
   GetConfig -> get
 
   RegGenericLambda inProxy outProxy name f profile -> do
-      -- let lbd = GenericLambda name profile inProxy outProxy f
-      insertLambda id name lbd
+      let lbd = GenericLambda name profile inProxy outProxy f
+          lbdLogicalId = LogicalId name
+          insertIdToLambda  = lbdIdToLambda %~ SHM.insert lbdLogicalId lbd
+
+      modify (lbdConfig %~ insertIdToLambda)
+      pure lbdLogicalId
 
 -- S3
   RegS3Bucket name profile -> do
       let newBucket = def & s3bName .~ name
                           & s3bProfile .~ profile
-          insertIdToBucket = s3IdToBucket %~ SHM.insert id newBucket
-          insertNameToId = s3NameToId %~ SHM.insert name id
+          bucketLogicalId = LogicalId name
+          insertIdToBucket = s3IdToBucket %~ SHM.insert bucketLogicalId newBucket
 
-      modify (s3Config %~ insertNameToId . insertIdToBucket)
+      modify (s3Config %~ insertIdToBucket)
+      pure bucketLogicalId
 
 
   RegS3BucketLambda name bucketId f profile -> do
       let lbd = S3BucketLambda name profile f
-          modifyBucket = s3bEventConfigs %~ ((S3EventConfig S3ObjectCreatedAll id):)
+          lbdLogicalId = LogicalId name
+          modifyBucket = s3bEventConfigs %~ ((S3EventConfig S3ObjectCreatedAll lbdLogicalId):)
+          insertIdToLambda  = lbdIdToLambda %~ SHM.insert lbdLogicalId lbd
+
       modify (s3Config . s3IdToBucket %~ SHM.adjust modifyBucket bucketId)
+      modify (lbdConfig %~ insertIdToLambda)
 
-      insertLambda id name lbd
+      pure lbdLogicalId
   )
-
-  where
-
-    insertLambda
-      :: LambdaId
-      -> Text
-      -> Lambda
-      -> Eff effs ()
-    insertLambda id name lbd = do
-
-      let insertIdToLambda  = lbdIdToLambda %~ SHM.insert id lbd
-
-      void $ modify (lbdConfig %~ insertNameToId . insertIdToLambda)
