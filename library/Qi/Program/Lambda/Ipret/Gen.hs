@@ -59,6 +59,6 @@ run = interpret (\case
     -- getLambdaPhysicalId :: Config -> LogicalId (ResourceType Lambda) -> PhysicalId (ResourceType Lambda)
     getLambdaPhysicalId config lid =
         let
-          lambda :: Lambda = getById config lid
+          lbd :: Lambda = getById config lid
         in
-          physicalId config lambda
+          physicalId config lbd

@@ -41,16 +41,12 @@ run
 run = interpret (\case
 
   CreateStack (StackName name) template -> do
-    config  <- getConfig
-
     void . amazonka cloudFormation $ createStack name
                 & csTemplateBody ?~ toS template
                 & csCapabilities .~ [ CapabilityNamedIAM ]
 
 
   UpdateStack (StackName name) template -> do
-    config  <- getConfig
-
     void . amazonka cloudFormation $ updateStack name
                 & usTemplateBody ?~ toS template
                 & usCapabilities .~ [ CapabilityNamedIAM ]

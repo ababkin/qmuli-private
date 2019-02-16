@@ -23,6 +23,7 @@ module Qi.Config.AWS.S3 (
   , s3bpExistence
   , s3eObject
   , s3oBucketId
+  , s3oKey
   ) where
 
 import           Control.Lens

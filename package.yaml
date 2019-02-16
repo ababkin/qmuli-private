@@ -14,11 +14,14 @@ ghc-options:
   - -O0                                 # Turn on aggressive optimizations
   - -fwarn-tabs                         # Warn on tabs (spaces are better)
   - -Wall                               # Turn on most warnings
+  - -Werror
   - -Wcpp-undef                         # Warn on undefined CPP expressions
   - -Widentities                        # Warn when converting between integers
                                         # without changing the type (i.e. noops)
   - -Wincomplete-record-updates         # Warn for partial record updates
   - -Wincomplete-uni-patterns           # Warn for incomplete pattern matching
+
+  - -Wno-unused-imports
   - -Wno-unused-do-bind                 # Allow single-line do blocks
   - -Wno-deprecations                   # Allow some deprecated functions
                                         # TODO(matthew-piziak): make this file specific
@@ -26,7 +29,7 @@ ghc-options:
   - -Wno-unticked-promoted-constructors # Allow unticked promoted constructors
   - -Wpartial-fields                    # Warn for records that could trigger
                                         # -Wincomplete-record-updates
-  - -Wredundant-constraints             # Warn on redundant typeclass constraints
+  # - -Wredundant-constraints             # Warn on redundant typeclass constraints
   - -optP=-Wno-nonportable-include-path # macOS compatibility
     
 extra-source-files:
@@ -37,18 +40,19 @@ extra-source-files:
   - js/*
 
 default-extensions:
-  - NoImplicitPrelude
-  - OverloadedStrings
-  - NamedFieldPuns
-  - TupleSections
-  - FlexibleInstances
+  - DeriveGeneric
   - FlexibleContexts
-  - ScopedTypeVariables
+  - FlexibleInstances
+  - LambdaCase
   - MultiParamTypeClasses
   - MonoLocalBinds
-  - LambdaCase
+  - NamedFieldPuns
+  - NoImplicitPrelude
+  - OverloadedStrings
   - RankNTypes
-  - DeriveGeneric
+  - ScopedTypeVariables
+  - TupleSections
+  - ViewPatterns
     
 dependencies:
   - aeson

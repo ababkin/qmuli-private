@@ -27,7 +27,7 @@ import qualified Qi.Config.CfTemplate           as CF
 import           Qi.Config.Types                (ResourceExistence (AlreadyExists))
 import           Qi.CLI.Options
 import           Qi.AWS.Types
-import           Qi.AWS.Resource
+import           Qi.AWS.Resource hiding (name)
 import qualified Qi.Program.Config.Ipret.State  as Config
 import           Qi.Program.Config.Lang         (ConfigEff, s3Bucket)
 import qualified Qi.Program.Gen.Lang            as Gen
@@ -144,7 +144,7 @@ withConfig configProgram = do
             S3BucketLambda{ _lbdS3BucketLambdaProgram } ->
               either  (reportBadArgument "S3")
                       _lbdS3BucketLambdaProgram
-                      $ parseEither (S3Event.parse config) =<< eitherDecode (toS req)
+                      $ parseEither S3Event.parse =<< eitherDecode (toS req)
 
 
 deployApp

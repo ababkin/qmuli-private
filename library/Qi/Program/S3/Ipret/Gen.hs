@@ -1,14 +1,9 @@
 {-# LANGUAGE DataKinds                  #-}
-{-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE LambdaCase                 #-}
-{-# LANGUAGE NamedFieldPuns             #-}
-{-# LANGUAGE OverloadedLists            #-}
-{-# LANGUAGE RankNTypes                 #-}
-{-# LANGUAGE TypeOperators              #-}
-{-# LANGUAGE ViewPatterns               #-}
 {-# LANGUAGE KindSignatures              #-}
+{-# LANGUAGE OverloadedLists            #-}
+{-# LANGUAGE TypeOperators              #-}
 
 module Qi.Program.S3.Ipret.Gen (run) where
 
@@ -19,7 +14,7 @@ import qualified Data.Map.Strict        as Map
 import           Network.AWS            hiding (Request, Response, send)
 import           Network.AWS.Data.Body  (RsBody (..))
 import           Network.AWS.Data.Text  (ToText (..))
-import           Network.AWS.S3
+import           Network.AWS.S3         hiding (bucket)
 import           Protolude              hiding ((<&>))
 import           Qi.AWS.Resource
 import           Qi.AWS.Types
@@ -62,7 +57,7 @@ run = interpret (\case
 
 
 
-  PutContent s3Obj@S3Object{_s3oBucketId, _s3oKey = S3Key (ObjectKey -> objKey)} payload -> do
+  PutContent S3Object{_s3oBucketId, _s3oKey = S3Key (ObjectKey -> objKey)} payload -> do
     config <- getConfig
     let bucketName = getBucketName config _s3oBucketId
     void $ amazonka s3 $ putObject bucketName objKey (toBody payload) & poACL ?~ OPublicReadWrite
@@ -82,7 +77,7 @@ run = interpret (\case
 
 
 
-  DeleteObject s3Obj@S3Object{_s3oBucketId, _s3oKey = S3Key (ObjectKey -> objKey)} -> do
+  DeleteObject S3Object{_s3oBucketId, _s3oKey = S3Key (ObjectKey -> objKey)} -> do
     config <- getConfig
     let bucketName = getBucketName config _s3oBucketId
     void $ amazonka s3 $ deleteObject bucketName objKey
@@ -93,7 +88,7 @@ run = interpret (\case
     let dict = Map.toList . Map.fromListWith (<>) $ toPair <$> s3objs
 
         toPair :: S3Object -> (BucketName, [ObjectIdentifier])
-        toPair s3Obj@S3Object{_s3oBucketId, _s3oKey = S3Key (ObjectKey -> objKey)} =
+        toPair S3Object{_s3oBucketId, _s3oKey = S3Key (ObjectKey -> objKey)} =
           ( getBucketName config _s3oBucketId
           , [objectIdentifier objKey]
           )

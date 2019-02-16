@@ -63,9 +63,9 @@ toResources config = Resources $ toResource <$> buckets
 
 
         lbdConfigs = S.s3BucketNotificationConfiguration
-          & S.sbncLambdaConfigurations ?~ map lbdConfig eventConfigs
+          & S.sbncLambdaConfigurations ?~ map lbdConf eventConfigs
 
-        lbdConfig s3EventConfig =
+        lbdConf s3EventConfig =
           S.s3BucketLambdaConfiguration
             (Literal . show $ s3EventConfig ^. event)
             (GetAtt (unLogicalId $ s3EventConfig ^. lbdId) "Arn")

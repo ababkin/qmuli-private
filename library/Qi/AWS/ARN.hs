@@ -16,7 +16,6 @@ module Qi.AWS.ARN (
 import           Control.Monad.Fail
 import           Data.Aeson
 import qualified Data.Text          as T
-import           Network.AWS        (Logger)
 import           Protolude
 import           Qi.Config.AWS.S3
 
@@ -33,6 +32,8 @@ data ArnPartition = AwsPartition
   deriving (Eq, Show)
 instance ArnToken ArnPartition where
   toToken AwsPartition = "aws"
+  fromToken "aws" = Just AwsPartition
+  fromToken _     = Nothing
 
 data Service =
     S3

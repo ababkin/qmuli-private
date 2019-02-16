@@ -16,10 +16,9 @@ import           Qi.Config.AWS.S3
 
 
 parse
-  :: Config
-  -> Value
+  :: Value
   -> Parser S3Event
-parse config = withObject "S3Event" $ \o -> do
+parse = withObject "S3Event" $ \o -> do
   firstRecord <- headMay <$> o .: "Records"
   case firstRecord of
     Nothing ->
