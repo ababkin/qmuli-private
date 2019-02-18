@@ -28,13 +28,13 @@ class (Show (LogicalId (ResourceType r)), Hashable (LogicalId (ResourceType r)))
 
   type ResourceType r :: AwsResourceType
 
-  typeName
-    :: r
-    -> Text
+  -- typeName
+  --   :: r
+  --   -> Text
 
-  name
-    :: r
-    -> Text
+  -- name
+  --   :: r
+  --   -> Text
 
   mapping
     :: Config
@@ -42,8 +42,8 @@ class (Show (LogicalId (ResourceType r)), Hashable (LogicalId (ResourceType r)))
 
   all
     :: Config
-    -> [ r ]
-  all = SHM.elems . mapping
+    -> [ (LogicalId (ResourceType r), r) ]
+  all = SHM.toList . mapping
 
   -- allLogicalIds
   --   :: Config
@@ -59,47 +59,47 @@ class (Show (LogicalId (ResourceType r)), Hashable (LogicalId (ResourceType r)))
       (panic $ "Could not reference resource with logical id: " <> P.show lid)
       $ SHM.lookup lid $ mapping config
 
-  logicalId
-    :: Config
-    -> r
-    -> LogicalId (ResourceType r)
-  logicalId _config r =
-    LogicalId $ makeAlphaNumeric (name r) <> typeName r
+  -- logicalId
+  --   :: Config
+  --   -> r
+  --   -> LogicalId (ResourceType r)
+  -- logicalId _config r =
+    -- LogicalId $ makeAlphaNumeric (name r) <> typeName r
 
-  physicalId
-    :: Config
-    -> r
-    -> PhysicalId (ResourceType r)
+  -- physicalId
+  --   :: Config
+  --   -> r
+  --   -> PhysicalId (ResourceType r)
 
 
 type LambdaId = LogicalId (ResourceType Lambda)
 instance AwsResource Lambda where
   type ResourceType Lambda = 'LambdaResource
 
-  typeName = const "Lambda"
-  name = view lbdName
+  -- typeName = "Lambda"
+  -- name = view lbdName
   mapping = view $ lbdConfig . lbdIdToLambda
-  physicalId config r =
-    PhysicalId $ makeAlphaNumeric (name r) `underscoreNamePrefixWith` config
+  -- physicalId config r =
+    -- PhysicalId $ (makeAlphaNumeric $ name r) <> typeName r `underscoreNamePrefixWith` config
 
 
 type KfId = LogicalId (ResourceType Kf)
 instance AwsResource Kf where
   type ResourceType Kf = 'KinesisFirehoseResource
 
-  typeName = const "Kf"
-  name = view kfName
+  -- typeName = "Kf"
+  -- name = view kfName
   mapping = view $ kfConfig . kfIdToKf
-  physicalId config r =
-    PhysicalId $ makeAlphaNumeric (name r) `dotNamePrefixWith` config
+  -- physicalId config r =
+    -- PhysicalId $ (makeAlphaNumeric $ name r) <> typeName r  `dotNamePrefixWith` config
 
 
 type S3BucketId = LogicalId (ResourceType S3Bucket)
 instance AwsResource S3Bucket where
   type ResourceType S3Bucket = 'S3BucketResource
 
-  typeName = const "S3Bucket"
-  name = view s3bName
+  -- typeName = "S3Bucket"
+  -- name = view s3bName
   mapping = view $ s3Config . s3IdToBucket
-  physicalId config r =
-    PhysicalId $ makeAlphaNumeric (name r) `dotNamePrefixWith` config
+  -- physicalId config r =
+    -- PhysicalId $ (makeAlphaNumeric $ name r) <> typeName r  `dotNamePrefixWith` config

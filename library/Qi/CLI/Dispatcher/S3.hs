@@ -4,7 +4,7 @@ import           Control.Lens
 import           Control.Monad.Freer    hiding (send)
 import           Protolude              hiding (all)
 import           Qi.AWS.Resource
-import           Qi.AWS.S3              (S3Bucket, s3bName)
+import           Qi.AWS.S3              (S3Bucket)
 import           Qi.AWS.Types
 import           Qi.Config
 import           Qi.Program.Config.Lang
@@ -17,11 +17,10 @@ clearBuckets
   => Eff effs ()
 clearBuckets  = do
   config <- getConfig
-  let bucketIds =
-                map (logicalId config) (all config :: [ S3Bucket ])
+  let bucketIds = map fst ( all config :: [ ( LogicalId 'S3BucketResource, S3Bucket ) ] )
   say "destroying buckets..."
   for_ bucketIds $ \bucketId -> do
-    say $ "destroying bucket: '" <> (getById config bucketId) ^. s3bName <> "'"
+    say $ "destroying bucket: '" <> show bucketId <> "'"
     forAll bucketId deleteObjects
 
   where

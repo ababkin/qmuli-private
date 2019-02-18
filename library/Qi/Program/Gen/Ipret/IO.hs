@@ -21,7 +21,7 @@ import           Network.HTTP.Client           (httpLbs, newManager)
 import           Protolude                     hiding ((<&>))
 import           Qi.Amazonka                   (currentRegion)
 import           Qi.AWS.Types                  (AwsMode (..))
-import           Qi.Config                 (namePrefix)
+import           Qi.Config                 (appName)
 import           Qi.Program.Config.Lang        (ConfigEff, getConfig)
 import           Qi.Program.Gen.Lang           (GenEff (..))
 import           Qi.Util                       (callProcess, printPending)
@@ -46,7 +46,7 @@ run
 run mode mkLogger = interpret (\case
 
   GetAppName ->
-    (^. namePrefix) <$> getConfig
+    (^. appName) <$> getConfig
 
   Http mgrSettings req -> send $
     httpLbs req =<< newManager mgrSettings

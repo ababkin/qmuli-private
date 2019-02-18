@@ -14,8 +14,6 @@ module Qi.AWS.S3 (
   , S3Event (..)
   , S3EventType (..)
   , S3EventConfig (..)
-  , mkS3BucketId
-  , s3bName
   , s3IdToBucket
   , event
   , lbdId
@@ -40,9 +38,6 @@ import           Qi.AWS.Types
 type S3BucketId = LogicalId 'S3BucketResource
 type LambdaId = LogicalId 'LambdaResource
 
-mkS3BucketId :: Text -> S3BucketId
-mkS3BucketId t = LogicalId t
-
 -- | This represents config for the S3 resources
 data S3Config = S3Config {
     _s3IdToBucket :: HashMap S3BucketId S3Bucket
@@ -52,18 +47,16 @@ instance Default S3Config where
   def = S3Config {
       _s3IdToBucket     = SHM.empty
     }
-
--- | Representation for a S3 Bucket resource
+-- https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket.html
+-- | Representation of a S3 Bucket resource
 data S3Bucket = S3Bucket {
-    _s3bName         :: Text
-  , _s3bProfile      :: S3BucketProfile
+    _s3bProfile      :: S3BucketProfile
   , _s3bEventConfigs :: [ S3EventConfig ]
   }
   deriving (Eq, Show)
 instance Default S3Bucket where
   def = S3Bucket {
-      _s3bName         = "default"
-    , _s3bProfile      = def
+      _s3bProfile      = def
     , _s3bEventConfigs = def
     }
 

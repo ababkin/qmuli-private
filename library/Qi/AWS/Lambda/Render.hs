@@ -2,32 +2,30 @@
 
 module Qi.AWS.Lambda.Render (toResources) where
 
-import           Protolude               hiding (all)
-import qualified Qi.AWS.IAMRole.Render   as Role
-import           Qi.AWS.Lambda           hiding (lbdName)
-import           Qi.AWS.Lambda.Accessors
+import           Protolude             hiding (all)
+import qualified Qi.AWS.IAMRole.Render as Role
 import           Qi.AWS.Resource
 import           Qi.AWS.Types
+import           Qi.AWS.Lambda
 import           Qi.Config
 import           Stratosphere
 
 
 toResources :: Config -> Resources
-toResources config = foldMap toAllLambdaResources $ all config
+toResources config@Config{ _appName } = foldMap toAllLambdaResources $ all config
   where
-    toAllLambdaResources :: Lambda -> Resources
-    toAllLambdaResources lbd = Resources $ [lambdaPermissionResource, lambdaResource]
+    toAllLambdaResources :: (LogicalId 'LambdaResource, Lambda) -> Resources
+    toAllLambdaResources (lbdLogicalId, lbd) = Resources $ [lambdaPermissionResource, lambdaResource]
 
       where
-        lbdLogicalId = logicalId config lbd
-        lbdPermissionLogicalId = getPermissionLogicalId lbd
+        lbdPermissionLogicalId :: LogicalId 'LambdaPermissionResource = castLogicalIdResource lbdLogicalId
 
         lambdaPermissionResource =
-          resource lbdPermissionLogicalId $
+          resource (show lbdPermissionLogicalId) $
             LambdaPermissionProperties $
             lambdaPermission
               "lambda:*"
-              (GetAtt (unLogicalId lbdLogicalId) "Arn")
+              (GetAtt (show lbdLogicalId) "Arn")
               principal
           where
             principal = case lbd of
@@ -35,14 +33,14 @@ toResources config = foldMap toAllLambdaResources $ all config
               S3BucketLambda{} -> "s3.amazonaws.com"
 
         lambdaResource = (
-          resource (unLogicalId lbdLogicalId) $
+          resource (show lbdLogicalId) $
             LambdaFunctionProperties $
             lambdaFunction
               lbdCode
               "index.handler"
               (GetAtt Role.lambdaBasicExecutionIAMRoleLogicalName "Arn")
               (Literal $ OtherRuntime "provided")
-            & lfFunctionName  ?~ Literal (unPhysicalId $ physicalId config lbd)
+            & lfFunctionName  ?~ Literal (show $ toPhysicalId _appName lbdLogicalId)
             & lfMemorySize    ?~ Literal memorySize
             & lfTimeout       ?~ Literal timeOut
           )
@@ -57,7 +55,7 @@ toResources config = foldMap toAllLambdaResources $ all config
               & lfcS3Key    ?~ lambdaS3Object
 
             lambdaS3Bucket :: Val Text
-            lambdaS3Bucket = Literal $ (config ^. namePrefix) <> ".app"
+            lambdaS3Bucket = Literal $ show _appName <> ".app"
 
             lambdaS3Object :: Val Text
             lambdaS3Object = "lambda.zip"

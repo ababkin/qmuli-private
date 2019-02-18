@@ -5,8 +5,6 @@
 -- Amazon Relational Database Service (Amazon RDS) tags, and API calls.
 
 {-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric  #-}
-{-# LANGUAGE NamedFieldPuns #-}
 
 module Qi.AWS.ARN (
     Arn
@@ -18,6 +16,7 @@ import           Data.Aeson
 import qualified Data.Text          as T
 import           Protolude
 import           Qi.AWS.S3
+import           Qi.AWS.Types
 
 
 class ArnToken a where
@@ -88,14 +87,14 @@ instance FromJSON Arn where
 
 -- arn:aws:s3:::my_corporate_bucket/exampleobject.png
 mkS3ObjectArn
-  :: S3Bucket
+  :: PhysicalId 'S3BucketResource
   -> S3Key
   -> Arn
-mkS3ObjectArn S3Bucket{ _s3bName } (S3Key key) = Arn {
+mkS3ObjectArn s3BucketPhysicalId (S3Key key) = Arn {
     partition = AwsPartition
   , service = S3
   , region = ""
   , resource = arnRes
   }
   where
-    arnRes = _s3bName <> "/" <> key
+    arnRes = show s3BucketPhysicalId <> "/" <> key

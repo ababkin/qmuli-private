@@ -2,14 +2,14 @@ module Qi.CLI.Options where
 
 import           Options.Applicative
 import           Protolude           hiding (runState)
-import           Qi.AWS.Types        (AwsMode (..))
+import           Qi.AWS.Types
 
 
 data Options = LbdDispatch | Management ManagementOptions
 
 data ManagementOptions = ManagementOptions {
     cmd     :: Command
-  , appName :: Text
+  , appName :: AppName
   , awsMode :: AwsMode
   }
 
@@ -31,12 +31,13 @@ optionsSpec = info (helper <*> (managementOptionsParser <|> pure LbdDispatch)) f
 managementOptionsParser :: Parser Options
 managementOptionsParser = map Management $ ManagementOptions
   <$> hsubparser (cfCmd <> lbdCmd)
-  <*> nameParser
+  <*> appNameParser
   <*> awsModeOption
 
 
-nameParser :: Parser Text
-nameParser = textArg "APP_NAME"
+appNameParser :: Parser AppName
+appNameParser =
+  either panic identity . mkAppName <$> textArg "APP_NAME"
 
 -- | Creates a Text positional argument with the given name
 textArg

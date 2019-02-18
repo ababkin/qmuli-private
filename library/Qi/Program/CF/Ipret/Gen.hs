@@ -26,10 +26,11 @@ import           Network.AWS.S3             (BucketName (BucketName),
 import           Protolude                  hiding ((<&>))
 import           Qi.Config
 import           Qi.AWS.S3
+import           Qi.AWS.Types
 import           Qi.Program.CF.Lang         (AbsentDirective (..), CfEff (..),
                                              StackDescription (..),
-                                             StackDescriptionDict,
-                                             StackName (StackName))
+                                             StackDescriptionDict
+                                             )
 import           Qi.Program.Config.Lang     (ConfigEff, getConfig)
 import           Qi.Program.Gen.Lang
 
@@ -40,20 +41,21 @@ run
   => (Eff (CfEff ': effs) a -> Eff effs a)
 run = interpret (\case
 
-  CreateStack (StackName name) template -> do
-    void . amazonka cloudFormation $ createStack name
+  CreateStack name template -> do
+    void . amazonka cloudFormation $ createStack ( show name )
                 & csTemplateBody ?~ toS template
                 & csCapabilities .~ [ CapabilityNamedIAM ]
 
 
-  UpdateStack (StackName name) template -> do
-    void . amazonka cloudFormation $ updateStack name
+  UpdateStack name template -> do
+    void . amazonka cloudFormation $ updateStack ( show name )
                 & usTemplateBody ?~ toS template
                 & usCapabilities .~ [ CapabilityNamedIAM ]
 
 
-  DeleteStack (StackName name) ->
-    void . amazonka cloudFormation $ deleteStack name
+  DeleteStack name ->
+    void . amazonka cloudFormation $ deleteStack ( show name )
+
                 & dsRetainResources .~ []
 
   DescribeStacks ->
@@ -84,7 +86,11 @@ run = interpret (\case
       r <- amazonka cloudFormation $ describeStacks
                   -- & dStackName ?~ name
       pure . Map.fromList $ (\stack ->
-        ( StackName $ stack ^. sStackName
+        ( either
+            (panic "AWS returned an incorrectly looking app name")
+            identity
+            . mkAppName
+            $ stack ^. sStackName
         , StackDescription {
               status  = stack ^. sStackStatus
             , outputs = catMaybes $ (\o -> do

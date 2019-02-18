@@ -8,9 +8,9 @@ import qualified Data.HashMap.Strict           as SHM
 import           Protolude                     hiding (State, get, put,
                                                 runState)
 import           Qi.AWS.Resource
+import           Qi.AWS.S3
 import           Qi.AWS.Types                  (AwsMode (LocalStack))
-import           Qi.Config.AWS
-import           Qi.Config.AWS.S3
+import           Qi.Config
 import qualified Qi.Program.Config.Ipret.State as Config
 import           Qi.Program.Config.Lang
 import qualified Qi.Program.Wiring.IO          as IO

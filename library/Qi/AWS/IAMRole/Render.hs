@@ -7,6 +7,7 @@ module Qi.AWS.IAMRole.Render (
 
 import           Data.Aeson   (Value (Array), object)
 import           Protolude
+import           Qi.AWS.Types
 import           Qi.Config
 import           Stratosphere
 
@@ -21,14 +22,18 @@ lambdaBasicExecutionIAMRoleLogicalName = "lambdaBasicExecutionIAMRole"
 toResources
   :: Config
   -> Resources
-toResources config = Resources [lbdRoleRes]
+toResources Config{ _appName } = Resources [lbdRoleRes]
   where
-    lbdRoleRes = resource lambdaBasicExecutionIAMRoleLogicalName $
-      IAMRoleProperties $
-      iamRole rolePolicyDocumentObject
-      & iamrPolicies ?~ [ executePolicy ]
-      & iamrRoleName ?~ (Literal $ "LambdaBasicExecutionRole" `underscoreNamePrefixWith` config)
-      & iamrPath ?~ "/"
+    lbdRoleRes = case mkLogicalId "LambdaBasicExecutionRole" of
+      -- TODO: Hack, get the physical ids for this some other way
+      Left err -> panic err
+      Right (lid :: LogicalId 'IAMRoleResource) ->
+        resource lambdaBasicExecutionIAMRoleLogicalName $
+          IAMRoleProperties $
+          iamRole rolePolicyDocumentObject
+          & iamrPolicies ?~ [ executePolicy ]
+          & iamrRoleName ?~ (Literal . show $ toPhysicalId _appName lid)
+          & iamrPath ?~ "/"
 
       where
         rolePolicyDocumentObject =
@@ -46,12 +51,15 @@ toResources config = Resources [lbdRoleRes]
             principal = object
               [ ("Service", "lambda.amazonaws.com") ]
 
-        executePolicy =
-          iamRolePolicy
-          [ ("Version", "2012-10-17")
-          , ("Statement", statement)
-          ] $
-          Literal $ "LambdaExecutionPolicy" `underscoreNamePrefixWith` config
+      -- TODO: Hack, get the physical ids for this some other way
+        executePolicy = case mkLogicalId "LambdaExecutionPolicy" of
+                          Left err -> panic err
+                          Right (lid :: LogicalId 'IAMPolicyResource) ->
+                            iamRolePolicy
+                            [ ("Version", "2012-10-17")
+                            , ("Statement", statement)
+                            ] $
+                            Literal . show $ toPhysicalId _appName lid
 
 
           where

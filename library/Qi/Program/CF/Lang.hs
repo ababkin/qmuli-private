@@ -3,8 +3,7 @@
 {-# LANGUAGE TypeOperators              #-}
 
 module Qi.Program.CF.Lang (
-    StackName(StackName)
-  , CfEff (..)
+    CfEff (..)
   , createStack
   , describeStacks
   , updateStack
@@ -26,14 +25,12 @@ import           Network.AWS.CloudFormation (StackStatus (..))
 import           Network.AWS.S3.Types       (ETag)
 import           Protolude
 import           Qi.AWS.S3
+import           Qi.AWS.Types
 import           Qi.Core.Curry
 import           Qi.Program.Gen.Lang
 
 
-type StackDescriptionDict = Map StackName StackDescription
-
-newtype StackName = StackName Text
-  deriving (Eq, Show, Ord, ToJSON)
+type StackDescriptionDict = Map AppName StackDescription
 
 data StackDescription = StackDescription {
     status  :: StackStatus
@@ -53,7 +50,7 @@ data AbsentDirective = AbsentOk | NoAbsent
 data CfEff r where
 
   CreateStack
-    :: StackName
+    :: AppName
     -> LBS.ByteString
     -> CfEff ()
 
@@ -61,23 +58,23 @@ data CfEff r where
     :: CfEff StackDescriptionDict
 
   UpdateStack
-    :: StackName
+    :: AppName
     -> LBS.ByteString
     -> CfEff ()
 
   DeleteStack
-    :: StackName
+    :: AppName
     -> CfEff ()
 
   WaitOnStackStatus
-    :: StackName
+    :: AppName
     -> StackStatus
     -> AbsentDirective
     -> CfEff ()
 
 createStack
   :: (Member CfEff effs)
-  => StackName
+  => AppName
   -> LBS.ByteString -- S3Object
   -> Eff effs ()
 createStack = send .: CreateStack
@@ -89,20 +86,20 @@ describeStacks = send DescribeStacks
 
 updateStack
   :: (Member CfEff effs)
-  => StackName
+  => AppName
   -> LBS.ByteString
   -> Eff effs ()
 updateStack = send .: UpdateStack
 
 deleteStack
   :: (Member CfEff effs)
-  => StackName
+  => AppName
   -> Eff effs ()
 deleteStack = send . DeleteStack
 
 waitOnStackStatus
   :: (Member CfEff effs)
-  => StackName
+  => AppName
   -> StackStatus
   -> AbsentDirective
   -> Eff effs ()

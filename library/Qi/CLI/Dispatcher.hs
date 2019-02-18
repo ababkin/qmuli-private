@@ -16,15 +16,14 @@ import           Qi.Program.Gen.Lang
 import           Qi.Program.Lambda.Lang         (LambdaEff)
 import qualified Qi.Program.Lambda.Lang         as Lbd
 import           Qi.Program.S3.Lang
-import           Qi.Config
-import           Qi.AWS.Lambda           hiding (lbdName)
-import qualified Qi.AWS.Lambda.Accessors as Lbd
+import           Qi.Config hiding (appName)
+import           Qi.AWS.Lambda
 import           Qi.AWS.S3
 import qualified Qi.AWS.S3.Event         as S3Event
 import qualified Qi.AWS.Render           as CF
 import           Qi.CLI.Options
 import           Qi.AWS.Types
-import           Qi.AWS.Resource hiding (name)
+import           Qi.AWS.Resource
 import qualified Qi.Program.Config.Ipret.State  as Config
 import           Qi.Program.Config.Lang         (ConfigEff, s3Bucket)
 import qualified Qi.Program.Gen.Lang            as Gen
@@ -52,10 +51,10 @@ withConfig configProgram = do
   hSetBuffering stdout LineBuffering
   hSetBuffering stderr LineBuffering
 
-  let mkConfig appName =
+  let runConfig appName =
           snd
         . run
-        . runState def{_namePrefix = appName}
+        . runState (mkConfig appName)
         . Config.run
         $ do
           s3Bucket "app" $ def & s3bpExistence .~ AlreadyExists -- always assume existence of the app bucket
@@ -63,18 +62,18 @@ withConfig configProgram = do
 
   case opts of
     LbdDispatch -> do
-      let splitNames compositeName = case splitOn "_" compositeName of
-                        (h:t) -> (h, mconcat t)
-                        _ -> panic "could not split the app and lbd names from the composite name"
-
-      (appName, lbdName) <- maybe
-                (panic "AWS_LAMBDA_FUNCTION_NAME not found in ENV")
-                (splitNames . toS)
-              <$> lookupEnv "AWS_LAMBDA_FUNCTION_NAME"
-
-      let config = mkConfig appName
-          runLambda = IO.run config RealDeal mkLambdaLogger
-      either panic (loop config lbdName runLambda) =<< getEndpoint
+      lambdaId <- maybe
+                    (panic "AWS_LAMBDA_FUNCTION_NAME not found in ENV")
+                    toS
+                    <$> lookupEnv "AWS_LAMBDA_FUNCTION_NAME"
+      case parseLambdaPhysicalId lambdaId of
+        Left err -> panic err
+        Right pid -> do
+          let appName = toAppName pid
+              lambdaLogicalId = toLogicalId pid
+              config = runConfig appName
+              runLambda = IO.run config RealDeal mkLambdaLogger
+          either panic (loop config lambdaLogicalId runLambda) =<< getEndpoint
 
 
     Management ManagementOptions{ appName, cmd, awsMode } -> do
@@ -104,13 +103,13 @@ withConfig configProgram = do
 
   where
     -- this loops over accumulated lambda calls and handles them
-    loop config lbdName runLambda endpoint = loop'
+    loop config lid runLambda endpoint = loop'
       where
         loop' = do
           req' <- getWithRetries 3 endpoint
           case req' of
             SuccessResponse HandlerRequest{ payload, requestId } -> do
-              resp <- runLambda $ lbdHandler config lbdName payload
+              resp <- runLambda $ lbdHandler payload
               respond endpoint requestId $ SuccessHandlerResponse (toS resp) (Just "application/json")
               loop'
 
@@ -125,13 +124,12 @@ withConfig configProgram = do
                   loop'
 
 
-    lbdHandler config name req =
-          let id = LogicalId name
-              reportBadArgument lbdType err =
+        lbdHandler req =
+          let reportBadArgument lbdType err =
                 panic $ "Could not parse event: '" <> toS req <>
                   "', for lambda type: '" <> lbdType <> "' error was: '" <> toS err <> "'"
           in
-          case getById config id of
+          case getById config lid of
 
             GenericLambda{ _lbdGenericLambdaProgram } ->
               either  (reportBadArgument "Generic")
@@ -151,9 +149,8 @@ deployApp
   -> Eff effs ()
 deployApp _template content = do
   say "deploying the app..."
-  config <- getConfig
-  let appName     = config ^. namePrefix
-      bucketName = BucketName $ appName <> ".app"
+  Config{ _appName } <- getConfig
+  let bucketName = BucketName $ show _appName <> ".app"
 
   say $ "creating bucket '" <> show bucketName <> "'"
   amazonka s3 $ createBucket bucketName
@@ -167,15 +164,13 @@ createCfStack
   => LBS.ByteString
   -> Eff effs ()
 createCfStack template = do
-  config <- getConfig
-  let appName     = config ^. namePrefix
-      stackName   = StackName appName
+  Config{ _appName } <- getConfig
 
   say "creating the stack..."
-  createStack stackName template
+  createStack _appName template
 
   say "waiting on the stack to be created..."
-  waitOnStackStatus stackName SSCreateComplete NoAbsent
+  waitOnStackStatus _appName SSCreateComplete NoAbsent
 
   say "stack was successfully created"
 
@@ -185,15 +180,13 @@ updateCfStack
   => LBS.ByteString
   -> Eff effs ()
 updateCfStack template = do
-  config <- getConfig
-  let appName     = config ^. namePrefix
-      stackName   = StackName appName
+  Config{ _appName } <- getConfig
 
   say "updating the stack..."
-  updateStack stackName template
+  updateStack _appName template
 
   say "waiting on the stack to be updated..."
-  waitOnStackStatus stackName SSUpdateComplete NoAbsent
+  waitOnStackStatus _appName SSUpdateComplete NoAbsent
 
   -- TODO: make lambda updating concurrent with the above stack update?
   updateLambdas
@@ -206,20 +199,19 @@ updateLambdas
   => Eff effs ()
 updateLambdas = do
   config <- getConfig
-  let lbdS3Obj = S3Object (LogicalId "app") $ S3Key "lambda.zip"
+  let lbdS3Obj = S3Object (either (panic "unexpected") identity $ mkLogicalId "app") $ S3Key "lambda.zip"
 
   say "updating the lambdas..."
-  traverse_ ((`Lbd.update` lbdS3Obj) . logicalId config) (all config :: [ Lambda ])
+  traverse_ ((`Lbd.update` lbdS3Obj) . fst) (all config :: [ (LogicalId 'LambdaResource, Lambda) ])
 
 
 describeCfStack
   :: Members '[ CfEff, GenEff, ConfigEff ] effs
   => Eff effs ()
 describeCfStack = do
-  config <- getConfig
-  let stackName = StackName $ config ^. namePrefix
+  Config{ _appName } <- getConfig
   stackDict <- describeStacks
-  maybe (panic $ "stack '" <> show stackName <> "' not found") (say . toS . encodePretty) $ Map.lookup stackName stackDict
+  maybe (panic $ "stack '" <> show _appName <> "' not found") (say . toS . encodePretty) $ Map.lookup _appName stackDict
 
 
 destroyCfStack
@@ -227,19 +219,13 @@ destroyCfStack
   => Eff effs ()
   -> Eff effs ()
 destroyCfStack action = do
-  config <- getConfig
-  let stackName = StackName $ config ^. namePrefix
-
+  Config{ _appName } <- getConfig
   say "destroying the stack..."
-
   clearBuckets
-  deleteStack stackName
-
+  deleteStack _appName
   action
-
   say "waiting on the stack to be destroyed..."
-  waitOnStackStatus stackName SSDeleteComplete AbsentOk
-
+  waitOnStackStatus _appName SSDeleteComplete AbsentOk
   say "stack was successfully destroyed"
 
 

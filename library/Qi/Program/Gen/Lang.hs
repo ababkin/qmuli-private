@@ -19,13 +19,14 @@ import           Network.AWS             hiding (Request, Response, send)
 import           Network.AWS.Data.Body   (RsBody (..))
 import           Network.HTTP.Client
 import           Protolude
+import           Qi.AWS.Types
 import           Qi.Core.Curry
 import           Servant.Client          (BaseUrl, ClientM, ServantError)
 
 
 data GenEff r where
   GetAppName
-    :: GenEff Text
+    :: GenEff AppName
 
   Http
     :: ManagerSettings
@@ -78,7 +79,7 @@ data GenEff r where
 
 getAppName
   :: (Member GenEff effs)
-  => Eff effs Text
+  => Eff effs AppName
 getAppName =
   send GetAppName
 

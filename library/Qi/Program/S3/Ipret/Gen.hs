@@ -38,8 +38,8 @@ run = interpret (\case
     -- handling _KeyNotFound handler action
 
     where
-      action config =
-        let bucketName = getBucketName config _s3oBucketId
+      action Config{ _appName } =
+        let bucketName = BucketName . show $ toPhysicalId _appName _s3oBucketId
         in
           amazonkaPostBodyExtract
             s3
@@ -58,14 +58,14 @@ run = interpret (\case
 
 
   PutContent S3Object{_s3oBucketId, _s3oKey = S3Key (ObjectKey -> objKey)} payload -> do
-    config <- getConfig
-    let bucketName = getBucketName config _s3oBucketId
+    Config{ _appName } <- getConfig
+    let bucketName = BucketName . show $ toPhysicalId _appName _s3oBucketId
     void $ amazonka s3 $ putObject bucketName objKey (toBody payload) & poACL ?~ OPublicReadWrite
 
 
   ListObjects bucketId maybeToken -> do
-    config <- getConfig
-    let bucketName = getBucketName config bucketId
+    Config{ _appName } <- getConfig
+    let bucketName = BucketName . show $ toPhysicalId _appName bucketId
     r <- amazonka s3 $ case maybeToken of
       Nothing -> -- first pagination call
         listObjectsV2 bucketName
@@ -78,18 +78,18 @@ run = interpret (\case
 
 
   DeleteObject S3Object{_s3oBucketId, _s3oKey = S3Key (ObjectKey -> objKey)} -> do
-    config <- getConfig
-    let bucketName = getBucketName config _s3oBucketId
+    Config{ _appName } <- getConfig
+    let bucketName = BucketName . show $ toPhysicalId _appName _s3oBucketId
     void $ amazonka s3 $ deleteObject bucketName objKey
 
 
   DeleteObjects s3objs -> do
-    config <- getConfig
+    Config{ _appName } <- getConfig
     let dict = Map.toList . Map.fromListWith (<>) $ toPair <$> s3objs
 
         toPair :: S3Object -> (BucketName, [ObjectIdentifier])
         toPair S3Object{_s3oBucketId, _s3oKey = S3Key (ObjectKey -> objKey)} =
-          ( getBucketName config _s3oBucketId
+          ( BucketName . show $ toPhysicalId _appName _s3oBucketId
           , [objectIdentifier objKey]
           )
 
@@ -98,12 +98,3 @@ run = interpret (\case
 
   )
 
-
-  where
-    -- getBucketName :: Config -> LogicalId (ResourceType S3Bucket)-> BucketName
-    getBucketName config lid =
-      let
-        bucket :: S3Bucket = getById config lid
-        pid :: PhysicalId 'S3BucketResource = physicalId config bucket
-      in
-        BucketName $ unPhysicalId pid

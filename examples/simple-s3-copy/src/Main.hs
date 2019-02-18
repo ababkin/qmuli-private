@@ -1,9 +1,3 @@
-{-# LANGUAGE DataKinds           #-}
-{-# LANGUAGE FlexibleContexts    #-}
-{-# LANGUAGE MonoLocalBinds      #-}
-{-# LANGUAGE NamedFieldPuns      #-}
-{-# LANGUAGE OverloadedStrings   #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell     #-}
 
 module Main where
@@ -16,7 +10,7 @@ import           Qi                     (withConfig)
 import           Qi.AWS.Lambda          (LambdaMemorySize (..), lpMemorySize)
 import           Qi.AWS.Resource        (S3BucketId)
 import           Qi.AWS.S3              (s3eObject, s3oBucketId)
-import           Qi.Program.Config.Lang (s3Bucket, s3BucketLambda)
+import           Qi.Program.Config.Lang (s3Bucket, s3BucketLambda, ConfigResult(..))
 import           Qi.Program.Gen.Lang    (GenEff, say)
 import           Qi.Program.S3.Lang     (S3Eff, S3LambdaProgram, getContent,
                                          putContent)
@@ -28,10 +22,10 @@ main = withConfig config
     config = do
 
       -- create an "input" s3 bucket
-      incoming <- s3Bucket "incoming" def
+      ConfigSuccess incoming <- s3Bucket "incoming" def
 
       -- create an "output" s3 bucket
-      outgoing <- s3Bucket "outgoing" def
+      ConfigSuccess outgoing <- s3Bucket "outgoing" def
 
       -- create a lambda, which will copy an s3 object from "incoming" to "outgoing" buckets
       -- upon an S3 "Put" event.

@@ -23,14 +23,14 @@ import qualified Stratosphere     as S (kfdsDeliveryStreamName,
 toResources
   :: Config
   -> Resources
-toResources config = Resources $ toResource <$> kfs
+toResources config@Config{ _appName } = Resources $ toResource <$> kfs
   where
     kfs = all config
 
-    toResource (kf :: Kf) = (
-      S.resource (unLogicalId lid) $
+    toResource (lid, _kf :: Kf) = (
+      S.resource (show lid) $
         KinesisFirehoseDeliveryStreamProperties $ S.kinesisFirehoseDeliveryStream
-          & S.kfdsDeliveryStreamName ?~ Literal (unPhysicalId pid)
+          & S.kfdsDeliveryStreamName ?~ Literal (show pid)
           & S.kfdsDeliveryStreamType ?~ Literal "DirectPut"
           & S.kfdsS3DestinationConfiguration ?~ s3Dest
           {- & S.kfdsExtendedS3DestinationConfiguration ?~ lbdConfigs -}
@@ -39,8 +39,7 @@ toResources config = Resources $ toResource <$> kfs
       {- & S.resourceDependsOn ?~ reqs -}
 
       where
-        lid = logicalId config kf
-        pid = physicalId config kf
+        pid = toPhysicalId _appName lid
 
         s3Dest = S.kinesisFirehoseDeliveryStreamS3DestinationConfiguration
                   bucketARNarg

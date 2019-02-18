@@ -1,6 +1,12 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module Qi.Config where
+module Qi.Config ( Config (..)
+                 , appName
+                 , s3Config
+                 , lbdConfig
+                 , kfConfig
+                 , mkConfig
+                 ) where
 
 import           Control.Lens
 import           Data.Char           (isAlphaNum)
@@ -20,15 +26,17 @@ import           Qi.AWS.Types
 
 
 data Config = Config {
-    _namePrefix :: Text
-  , _s3Config   :: S3Config
-  , _lbdConfig  :: LambdaConfig
-  , _kfConfig   :: KfConfig
+    _appName   :: AppName
+  , _s3Config  :: S3Config
+  , _lbdConfig :: LambdaConfig
+  , _kfConfig  :: KfConfig
 }
   deriving (Eq, Show)
-instance Default Config where
-  def = Config {
-      _namePrefix = "qmuli"
+
+mkConfig :: AppName -> Config
+mkConfig appName =
+  Config {
+      _appName = appName
     , _s3Config   = def
     , _lbdConfig  = def
     , _kfConfig   = def
@@ -36,31 +44,28 @@ instance Default Config where
 
 makeLenses ''Config
 
-underscoreNamePrefixWith
-  :: Text
-  -> Config
-  -> Text
-underscoreNamePrefixWith = namePrefixWith "_"
+-- underscoreNamePrefixWith
+--   :: Text
+--   -> Config
+--   -> Text
+-- underscoreNamePrefixWith = namePrefixWith "_"
 
-dotNamePrefixWith
-  :: Text
-  -> Config
-  -> Text
-dotNamePrefixWith = namePrefixWith "."
+-- dotNamePrefixWith
+--   :: Text
+--   -> Config
+--   -> Text
+-- dotNamePrefixWith = namePrefixWith "."
 
-namePrefixWith
-  :: Text
-  -> Text
-  -> Config
-  -> Text
-namePrefixWith sep name config =
-  T.concat [config ^. namePrefix, sep, name]
-
-
-makeAlphaNumeric
-  :: Text
-  -> Text
-makeAlphaNumeric = T.filter isAlphaNum
+-- namePrefixWith
+--   :: Text
+--   -> Text
+--   -> Config
+--   -> Text
+-- namePrefixWith sep name config =
+--   T.concat [show $ config ^. appName, sep, name]
 
 
-
+-- makeAlphaNumeric
+--   :: Text
+--   -> Text
+-- makeAlphaNumeric = T.filter isAlphaNum

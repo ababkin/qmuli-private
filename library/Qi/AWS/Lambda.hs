@@ -1,7 +1,5 @@
-{-# LANGUAGE DataKinds                 #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE KindSignatures            #-}
-{-# LANGUAGE RankNTypes                #-}
 {-# LANGUAGE TemplateHaskell           #-}
 
 module Qi.AWS.Lambda where
@@ -36,19 +34,18 @@ instance Default LambdaConfig where
   }
 
 
+-- TODO: turn this into a good sum type
 data Lambda =
     forall a b
   . (FromJSON a, ToJSON b)
   => GenericLambda {
-    _lbdName                 :: Text
-  , _lbdProfile              :: LambdaProfile
+    _lbdProfile              :: LambdaProfile
   , _lbdInputProxy           :: Proxy a
   , _lbdOutputProxy          :: Proxy b
   , _lbdGenericLambdaProgram :: forall effs . Members '[ GenEff, S3Eff ] effs => a -> Eff effs b
   }
   | S3BucketLambda {
-    _lbdName                  :: Text
-  , _lbdProfile               :: LambdaProfile
+    _lbdProfile               :: LambdaProfile
   , _lbdS3BucketLambdaProgram :: forall effs . Members '[ GenEff, S3Eff ] effs => S3LambdaProgram effs
   }
 
