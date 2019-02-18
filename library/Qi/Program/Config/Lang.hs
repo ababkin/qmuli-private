@@ -22,11 +22,11 @@ import           Qi.AWS.Types
 type LambdaId = LogicalId 'LambdaResource
 type S3BucketId = LogicalId 'S3BucketResource
 
-data ConfigError = NameAlreadyUsed
-                 | NameInvalid Text
+-- data ConfigError = NameAlreadyUsed
+--                  | NameInvalid Text
 
-data ConfigResult a = ConfigFailure ConfigError
-                    | ConfigSuccess a
+-- data ConfigResult a = ConfigFailure ConfigError
+--                     | ConfigSuccess a
 
 data ConfigEff r where
 
@@ -41,20 +41,20 @@ data ConfigEff r where
     -> Text
     -> (forall effs . (Member GenEff effs, Member S3Eff effs) => a -> Eff effs b)
     -> LambdaProfile
-    -> ConfigEff (ConfigResult LambdaId)
+    -> ConfigEff LambdaId
 
 -- S3
   RegS3Bucket
     :: Text
     -> S3BucketProfile
-    -> ConfigEff (ConfigResult S3BucketId)
+    -> ConfigEff S3BucketId
 
   RegS3BucketLambda
     :: Text
     -> S3BucketId
     -> (forall effs . (Member GenEff effs, Member S3Eff effs) => S3LambdaProgram effs)
     -> LambdaProfile
-    -> ConfigEff (ConfigResult LambdaId)
+    -> ConfigEff LambdaId
 
 
 getConfig
@@ -69,7 +69,7 @@ genericLambda
   => Text
   -> (forall effs . (Member GenEff effs, Member S3Eff effs) => a -> Eff effs b)
   -> LambdaProfile
-  -> Eff resEffs (ConfigResult LambdaId)
+  -> Eff resEffs LambdaId
 genericLambda name f =
   send . RegGenericLambda (Proxy :: Proxy a) (Proxy :: Proxy b) name f
 
@@ -77,7 +77,7 @@ s3Bucket
   :: (Member ConfigEff effs)
   => Text
   -> S3BucketProfile
-  -> Eff effs (ConfigResult S3BucketId)
+  -> Eff effs S3BucketId
 s3Bucket =
   send .: RegS3Bucket
 
@@ -88,7 +88,7 @@ s3BucketLambda
   -> S3BucketId
   -> (forall effs . (Member GenEff effs, Member S3Eff effs) => S3LambdaProgram effs)
   -> LambdaProfile
-  -> Eff resEffs (ConfigResult LambdaId)
+  -> Eff resEffs LambdaId
 s3BucketLambda name bucketId f =
   send . RegS3BucketLambda name bucketId f
 

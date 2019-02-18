@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fno-warn-incomplete-uni-patterns #-}
+
 module Qi.Test.Config.Eff where
 
 import           Control.Lens
@@ -9,7 +11,7 @@ import           Protolude                     hiding (State, get, put,
                                                 runState)
 import           Qi.AWS.Resource
 import           Qi.AWS.S3
-import           Qi.AWS.Types                  (AwsMode (LocalStack))
+import           Qi.AWS.Types
 import           Qi.Config
 import qualified Qi.Program.Config.Ipret.State as Config
 import           Qi.Program.Config.Lang
@@ -22,12 +24,15 @@ spec :: Spec
 spec = parallel $
   describe "ConfigEff" $ do
     it "inserts an S3 bucket into the S3 config" $ do
-      let exec = IO.run def LocalStack mkTestLogger $ do
-            s3Bucket "mybucket" def
+      let bucketName = "mybucket"
+          Right initialConfig = mkConfig <$> mkAppName "testApp"
+          exec = IO.run initialConfig LocalStack mkTestLogger $ do
+            s3Bucket bucketName def
             getConfig
 
-          expected = def & s3Config . s3IdToBucket .~ expectedS3Buckets
-          expectedS3Buckets = SHM.singleton (mkS3BucketId "mybucket") (S3Bucket "mybucket" def [])
+          expected = initialConfig & s3Config . s3IdToBucket .~ expectedS3Buckets
+          Right lid = mkLogicalId bucketName
+          expectedS3Buckets = SHM.singleton lid (S3Bucket def [])
 
       exec `shouldReturn` expected
 

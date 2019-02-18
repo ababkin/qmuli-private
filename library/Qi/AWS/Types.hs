@@ -63,7 +63,9 @@ data ResourceExistence = AlreadyExists | ShouldCreate
 
 newtype AppName = AppName Text
   deriving (Eq, Ord)
-  deriving newtype (Show, ToJSON, FromJSON)
+  deriving newtype (ToJSON, FromJSON)
+instance Show AppName where
+  show (AppName t) = toS t
 
 mkAppName :: Text -> Either Text AppName
 mkAppName t = Right $ AppName t -- TODO: restrict app names according to validation rules
@@ -83,17 +85,17 @@ newtype LogicalId (r :: AwsResourceType) = LogicalId Text
   deriving Eq
   deriving newtype (ToJSON, FromJSON, Hashable)
 instance Show (LogicalId 'S3BucketResource) where
-  show (LogicalId resourceName) = P.show resourceName <> "S3Bucket"
+  show (LogicalId resourceName) = toS resourceName <> "S3Bucket"
 instance Show (LogicalId 'LambdaResource) where
-  show (LogicalId resourceName) = P.show resourceName <> "Lambda"
+  show (LogicalId resourceName) = toS resourceName <> "Lambda"
 instance Show (LogicalId 'LambdaPermissionResource) where
-  show (LogicalId resourceName) = P.show resourceName <> "LambdaPermission"
+  show (LogicalId resourceName) = toS resourceName <> "LambdaPermission"
 instance Show (LogicalId 'KinesisFirehoseResource) where
-  show (LogicalId resourceName) = P.show resourceName <> "KinesisFirehose"
+  show (LogicalId resourceName) = toS resourceName <> "KinesisFirehose"
 instance Show (LogicalId 'IAMRoleResource) where
-  show (LogicalId resourceName) = P.show resourceName <> "IAMRole"
+  show (LogicalId resourceName) = toS resourceName <> "IAMRole"
 instance Show (LogicalId 'IAMPolicyResource) where
-  show (LogicalId resourceName) = P.show resourceName <> "IAMPolicy"
+  show (LogicalId resourceName) = toS resourceName <> "IAMPolicy"
 -- instance Show (LogicalId rt) where
 --   show _ = panic "unimplemented"
 
@@ -105,7 +107,7 @@ mkLogicalId t = Right $ LogicalId t -- TODO: restrict names according to resourc
 data PhysicalId (rt :: AwsResourceType) = PhysicalId AppName (LogicalId rt)
   deriving Eq
 instance Show (PhysicalId 'S3BucketResource) where
-  show (PhysicalId appName logicalId) = P.show appName <> "_" <> P.show logicalId
+  show (PhysicalId appName logicalId) = P.show appName <> "." <> P.show logicalId
 instance Show (PhysicalId 'LambdaResource) where
   show (PhysicalId appName logicalId) = P.show appName <> "." <> P.show logicalId
 instance Show (PhysicalId 'LambdaPermissionResource) where
@@ -120,7 +122,7 @@ instance Show (PhysicalId 'IAMPolicyResource) where
 --   show _ = panic "unimplemented"
 
 parseS3BucketPhysicalId :: Text -> Either Text (PhysicalId 'S3BucketResource)
-parseS3BucketPhysicalId t = parsePhysicalId "S3Bucket" '_' t
+parseS3BucketPhysicalId t = parsePhysicalId "S3Bucket" '.' t
 
 parseLambdaPhysicalId :: Text -> Either Text (PhysicalId 'LambdaResource)
 parseLambdaPhysicalId t = parsePhysicalId "Lambda" '.' t
@@ -150,5 +152,7 @@ toLogicalId (PhysicalId _appName logicalId) = logicalId
 toPhysicalId :: AppName -> LogicalId rt -> PhysicalId rt
 toPhysicalId appName logicalId = PhysicalId appName logicalId
 
-castLogicalIdResource :: LogicalId (a :: AwsResourceType) -> LogicalId (b :: AwsResourceType)
+castLogicalIdResource
+  :: LogicalId (a :: AwsResourceType)
+  -> LogicalId (b :: AwsResourceType)
 castLogicalIdResource (LogicalId id) = LogicalId id

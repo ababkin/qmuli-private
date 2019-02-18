@@ -20,7 +20,7 @@ import           Qi.Config hiding (appName)
 import           Qi.AWS.Lambda
 import           Qi.AWS.S3
 import qualified Qi.AWS.S3.Event         as S3Event
-import qualified Qi.AWS.Render           as CF
+import qualified Qi.AWS.Render           as R
 import           Qi.CLI.Options
 import           Qi.AWS.Types
 import           Qi.AWS.Resource
@@ -77,9 +77,9 @@ withConfig configProgram = do
 
 
     Management ManagementOptions{ appName, cmd, awsMode } -> do
-      let config = mkConfig appName
+      let config = runConfig appName
           runCli = IO.run config awsMode mkCliLogger
-          template = CF.render config
+          template = R.render config
 
       runCli $ case cmd of
         CfRenderTemplate     -> Gen.say $ toS template

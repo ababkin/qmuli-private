@@ -1,10 +1,6 @@
-{-# LANGUAGE KindSignatures             #-}
-{-# LANGUAGE DataKinds              #-}
 {-# LANGUAGE ConstraintKinds        #-}
 {-# LANGUAGE PolyKinds              #-}
-{-# LANGUAGE TypeFamilies           #-}
-{-# LANGUAGE TypeOperators          #-}
-{-# LANGUAGE ScopedTypeVariables          #-}
+{-# LANGUAGE TypeFamilies              #-}
 
 module Qi.AWS.Resource where
 
@@ -28,14 +24,6 @@ class (Show (LogicalId (ResourceType r)), Hashable (LogicalId (ResourceType r)))
 
   type ResourceType r :: AwsResourceType
 
-  -- typeName
-  --   :: r
-  --   -> Text
-
-  -- name
-  --   :: r
-  --   -> Text
-
   mapping
     :: Config
     -> SHM.HashMap (LogicalId (ResourceType r)) r
@@ -44,11 +32,6 @@ class (Show (LogicalId (ResourceType r)), Hashable (LogicalId (ResourceType r)))
     :: Config
     -> [ (LogicalId (ResourceType r), r) ]
   all = SHM.toList . mapping
-
-  -- allLogicalIds
-  --   :: Config
-  --   -> [ LogicalId (ResourceType r) ]
-  -- allLogicalIds = SHM.keys . mapping
 
   getById
     :: Config
@@ -59,47 +42,18 @@ class (Show (LogicalId (ResourceType r)), Hashable (LogicalId (ResourceType r)))
       (panic $ "Could not reference resource with logical id: " <> P.show lid)
       $ SHM.lookup lid $ mapping config
 
-  -- logicalId
-  --   :: Config
-  --   -> r
-  --   -> LogicalId (ResourceType r)
-  -- logicalId _config r =
-    -- LogicalId $ makeAlphaNumeric (name r) <> typeName r
-
-  -- physicalId
-  --   :: Config
-  --   -> r
-  --   -> PhysicalId (ResourceType r)
-
 
 type LambdaId = LogicalId (ResourceType Lambda)
 instance AwsResource Lambda where
   type ResourceType Lambda = 'LambdaResource
-
-  -- typeName = "Lambda"
-  -- name = view lbdName
   mapping = view $ lbdConfig . lbdIdToLambda
-  -- physicalId config r =
-    -- PhysicalId $ (makeAlphaNumeric $ name r) <> typeName r `underscoreNamePrefixWith` config
-
 
 type KfId = LogicalId (ResourceType Kf)
 instance AwsResource Kf where
   type ResourceType Kf = 'KinesisFirehoseResource
-
-  -- typeName = "Kf"
-  -- name = view kfName
   mapping = view $ kfConfig . kfIdToKf
-  -- physicalId config r =
-    -- PhysicalId $ (makeAlphaNumeric $ name r) <> typeName r  `dotNamePrefixWith` config
-
 
 type S3BucketId = LogicalId (ResourceType S3Bucket)
 instance AwsResource S3Bucket where
   type ResourceType S3Bucket = 'S3BucketResource
-
-  -- typeName = "S3Bucket"
-  -- name = view s3bName
   mapping = view $ s3Config . s3IdToBucket
-  -- physicalId config r =
-    -- PhysicalId $ (makeAlphaNumeric $ name r) <> typeName r  `dotNamePrefixWith` config

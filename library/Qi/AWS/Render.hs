@@ -29,5 +29,5 @@ toResources config = mconcat $ ($ config) <$>
   [ S3.toResources
   , Role.toResources
   , Lambda.toResources
-  , KF.toResources
+  -- , KF.toResources
   ]

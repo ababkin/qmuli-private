@@ -42,7 +42,7 @@ run = interpret (\case
       let lbd = GenericLambda profile inProxy outProxy f
 
       modify (lbdConfig . lbdIdToLambda %~ SHM.insert lid lbd)
-      pure $ ConfigSuccess lid
+      pure lid
 
 -- S3
   RegS3Bucket name profile ->
@@ -50,7 +50,7 @@ run = interpret (\case
       let newBucket = def & s3bProfile .~ profile
 
       modify (s3Config . s3IdToBucket %~ SHM.insert lid newBucket)
-      pure $ ConfigSuccess lid
+      pure lid
 
 
   RegS3BucketLambda name bucketId f profile -> do
@@ -61,13 +61,13 @@ run = interpret (\case
       modify (s3Config . s3IdToBucket %~ SHM.adjust modifyBucket bucketId)
       modify (lbdConfig . lbdIdToLambda %~ SHM.insert lid lbd)
 
-      pure $ ConfigSuccess lid
+      pure lid
   )
 
   where
     withLogicalId name cont =
       case mkLogicalId name of
-        Left err -> pure . ConfigFailure $ NameInvalid err
+        Left err -> panic $ "invalid name used for logical name: " <> show err
         Right lid -> do
           -- TODO: check if id is already used for a resource of this type
           cont lid
