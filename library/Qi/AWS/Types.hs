@@ -20,6 +20,7 @@ module Qi.AWS.Types ( AwsMode (..)
                     -- ^ Smart constructor for Logical Id
                     , PhysicalId
                     -- ^ Physical Id for a resource (hide the constructor)
+                    , mkPhysicalId
                     , parseLambdaPhysicalId
                     , parseS3BucketPhysicalId
                     -- ^ Physical Id parser
@@ -85,72 +86,72 @@ newtype LogicalId (r :: AwsResourceType) = LogicalId Text
   deriving Eq
   deriving newtype (ToJSON, FromJSON, Hashable)
 instance Show (LogicalId 'S3BucketResource) where
-  show (LogicalId resourceName) = toS resourceName <> "S3Bucket"
+  show (LogicalId t) = toS t <> "S3Bucket"
 instance Show (LogicalId 'LambdaResource) where
-  show (LogicalId resourceName) = toS resourceName <> "Lambda"
+  show (LogicalId t) = toS t <> "Lambda"
 instance Show (LogicalId 'LambdaPermissionResource) where
-  show (LogicalId resourceName) = toS resourceName <> "LambdaPermission"
+  show (LogicalId t) = toS t <> "LambdaPermission"
 instance Show (LogicalId 'KinesisFirehoseResource) where
-  show (LogicalId resourceName) = toS resourceName <> "KinesisFirehose"
+  show (LogicalId t) = toS t <> "KinesisFirehose"
 instance Show (LogicalId 'IAMRoleResource) where
-  show (LogicalId resourceName) = toS resourceName <> "IAMRole"
+  show (LogicalId t) = toS t <> "IAMRole"
 instance Show (LogicalId 'IAMPolicyResource) where
-  show (LogicalId resourceName) = toS resourceName <> "IAMPolicy"
--- instance Show (LogicalId rt) where
---   show _ = panic "unimplemented"
+  show (LogicalId t) = toS t <> "IAMPolicy"
 
 -- TODO: I think I need to remove this
 mkLogicalId :: Text -> Either Text (LogicalId r)
 mkLogicalId t = Right $ LogicalId t -- TODO: restrict names according to resource type
 
 -- This is pretty much just the logical id prefixed with the app name
-data PhysicalId (rt :: AwsResourceType) = PhysicalId AppName (LogicalId rt)
+data PhysicalId (rt :: AwsResourceType) = PhysicalId AppName Text
   deriving Eq
 instance Show (PhysicalId 'S3BucketResource) where
-  show (PhysicalId appName logicalId) = P.show appName <> "." <> P.show logicalId
+  show (PhysicalId appName id) = P.show appName <> "." <> toS id <> "." <> "s3-bucket"
 instance Show (PhysicalId 'LambdaResource) where
-  show (PhysicalId appName logicalId) = P.show appName <> "." <> P.show logicalId
+  show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "lambda"
 instance Show (PhysicalId 'LambdaPermissionResource) where
-  show (PhysicalId appName logicalId) = P.show appName <> "." <> P.show logicalId
+  show (PhysicalId appName id) = P.show appName <> "." <> toS id <> "." <> "lambda-permission"
 instance Show (PhysicalId 'KinesisFirehoseResource) where
-  show (PhysicalId appName logicalId) = P.show appName <> "." <> P.show logicalId
+  show (PhysicalId appName id) = P.show appName <> "." <> toS id <> "." <> "kinesis-firehose"
 instance Show (PhysicalId 'IAMRoleResource) where
-  show (PhysicalId appName logicalId) = P.show appName <> "_" <> P.show logicalId
+  show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "iam-role"
 instance Show (PhysicalId 'IAMPolicyResource) where
-  show (PhysicalId appName logicalId) = P.show appName <> "_" <> P.show logicalId
--- instance Show (PhysicalId rt) where
---   show _ = panic "unimplemented"
+  show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "iam-policy"
 
+mkPhysicalId :: AppName -> Text -> Either Text (PhysicalId rt)
+mkPhysicalId appName t = Right $ PhysicalId appName t
+-- TODO: restrict names according to resource type
+--
 parseS3BucketPhysicalId :: Text -> Either Text (PhysicalId 'S3BucketResource)
-parseS3BucketPhysicalId t = parsePhysicalId "S3Bucket" '.' t
+parseS3BucketPhysicalId t = parsePhysicalId "s3-bucket" '.' t
 
 parseLambdaPhysicalId :: Text -> Either Text (PhysicalId 'LambdaResource)
-parseLambdaPhysicalId t = parsePhysicalId "Lambda" '.' t
+parseLambdaPhysicalId t = parsePhysicalId "lambda" '_' t
 
 parsePhysicalId :: Text -> Char -> Text -> Either Text (PhysicalId r)
 parsePhysicalId resourceSuffix appNameSeparator t =
-    if resourceSuffix `T.isSuffixOf` t
-          then PhysicalId <$> appName <*> logicalId
-          else Left $ "The Physical Id suffix is incorrect, saw: " <> P.show t <>
-                    ", expected to see the following suffix: " <> P.show resourceSuffix
+  if resourceSuffix `T.isSuffixOf` t
+    then physicalId
+    else Left $ "The Physical Id suffix is incorrect, saw: " <> P.show t <>
+                  ", expected to see the following suffix: " <> P.show resourceSuffix
 
   where
     appName = mkAppName $ T.take appNamePrefixLength t
-    logicalId = mkLogicalId . dropResourceTypeSuffix $ T.drop (appNamePrefixLength + 1) t
+    physicalId = (`mkPhysicalId` (dropResourceTypeSuffix $ T.drop (appNamePrefixLength + 1) t)) =<< appName
     appNamePrefixLength = T.length (T.takeWhile (/=appNameSeparator) t)
-    dropResourceTypeSuffix = T.reverse . T.drop (T.length resourceSuffix) . T.reverse
+    dropResourceTypeSuffix = T.reverse . T.drop (T.length resourceSuffix + 1) . T.reverse
 
 -- extract app name
 toAppName :: PhysicalId rt -> AppName
-toAppName (PhysicalId appName _logicalId) = appName
+toAppName (PhysicalId appName _id) = appName
 
 -- demote the Id
 toLogicalId :: PhysicalId rt -> LogicalId rt
-toLogicalId (PhysicalId _appName logicalId) = logicalId
+toLogicalId (PhysicalId _appName id) = LogicalId id
 
 -- promote the Id
 toPhysicalId :: AppName -> LogicalId rt -> PhysicalId rt
-toPhysicalId appName logicalId = PhysicalId appName logicalId
+toPhysicalId appName (LogicalId id) = PhysicalId appName id
 
 castLogicalIdResource
   :: LogicalId (a :: AwsResourceType)

@@ -11,6 +11,7 @@ import           Protolude                             hiding (State, get, put,
                                                         runState)
 import           Qi.AWS.Lambda
 import qualified Qi.AWS.Lambda.Render                  as Lambda
+import qualified Qi.AWS.LambdaPermission.Render        as LambdaPermission
 import           Qi.AWS.Resource
 import           Qi.AWS.S3
 import qualified Qi.AWS.S3.Render                      as S3
@@ -38,7 +39,7 @@ spec = parallel $
 
     describe "inserts an S3 bucket, lambda into the S3 config and attaches them correctly" $ do
 
-        let expectedLambdaId = lambdaName <> "Lambda"
+        let expectedLambdaLogicalId = lambdaName <> "Lambda"
             config = runConfig $ do
                         bid <- s3Bucket bucketName def
                         void $ s3BucketLambda lambdaName bid lambdaProgram $
@@ -67,13 +68,12 @@ spec = parallel $
 --
         it "S3 bucket resource is rendered correctly" $ do
           -- https://github.com/frontrowed/stratosphere/blob/master/library-gen/Stratosphere/ResourceProperties/S3BucketS3KeyFilter.hs
-          let expectedBucketId = bucketName <> "S3Bucket"
+          let expectedBucketLogicalId = bucketName <> "S3Bucket"
               expectedFilters  = Nothing -- Just (S.S3BucketNotificationFilter (S.S3BucketS3KeyFilter []))
-              expectedPhysicalId = show appName <> "." <> expectedBucketId
-
+              expectedPhysicalId = show appName <> "." <> bucketName <> ".s3-bucket"
           case S3.toResources config of
-                S.Resources [ S.Resource bucketId (S.S3BucketProperties bucket) _ _ _ _ _ ] -> do
-                        bucketId `shouldBe` expectedBucketId
+                S.Resources [ S.Resource bucketLogicalId (S.S3BucketProperties bucket) _ _ _ _ _ ] -> do
+                        bucketLogicalId `shouldBe` expectedBucketLogicalId
                         view S.sbBucketName bucket `shouldBe` Just (S.Literal expectedPhysicalId)
         -- https://github.com/frontrowed/stratosphere/blob/master/library-gen/Stratosphere/ResourceProperties/S3BucketNotificationConfiguration.hs
                         let Just ( S.S3BucketNotificationConfiguration (Just [lbdNotifyConfig]) _ _ ) =
@@ -81,18 +81,21 @@ spec = parallel $
         -- https://github.com/frontrowed/stratosphere/blob/master/library-gen/Stratosphere/ResourceProperties/S3BucketLambdaConfiguration.hs
                         view S.sblcEvent lbdNotifyConfig `shouldBe` S.Literal "s3:ObjectCreated:*"
                         view S.sblcFilter lbdNotifyConfig `shouldBe` expectedFilters
-                        view S.sblcFunction lbdNotifyConfig `shouldBe` S.GetAtt expectedLambdaId "Arn"
+                        view S.sblcFunction lbdNotifyConfig `shouldBe` S.GetAtt expectedLambdaLogicalId "Arn"
 
                 _ -> panic "unexpected number of resources created"
 
         it "Lambda resource is rendered correctly" $ do
-          let expectedRoleId   = lambdaName <> "LambdaPermission"
-
           case Lambda.toResources config of
-                S.Resources [ S.Resource roleId _ _ _ _ _ _
-                            , S.Resource lambdaId (S.LambdaFunctionProperties _lbd) _ _ _ _ _
-                            ] -> do
-                        lambdaId `shouldBe` expectedLambdaId
-                        roleId `shouldBe` expectedRoleId
+                S.Resources [ S.Resource lambdaId (S.LambdaFunctionProperties _lbd) _ _ _ _ _ ] -> do
+                        lambdaId `shouldBe` expectedLambdaLogicalId
+
+                _ -> panic "unexpected number of resources created"
+
+        it "LambdaPermission resource is rendered correctly" $ do
+          let expectedLogicalRoleId = lambdaName <> "LambdaPermission"
+          case LambdaPermission.toResources config of
+                S.Resources [ S.Resource roleId _ _ _ _ _ _ ] -> do
+                        roleId `shouldBe` expectedLogicalRoleId
 
                 _ -> panic "unexpected number of resources created"

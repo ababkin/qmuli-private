@@ -1,0 +1,19 @@
+{-# OPTIONS_GHC -fno-warn-incomplete-uni-patterns #-}
+
+module Qi.Test.Resource where
+
+import           Control.Lens
+import           Protolude        hiding (State, get, put, runState)
+import           Qi.AWS.Resource
+import           Qi.AWS.Types
+import           Qi.Config        hiding (appName)
+import           Test.Tasty.Hspec
+
+
+spec :: Spec
+spec = parallel $
+  describe "Resource" $ do
+    it "parse physical id" $ do
+      let Right appName = mkAppName "testApp"
+      let Right pid = mkPhysicalId appName "mybucket"
+      parseLambdaPhysicalId "testApp_mybucket_lambda" `shouldBe` Right pid

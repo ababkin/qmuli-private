@@ -13,7 +13,7 @@ import           Stratosphere
 
 
 lambdaBasicExecutionIAMRoleLogicalName :: Text
-lambdaBasicExecutionIAMRoleLogicalName = "lambdaBasicExecutionIAMRole"
+lambdaBasicExecutionIAMRoleLogicalName = "lambdaBasicExecutionRole"
 
 -- authenticatedIAMRoleLogicalName :: Text
 -- authenticatedIAMRoleLogicalName = "authenticatedIAMRole"
@@ -32,7 +32,7 @@ toResources Config{ _appName } = Resources [lbdRoleRes]
           IAMRoleProperties $
           iamRole rolePolicyDocumentObject
           & iamrPolicies ?~ [ executePolicy ]
-          & iamrRoleName ?~ (Literal . show $ toPhysicalId _appName lid)
+          & iamrRoleName ?~ Literal (show lid)
           & iamrPath ?~ "/"
 
       where

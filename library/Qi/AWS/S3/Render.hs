@@ -1,6 +1,4 @@
-{-# LANGUAGE NamedFieldPuns    #-}
 {-# LANGUAGE OverloadedLists   #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Qi.AWS.S3.Render (toResources) where
 
