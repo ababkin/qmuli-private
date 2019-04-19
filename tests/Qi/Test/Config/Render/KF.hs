@@ -2,6 +2,7 @@
 
 module Qi.Test.Config.Render.KF where
 
+import Data.Aeson
 import           Control.Lens
 import           Control.Monad.Freer
 import           Control.Monad.Freer.State
@@ -51,12 +52,36 @@ spec = parallel $
 --
       it "KF resource is rendered correctly" $ do
         let expectedKfLogicalId = kfName <> "KinesisFirehose"
-            expectedKfPhysicalId = show appName <> "." <> kfName <> ".kf"
+            expectedKfPhysicalId = show appName <> "." <> kfName <> ".kinesis-firehose"
 
         case KF.toResources config of
-          Resources [Resource kfLogicalId (ResourceProperties _ _kf) _ _ _ _ _ _
+          Resources [Resource kfLogicalId (ResourceProperties _ props) _ _ _ _ _ _
                     ] -> do
+
             kfLogicalId `shouldBe` expectedKfLogicalId
+
+            let assertProp ps propKey expectedTextValue =
+                  SHM.lookup propKey ps `shouldBe` Just (String expectedTextValue)
+
+
+            let withProps ps cont =
+                  let propShouldBe = assertProp ps
+                      withSubProps propKey cont' =
+                        case SHM.lookup propKey props of
+                          Nothing -> panic $ "no top level property: " <> propKey
+                          Just (Object subprops) -> cont' (assertProp subprops)
+                          Just unexpected -> panic $ "unexpected value under key, expected Object but got: " <> show unexpected
+
+                  in  cont (propShouldBe, withSubProps)
+
+            withProps props $ \(propShouldBe, withSubProps) -> do
+              "DeliveryStreamName" `propShouldBe` expectedKfPhysicalId
+              "DeliveryStreamType" `propShouldBe` "DirectPut"
+
+              withSubProps "S3DestinationConfiguration" $
+                \(propShouldBe') -> do
+                  "BucketARN" `propShouldBe'` "aws:s3::testapp.mybucket.s3-bucket"
+
             -- view sbBucketName kf `shouldBe` Just (Literal expectedKfPhysicalId)
       -- https://github.com/frontrowed/stratosphere/blob/master/library-gen/Stratosphere/ResourceProperties/S3BucketNotificationConfiguration.hs
             -- view sbNotificationConfiguration bucket `shouldBe` expectedNotificationConfig

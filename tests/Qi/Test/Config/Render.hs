@@ -72,20 +72,20 @@ spec = parallel $
         -- https://github.com/frontrowed/stratosphere/blob/master/library-gen/Stratosphere/ResourceProperties/S3BucketS3KeyFilter.hs
         let expectedBucketLogicalId = bucketName <> "S3Bucket"
             expectedFilters  = Nothing -- Just (S.S3BucketNotificationFilter (S.S3BucketS3KeyFilter []))
-            expectedPhysicalId = show appName <> "." <> bucketName <> ".s3-bucket"
+            expectedBucketPhysicalId = show appName <> "." <> bucketName <> ".s3-bucket"
 
         case S3.toResources config of
-          S.Resources [ S.Resource bucketLogicalId (S.ResourceProperties _type bucketProps) _ _ _ _ _ _ ] -> do
+          S.Resources [ S.Resource bucketLogicalId (S.ResourceProperties _type props) _ _ _ _ _ _ ] -> do
             bucketLogicalId `shouldBe` expectedBucketLogicalId
 
-            let propShouldBe propKey expectedTextValue =
-                  SHM.lookup propKey bucketProps `shouldBe` Just (String expectedTextValue)
+            -- let propShouldBe propKey expectedTextValue =
+            --       SHM.lookup propKey bucketProps `shouldBe` Just (String expectedTextValue)
 
-            "BucketName" `propShouldBe` expectedPhysicalId
+            -- "BucketName" `propShouldBe` expectedBucketPhysicalId
 
           _ -> panic "unexpected number of resources created"
 
-
+     
       -- TODO
 {-
       -- https://github.com/frontrowed/stratosphere/blob/master/library-gen/Stratosphere/ResourceProperties/S3BucketNotificationConfiguration.hs
