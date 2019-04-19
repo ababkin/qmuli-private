@@ -24,6 +24,8 @@ ghc-options:
   - -Wno-unused-matches
   - -Wno-unused-local-binds
   - -Wno-unused-imports
+  # - -Wno-missing-signatures
+
   - -Wno-unused-do-bind                 # Allow single-line do blocks
   - -Wno-deprecations                   # Allow some deprecated functions
                                         # TODO(matthew-piziak): make this file specific

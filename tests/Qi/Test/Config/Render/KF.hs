@@ -7,7 +7,6 @@ import           Control.Lens
 import           Control.Monad.Freer
 import           Control.Monad.Freer.State
 import           Data.Default                          (def)
-import qualified Data.HashMap.Strict                   as SHM
 import           Protolude                             hiding (State, get, put,
                                                         runState)
 import           Qi.AWS.Resource
@@ -21,6 +20,7 @@ import qualified Qi.Program.Config.Ipret.State         as Config
 import           Qi.Program.Config.Lang as Config
 import           Qi.Test.Logger
 import           Test.Tasty.Hspec
+import Qi.Test.Util
 
 import  Stratosphere
 import  Stratosphere.Resources
@@ -48,8 +48,6 @@ spec = parallel $
               . runState (mkConfig appName)
               $ Config.run configProgram
 
--- https://github.com/frontrowed/stratosphere/blob/master/library-gen/Stratosphere/Resources/S3Bucket.hs
---
       it "KF resource is rendered correctly" $ do
         let expectedKfLogicalId = kfName <> "KinesisFirehose"
             expectedKfPhysicalId = show appName <> "." <> kfName <> ".kinesis-firehose"
@@ -60,30 +58,20 @@ spec = parallel $
 
             kfLogicalId `shouldBe` expectedKfLogicalId
 
-            let assertProp ps propKey expectedTextValue =
-                  SHM.lookup propKey ps `shouldBe` Just (String expectedTextValue)
 
+            withProps props $ \(propShouldBe, subProps) -> do
+              "DeliveryStreamName" `propShouldBe` String expectedKfPhysicalId
+              "DeliveryStreamType" `propShouldBe` String "DirectPut"
 
-            let withProps ps cont =
-                  let propShouldBe = assertProp ps
-                      withSubProps propKey cont' =
-                        case SHM.lookup propKey props of
-                          Nothing -> panic $ "no top level property: " <> propKey
-                          Just (Object subprops) -> cont' (assertProp subprops)
-                          Just unexpected -> panic $ "unexpected value under key, expected Object but got: " <> show unexpected
-
-                  in  cont (propShouldBe, withSubProps)
-
-            withProps props $ \(propShouldBe, withSubProps) -> do
-              "DeliveryStreamName" `propShouldBe` expectedKfPhysicalId
-              "DeliveryStreamType" `propShouldBe` "DirectPut"
-
-              withSubProps "S3DestinationConfiguration" $
-                \(propShouldBe') -> do
-                  "BucketARN" `propShouldBe'` "aws:s3::testapp.mybucket.s3-bucket"
-
-            -- view sbBucketName kf `shouldBe` Just (Literal expectedKfPhysicalId)
-      -- https://github.com/frontrowed/stratosphere/blob/master/library-gen/Stratosphere/ResourceProperties/S3BucketNotificationConfiguration.hs
-            -- view sbNotificationConfiguration bucket `shouldBe` expectedNotificationConfig
+              withProps (subProps "S3DestinationConfiguration") $
+                \(propShouldBe', subProps') -> do
+                  "BucketARN" `propShouldBe'` String "aws:s3::testapp.mybucket.s3-bucket"
+                  withProps (subProps' "BufferingHints") $
+                    \(propShouldBe'', _subProps'') -> do
+                      "IntervalInSeconds" `propShouldBe''` Number 1
+                      "SizeInMBs" `propShouldBe''` Number 3
+                  "CompressionFormat" `propShouldBe'` String "UNCOMPRESSED"
+                  "Prefix" `propShouldBe'` String "mydata"
+                  "RoleARN" `propShouldBe'` String "aws:iam::testapp.mykftos3.role"
 
           unexpected -> panic $ "unexpected number of resources created: " <> show unexpected

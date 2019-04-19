@@ -51,10 +51,16 @@ toResources config@Config{ _appName } = Resources $ toResource <$> kfs
                   roleArn
                   {- & kfdssdcCloudWatchLoggingOptions ?~ -}
                   {- & kfdssdcEncryptionConfiguration ?~ -}
-                  {- & kfdssdcPrefix ?~ -}
+                   & kfdssdcPrefix ?~ prefix
 
         bucketArn = Literal . show $ toArn _kfBucket _appName
+        -- TODO: put this in profile
         bufferingHints = KinesisFirehoseDeliveryStreamBufferingHints (Literal 1) (Literal 3) -- & kfdsbhIntervalInSeconds ?~ Literal 1
                                                                       -- & kfdsbhSizeInMBs .~ Literal 3
         compressionFormat = Literal KFS3Uncompressed
-        roleArn = Literal "blah"
+
+        -- The ARN of an AWS Identity and Access Management (IAM) role that grants Kinesis Data Firehose access to your Amazon S3 bucket and AWS KMS (if you enable data encryption).
+        roleArn = Literal "aws:iam::testapp.mykftos3.role"
+
+        -- A prefix that Kinesis Data Firehose adds to the files that it delivers to the Amazon S3 bucket. The prefix helps you identify the files that Kinesis Data Firehose delivered.
+        prefix = "mydata"
