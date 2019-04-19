@@ -13,6 +13,7 @@ import           Protolude
 import           Qi.Config              (Config)
 import           Qi.AWS.Lambda       (LambdaProfile)
 import           Qi.AWS.S3           (S3BucketProfile)
+import           Qi.AWS.KF
 import           Qi.Core.Curry
 import           Qi.Program.Gen.Lang
 import           Qi.Program.S3.Lang
@@ -56,6 +57,10 @@ data ConfigEff r where
     -> LambdaProfile
     -> ConfigEff LambdaId
 
+  RegS3BucketKf
+    :: Text
+    -> S3BucketId
+    -> ConfigEff KfId
 
 getConfig
   :: forall effs
@@ -92,3 +97,11 @@ s3BucketLambda
 s3BucketLambda name bucketId f =
   send . RegS3BucketLambda name bucketId f
 
+s3Kf
+  :: forall resEffs
+  .  (Member ConfigEff resEffs)
+  => Text
+  -> S3BucketId
+  -> Eff resEffs KfId
+s3Kf name =
+  send . RegS3BucketKf name

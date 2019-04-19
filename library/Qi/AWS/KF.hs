@@ -14,6 +14,7 @@ import qualified Data.HashMap.Strict as SHM
 import           GHC.Show            (Show (..))
 import           Protolude
 import           Qi.AWS.Types
+import Qi.AWS.S3
 
 
 type KfId = LogicalId 'KinesisFirehoseResource
@@ -28,15 +29,15 @@ instance Default KfConfig where
     }
 
 data Kf = Kf {
-    _kfName    :: Text
-  , _kfProfile :: KfProfile
+    _kfProfile :: KfProfile
+  , _kfBucket :: S3BucketId
   }
   deriving (Eq, Show)
-instance Default Kf where
-  def = Kf {
-      _kfName         = "default"
-    , _kfProfile      = def
-    }
+-- instance Default Kf where
+--   def = Kf {
+--       _kfName         = "default"
+--     , _kfProfile      = def
+--     }
 
 data KfProfile = KfProfile
   { _kfpExistence    :: ResourceExistence

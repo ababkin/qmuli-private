@@ -24,6 +24,7 @@ import           Protolude                 hiding (State, get, gets, modify,
                                             runState)
 import           Qi.AWS.Lambda             hiding (LambdaId)
 import           Qi.AWS.S3
+import           Qi.AWS.KF
 import           Qi.AWS.Types
 import           Qi.Config
 import           Qi.Program.Config.Lang
@@ -62,9 +63,17 @@ run = interpret (\case
       modify (lbdConfig . lbdIdToLambda %~ SHM.insert lid lbd)
 
       pure lid
+
+
+  RegS3BucketKf name bucketId -> do
+    withLogicalId name $ \lid -> do
+      let kf = Kf def bucketId
+      modify (kfConfig . kfIdToKf %~ SHM.insert lid kf)
+      pure lid
   )
 
   where
+    -- withLogicalId :: forall m b . Text -> (forall rt . LogicalId (rt :: AwsResourceType) -> m b) -> m b
     withLogicalId name cont =
       case mkLogicalId name of
         Left err -> panic $ "invalid name used for logical name: " <> show err

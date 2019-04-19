@@ -21,6 +21,8 @@ ghc-options:
   - -Wincomplete-record-updates         # Warn for partial record updates
   - -Wincomplete-uni-patterns           # Warn for incomplete pattern matching
 
+  - -Wno-unused-matches
+  - -Wno-unused-local-binds
   - -Wno-unused-imports
   - -Wno-unused-do-bind                 # Allow single-line do blocks
   - -Wno-deprecations                   # Allow some deprecated functions

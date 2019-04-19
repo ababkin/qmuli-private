@@ -29,8 +29,6 @@ import           Qi.Program.Gen.Lang
 import           Qi.Program.S3.Internal (ListToken)
 
 
-type S3BucketId = LogicalId 'S3BucketResource
-
 type S3LambdaProgram effs = S3Event -> Eff effs LBS.ByteString
 
 data S3Eff r where

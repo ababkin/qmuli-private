@@ -10,9 +10,7 @@ import           Qi.AWS.S3       (S3Bucket (..), S3EventConfig (..), event,
                                   s3bpExistence)
 import           Qi.AWS.Types
 import           Qi.Config
-import           Stratosphere    (CannedACL (..),
-                                  ResourceProperties (S3BucketProperties),
-                                  Resources (Resources), Val (GetAtt, Literal))
+import           Stratosphere   
 import qualified Stratosphere    as S (resource, resourceDependsOn, s3Bucket,
                                        s3BucketLambdaConfiguration,
                                        s3BucketNotificationConfiguration,
@@ -30,7 +28,7 @@ toResources config@Config{ _appName } = Resources $ toResource <$> buckets
 
     toResource (lid, bucket) = (
       S.resource (show lid) $
-        S3BucketProperties $ S.s3Bucket
+        S.s3Bucket
           & S.sbBucketName    ?~ Literal (show pid)
           & S.sbAccessControl ?~ Literal PublicReadWrite
           & S.sbNotificationConfiguration ?~ lbdConfigs

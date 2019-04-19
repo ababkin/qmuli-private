@@ -31,5 +31,5 @@ toResources config = mconcat $ ($ config) <$>
   , Role.toResources
   , LambdaPermission.toResources
   , Lambda.toResources
-  -- , KF.toResources
+  , KF.toResources
   ]

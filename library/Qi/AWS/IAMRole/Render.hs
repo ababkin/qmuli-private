@@ -29,7 +29,6 @@ toResources Config{ _appName } = Resources [lbdRoleRes]
       Left err -> panic err
       Right (lid :: LogicalId 'IAMRoleResource) ->
         resource lambdaBasicExecutionIAMRoleLogicalName $
-          IAMRoleProperties $
           iamRole rolePolicyDocumentObject
           & iamrPolicies ?~ [ executePolicy ]
           & iamrRoleName ?~ Literal (show lid)

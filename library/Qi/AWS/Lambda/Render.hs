@@ -18,7 +18,6 @@ toResources config@Config{ _appName } = Resources $ map toLambdaResource lbds
 
     toLambdaResource (lbdLogicalId, lbd) = (
       resource (show lbdLogicalId) $
-        LambdaFunctionProperties $
         lambdaFunction
           lbdCode
           "index.handler"

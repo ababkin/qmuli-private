@@ -8,15 +8,19 @@
 
 module Qi.AWS.ARN (
     Arn
-  , mkS3ObjectArn
+  , ToArn(..)
+  -- , mkS3ObjectArn
   ) where
 
 import           Control.Monad.Fail
 import           Data.Aeson
 import qualified Data.Text          as T
-import           Protolude
+import           Protolude hiding (show)
+import qualified          Protolude as P
 import           Qi.AWS.S3
 import           Qi.AWS.Types
+import GHC.Show (Show(..))
+import           Control.Lens
 
 
 class ArnToken a where
@@ -59,10 +63,10 @@ data Arn = Arn
   , region    :: Text
   , resource  :: Text
   }
-  deriving (Eq, Show)
+  deriving (Eq)
 
-instance ToJSON Arn where
-  toJSON Arn{ partition, service, region, resource } = String $ mconcat
+instance Show Arn where
+  show Arn{ partition, service, region, resource } = toS $ mconcat
         [ toToken partition
         , ":"
         , toToken service
@@ -71,6 +75,8 @@ instance ToJSON Arn where
         , ":"
         , toToken resource
         ]
+instance ToJSON Arn where
+  toJSON = String . P.show
 instance FromJSON Arn where
   parseJSON = withText "Arn" $ \t ->
     case T.splitOn ":" t of
@@ -86,15 +92,38 @@ instance FromJSON Arn where
 
 
 -- arn:aws:s3:::my_corporate_bucket/exampleobject.png
-mkS3ObjectArn
-  :: PhysicalId 'S3BucketResource
-  -> S3Key
-  -> Arn
-mkS3ObjectArn s3BucketPhysicalId (S3Key key) = Arn {
-    partition = AwsPartition
-  , service = S3
-  , region = ""
-  , resource = arnRes
-  }
-  where
-    arnRes = show s3BucketPhysicalId <> "/" <> key
+-- mkS3ObjectArn
+--   :: PhysicalId 'S3BucketResource
+--   -> S3Key
+--   -> Arn
+-- mkS3ObjectArn s3BucketPhysicalId (S3Key key) = Arn {
+--     partition = AwsPartition
+--   , service = S3
+--   , region = ""
+--   , resource = arnRes
+--   }
+--   where
+--     arnRes = P.show s3BucketPhysicalId <> "/" <> key
+
+class ToArn a where
+  toArn :: a -> AppName -> Arn
+
+instance ToArn S3BucketId where
+  toArn id appName = Arn {
+      partition = AwsPartition
+    , service = S3
+    , region = ""
+    , resource = P.show $ toPhysicalId appName id
+    }
+
+instance ToArn S3Object where
+  toArn s3obj appName = Arn {
+      partition = AwsPartition
+    , service = S3
+    , region = ""
+    , resource = arnRes
+    }
+    where
+      bucketId =  s3obj ^. s3oBucketId
+      objKey =  s3obj ^. s3oKey
+      arnRes = P.show (toPhysicalId appName bucketId) <> "/" <> P.show objKey

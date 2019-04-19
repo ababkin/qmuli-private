@@ -1,4 +1,4 @@
-resolver: lts-13.7
+resolver: lts-13.17
 
 packages:
 - '.'
@@ -20,6 +20,11 @@ packages:
 #     # - amazonka-lex-models
 #     - core
 #   extra-dep: true
+
+- location:
+    git: https://github.com/freckle/stratosphere.git
+    commit: a388e98e5bd4b9d7fc610a193f614d45c539aa54
+  extra-dep: true
 
 extra-deps: 
   - random-string-0.1.0.1

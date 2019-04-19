@@ -8,6 +8,7 @@
 module Qi.AWS.S3 (
     S3Config (..)
   , S3Bucket (..)
+  , S3BucketId
   , S3BucketProfile (..)
   , S3Key (..)
   , S3Object (..)
@@ -78,7 +79,9 @@ instance Show S3EventType where
   show S3ObjectRemovedAll = "s3:ObjectRemoved:*"
 
 newtype S3Key = S3Key Text
-  deriving (Eq, Show, Generic, ToJSON, FromJSON)
+  deriving (Eq, Generic, ToJSON, FromJSON)
+instance Show S3Key where
+  show (S3Key key) = toS key
 
 data S3Object = S3Object {
     _s3oBucketId :: S3BucketId

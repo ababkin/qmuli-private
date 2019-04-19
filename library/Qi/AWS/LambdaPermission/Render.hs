@@ -18,7 +18,6 @@ toResources config@Config{ _appName } = Resources $ map toLambdaPermissionResour
 
     toLambdaPermissionResource (lbdLogicalId, lbd) =
           resource (show lbdPermissionLogicalId) $
-            LambdaPermissionProperties $
             lambdaPermission
               "lambda:*"
               (GetAtt (show lbdLogicalId) "Arn")
