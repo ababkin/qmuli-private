@@ -1,11 +1,10 @@
 {-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE KindSignatures            #-}
 {-# LANGUAGE TemplateHaskell           #-}
+{-# LANGUAGE ConstraintKinds     #-}
 
 module Qi.AWS.Lambda where
 
 import           Control.Lens
-import           Control.Monad.Freer
 import           Data.Aeson                 (FromJSON, ToJSON)
 import qualified Data.ByteString.Lazy.Char8 as LBS
 import           Data.Default               (Default, def)
@@ -15,10 +14,12 @@ import           Data.Proxy                 (Proxy)
 import           Data.Text                  (Text)
 import           GHC.Show                   (Show (..))
 import           Protolude                  as P
+import           Polysemy
+import           Stratosphere
+
 import           Qi.AWS.S3           (S3Event)
 import           Qi.Program.Gen.Lang
 import           Qi.Program.S3.Lang         (S3Eff, S3LambdaProgram)
-import           Stratosphere
 import           Qi.AWS.Types
 import           Qi.AWS.IAM
 import           Qi.Program.KF.Lang (KfEff)
@@ -26,6 +27,7 @@ import           Qi.AWS.CW                     (CwEvent, CwLambdaProgram)
 
 
 type LambdaId = LogicalId 'LambdaResource
+type AllLambdaEffects effs = (Member GenEff effs, Member KfEff effs, Member S3Eff effs)
 
 data LambdaConfig = LambdaConfig {
     _lbdIdToLambda :: HashMap LambdaId Lambda
@@ -36,29 +38,28 @@ instance Default LambdaConfig where
     _lbdIdToLambda  = SHM.empty
   }
 
-
 -- TODO: FIX this: turn this into a good sum type
 data Lambda =
     forall a b
   . (FromJSON a, ToJSON b)
   => GenericLambda {
-      _lbdRole                 :: RoleId
-    , _lbdProfile              :: LambdaProfile
-    , _lbdInputProxy           :: Proxy a
-    , _lbdOutputProxy          :: Proxy b
-    , _lbdGenericLambdaProgram :: forall effs . Members '[ GenEff, S3Eff ] effs
-                                  => a -> Eff effs b
+      _lbdRole                  :: RoleId
+    , _lbdProfile               :: LambdaProfile
+    , _lbdInputProxy            :: Proxy a
+    , _lbdOutputProxy           :: Proxy b
+    , _lbdGenericLambdaProgram  :: forall effs . AllLambdaEffects effs
+                                   => a -> Sem effs b
     }
   | S3BucketLambda {
       _lbdRole                  :: RoleId
     , _lbdProfile               :: LambdaProfile
-    , _lbdS3BucketLambdaProgram :: forall effs . Members '[ GenEff, S3Eff ] effs
+    , _lbdS3BucketLambdaProgram :: forall effs . AllLambdaEffects effs
                                    => S3LambdaProgram effs
     }
   | CwEventLambda {
       _lbdRole                  :: RoleId
     , _lbdProfile               :: LambdaProfile
-    , _lbdCwLambdaProgram       :: forall effs . Members '[ GenEff, KfEff ] effs
+    , _lbdCwLambdaProgram       :: forall effs . AllLambdaEffects effs
                                    => CwLambdaProgram effs
     }
 

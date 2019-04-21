@@ -1,46 +1,48 @@
-{-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE TypeOperators     #-}
+{-# LANGUAGE TemplateHaskell     #-}
 
 module Qi.Program.Lambda.Lang where
 
-import           Control.Monad.Freer
 import           Data.Aeson          (ToJSON)
 import           Protolude
+import           Data.Composition
+import           Polysemy
+
 import           Qi.AWS.S3           (S3Object)
 import           Qi.AWS.Types
-import           Qi.Core.Curry
 
 
 type LambdaId = LogicalId 'LambdaResource
 
-data LambdaEff r where
+data LambdaEff m r where
 
   Invoke
     :: ToJSON a
     => LambdaId
     -> a
-    -> LambdaEff ()
+    -> LambdaEff m ()
 
   Update
     :: LambdaId
     -> S3Object
-    -> LambdaEff ()
+    -> LambdaEff m ()
+
+makeSem ''LambdaEff
+
+-- invoke
+--   :: (Member LambdaEff effs, ToJSON a)
+--   => LambdaId
+--   -> a
+--   -> Eff effs ()
+-- invoke =
+--   send .: Invoke
 
 
-invoke
-  :: (Member LambdaEff effs, ToJSON a)
-  => LambdaId
-  -> a
-  -> Eff effs ()
-invoke =
-  send .: Invoke
+-- update
+--   :: (Member LambdaEff effs)
+--   => LambdaId
+--   -> S3Object
+--   -> Eff effs ()
+-- update =
+--   send .: Update
 
-
-update
-  :: (Member LambdaEff effs)
-  => LambdaId
-  -> S3Object
-  -> Eff effs ()
-update =
-  send .: Update
 

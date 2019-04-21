@@ -35,6 +35,8 @@ ghc-options:
                                         # -Wincomplete-record-updates
   # - -Wredundant-constraints             # Warn on redundant typeclass constraints
   - -optP=-Wno-nonportable-include-path # macOS compatibility
+  - -flate-specialise
+  - -fspecialise-aggressively
     
 extra-source-files:
   - CHANGELOG.md
@@ -56,12 +58,15 @@ default-extensions:
   - NamedFieldPuns
   - NoImplicitPrelude
   - OverloadedStrings
+  - PolyKinds
   - RankNTypes
   - ScopedTypeVariables
   - TupleSections
+  - TypeApplications
+  - TypeFamilies
   - TypeOperators
   - ViewPatterns
-    
+
 dependencies:
   - aeson
   - aeson-pretty
@@ -69,6 +74,7 @@ dependencies:
   - base
   - binary
   - bytestring
+  - composition
   - conduit
   - conduit-extra
   - containers
@@ -79,7 +85,6 @@ dependencies:
   - exceptions
   - executable-path
   - extra
-  - freer-simple 
   - hashable
   - unordered-containers
   - heredoc
@@ -89,6 +94,7 @@ dependencies:
   - lens-aeson
   - mtl
   - optparse-applicative
+  - polysemy
   - process
   - protolude
   - req

@@ -1,16 +1,17 @@
 {-# LANGUAGE OverloadedLists            #-}
 
 
-module Qi.Program.Lambda.Ipret.Gen  where
+module Qi.Program.Lambda.Ipret.Gen (run) where
 
 import           Control.Lens           (Getting, (.~), (?~), (^.))
-import           Control.Monad.Freer
 import           Data.Aeson             (encode)
 import           Network.AWS.Lambda     (InvocationType (Event),
                                          iInvocationType, invoke, lambda,
                                          uS3Bucket, uS3Key, updateFunctionCode)
 import           Network.AWS.S3         (ObjectKey (ObjectKey))
 import           Protolude              hiding ((<&>))
+import           Polysemy hiding (run)
+
 import           Qi.AWS.Lambda
 import           Qi.AWS.Resource
 import           Qi.AWS.S3
@@ -21,12 +22,10 @@ import           Qi.Program.Gen.Lang
 import           Qi.Program.Lambda.Lang (LambdaEff (..))
 
 
-type LambdaId = LogicalId 'LambdaResource
-
 run
   :: forall effs a
   .  (Member GenEff effs, Member ConfigEff effs)
-  => (Eff (LambdaEff ': effs) a -> Eff effs a)
+  => (Sem (LambdaEff ': effs) a -> Sem effs a)
 run = interpret (\case
 
   Invoke lid payload -> do

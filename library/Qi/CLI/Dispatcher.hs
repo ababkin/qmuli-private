@@ -1,14 +1,24 @@
+{-# LANGUAGE ConstraintKinds     #-}
+
 module Qi.CLI.Dispatcher (withConfig) where
 
-import           Data.Aeson                     (eitherDecode, encode)
 import           Control.Lens
-import           Control.Monad.Freer
+import           Data.Aeson                     (eitherDecode, encode)
 import           Data.Aeson.Encode.Pretty       (encodePretty)
+import           Data.Aeson.Types               (parseEither)
 import qualified Data.ByteString.Lazy           as LBS
 import qualified Data.Map                       as Map
 import           Network.AWS.Data.Body          (toBody)
 import           Network.AWS.S3
 import           Protolude                      hiding (FilePath, all, State, runState)
+import           System.Environment             (lookupEnv)
+import           System.IO                      (BufferMode (..), hSetBuffering,
+                                                 stderr, stdout)
+import           Data.Default                   (def)
+import           Data.Text                      (splitOn)
+import           Polysemy
+import           Polysemy.State
+
 import           Qi.CLI.Dispatcher.S3           as S3 (clearBuckets)
 import           Qi.Program.CF.Lang
 import           Qi.Program.Config.Lang         (getConfig)
@@ -31,17 +41,10 @@ import qualified Qi.Program.Wiring.IO           as IO
 import           Qi.AWS.Logger (mkLambdaLogger, mkCliLogger)
 import           Qi.AWS.Runtime  (Response(SuccessResponse, ErrorResponse), ErrorCode(ErrorCode), getEndpoint, getWithRetries, HandlerRequest(..), respond, HandlerResponse(..))
 import           Qi.AWS.Types (AwsMode(RealDeal))
-import           System.Environment             (lookupEnv)
-import           System.IO                      (BufferMode (..), hSetBuffering,
-                                                 stderr, stdout)
-import           Data.Default                   (def)
-import           Data.Text                      (splitOn)
-import           Control.Monad.Freer.State
-import           Data.Aeson.Types               (parseEither)
 
 
 withConfig
-  :: Eff '[ConfigEff, State Config] ()
+  :: Sem '[ConfigEff, State Config] ()
   -> IO ()
 withConfig configProgram = do
   -- `showHelpOnErrorExecParser` parses out commands, arguments and options using the rules in `opts`
@@ -52,7 +55,7 @@ withConfig configProgram = do
   hSetBuffering stderr LineBuffering
 
   let runConfig appName =
-          snd
+          fst
         . run
         . runState (mkConfig appName)
         . Config.run
@@ -107,50 +110,53 @@ withConfig configProgram = do
       where
         loop' = do
           req' <- getWithRetries 3 endpoint
-          case req' of
-            SuccessResponse HandlerRequest{ payload, requestId } -> do
-              resp <- runLambda $ lbdHandler payload
-              respond endpoint requestId $ SuccessHandlerResponse (toS resp) (Just "application/json")
-              loop'
+          pass
+        --   case req' of
+        --     SuccessResponse HandlerRequest{ payload, requestId } -> do
+        --       resp <- runLambda $ lbdHandler payload
+        --       respond endpoint requestId $ SuccessHandlerResponse (toS resp) (Just "application/json")
+        --       loop'
 
-            ErrorResponse code ->
-              case code of
-                ErrorCode (-1) ->
-                  panic ("Failed to send HTTP request to retrieve next task." :: Text)
-                _ -> do
-                  print ("HTTP request was not successful. HTTP response code: " <>
-                     show code <>
-                     ". Retrying.." :: Text)
-                  loop'
+        --     ErrorResponse code ->
+        --       case code of
+        --         ErrorCode (-1) ->
+        --           panic ("Failed to send HTTP request to retrieve next task." :: Text)
+        --         _ -> do
+        --           print ("HTTP request was not successful. HTTP response code: " <>
+        --              show code <>
+        --              ". Retrying.." :: Text)
+        --           loop'
 
 
-        lbdHandler req =
-          let reportBadArgument lbdType err =
-                panic $ "Could not parse event: '" <> toS req <>
-                  "', for lambda type: '" <> lbdType <> "' error was: '" <> toS err <> "'"
-          in
-          case getById config lid of
+        -- lbdHandler req =
+        --   let reportBadArgument lbdType err =
+        --         panic $ "Could not parse event: '" <> toS req <>
+        --           "', for lambda type: '" <> lbdType <> "' error was: '" <> toS err <> "'"
+        --   in
+        --   case getById config lid of
 
-            GenericLambda{ _lbdGenericLambdaProgram } ->
-              either  (reportBadArgument "Generic")
-                      (map encode . _lbdGenericLambdaProgram)
-                      $ eitherDecode (toS req)
+        --     GenericLambda{ _lbdGenericLambdaProgram } ->
+        --       either  (reportBadArgument "Generic")
+        --               (map encode . _lbdGenericLambdaProgram)
+        --               $ eitherDecode (toS req)
 
-            S3BucketLambda{ _lbdS3BucketLambdaProgram } ->
-              either  (reportBadArgument "S3")
-                      _lbdS3BucketLambdaProgram
-                      $ parseEither S3Event.parse =<< eitherDecode (toS req)
+        --     S3BucketLambda{ _lbdS3BucketLambdaProgram } ->
+        --       either  (reportBadArgument "S3")
+        --               _lbdS3BucketLambdaProgram
+        --               $ parseEither S3Event.parse =<< eitherDecode (toS req)
 
-            CwEventLambda{ _lbdCwLambdaProgram } ->
-              either  (reportBadArgument "CW")
-                      _lbdCwLambdaProgram
-                      $ eitherDecode (toS req)
+        --     CwEventLambda{ _lbdCwLambdaProgram } ->
+        --       either  (reportBadArgument "CW")
+        --               _lbdCwLambdaProgram
+        --               $ eitherDecode (toS req)
+
+type Basic effs = (Member GenEff effs, Member ConfigEff effs)
 
 deployApp
-  :: Members '[ S3Eff, GenEff, ConfigEff ] effs
+  :: (Member S3Eff effs, Basic effs)
   => LBS.ByteString
   -> LBS.ByteString
-  -> Eff effs ()
+  -> Sem effs ()
 deployApp _template content = do
   say "deploying the app..."
   Config{ _appName } <- getConfig
@@ -164,9 +170,9 @@ deployApp _template content = do
   pass
 
 createCfStack
-  :: Members '[ CfEff, GenEff, ConfigEff ] effs
+  :: (Member CfEff effs, Basic effs)
   => LBS.ByteString
-  -> Eff effs ()
+  -> Sem effs ()
 createCfStack template = do
   Config{ _appName } <- getConfig
 
@@ -180,9 +186,9 @@ createCfStack template = do
 
 
 updateCfStack
-  :: Members '[ LambdaEff, CfEff, GenEff, ConfigEff ] effs
+  :: (Member CfEff effs, Member LambdaEff effs, Basic effs)
   => LBS.ByteString
-  -> Eff effs ()
+  -> Sem effs ()
 updateCfStack template = do
   Config{ _appName } <- getConfig
 
@@ -199,8 +205,8 @@ updateCfStack template = do
 
 
 updateLambdas
-  :: Members '[ LambdaEff, GenEff, ConfigEff ] effs
-  => Eff effs ()
+  :: (Member LambdaEff effs, Basic effs)
+  => Sem effs ()
 updateLambdas = do
   config <- getConfig
   let lbdS3Obj = S3Object (either (panic "unexpected") identity $ mkLogicalId "app") $ S3Key "lambda.zip"
@@ -210,8 +216,8 @@ updateLambdas = do
 
 
 describeCfStack
-  :: Members '[ CfEff, GenEff, ConfigEff ] effs
-  => Eff effs ()
+  :: (Member CfEff effs, Basic effs)
+  => Sem effs ()
 describeCfStack = do
   Config{ _appName } <- getConfig
   stackDict <- describeStacks
@@ -219,9 +225,9 @@ describeCfStack = do
 
 
 destroyCfStack
-  :: Members '[ LambdaEff, CfEff, S3Eff, GenEff, ConfigEff ] effs
-  => Eff effs ()
-  -> Eff effs ()
+  :: (Member S3Eff effs, Member CfEff effs, Member LambdaEff effs, Basic effs)
+  => Sem effs ()
+  -> Sem effs ()
 destroyCfStack action = do
   Config{ _appName } <- getConfig
   say "destroying the stack..."
@@ -234,10 +240,10 @@ destroyCfStack action = do
 
 
 cycleStack
-  :: Members '[ LambdaEff, CfEff, S3Eff, GenEff, ConfigEff ] effs
+  :: (Member S3Eff effs, Member CfEff effs, Member LambdaEff effs, Basic effs)
   => LBS.ByteString
   -> LBS.ByteString
-  -> Eff effs ()
+  -> Sem effs ()
 cycleStack template content = do
   destroyCfStack $ deployApp template content
   createCfStack template

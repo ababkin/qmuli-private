@@ -1,13 +1,9 @@
-{-# LANGUAGE DataKinds                  #-}
-{-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedLists            #-}
-{-# LANGUAGE TypeOperators              #-}
 
 module Qi.Program.CF.Ipret.Gen (run) where
 
 import           Control.Lens
-import           Control.Monad.Freer        hiding (run)
 import           Data.Map                   (Map)
 import qualified Data.Map                   as Map
 import           Network.AWS.CloudFormation (Capability (CapabilityNamedIAM), StackStatus (SSCreateComplete, SSDeleteComplete, SSUpdateComplete),
@@ -24,6 +20,8 @@ import           Network.AWS.CloudFormation (Capability (CapabilityNamedIAM), St
 import           Network.AWS.S3             (BucketName (BucketName),
                                              ObjectKey (ObjectKey))
 import           Protolude                  hiding ((<&>))
+import           Polysemy hiding (run)
+
 import           Qi.Config
 import           Qi.AWS.S3
 import           Qi.AWS.Types
@@ -38,7 +36,7 @@ import           Qi.Program.Gen.Lang
 run
   :: forall effs a
   .  (Member GenEff effs, Member ConfigEff effs)
-  => (Eff (CfEff ': effs) a -> Eff effs a)
+  => (Sem (CfEff ': effs) a -> Sem effs a)
 run = interpret (\case
 
   CreateStack name template -> do
@@ -81,7 +79,7 @@ run = interpret (\case
 
   where
 
-    getStackDescriptions :: Eff effs StackDescriptionDict
+    getStackDescriptions :: Sem effs StackDescriptionDict
     getStackDescriptions = do
       r <- amazonka cloudFormation $ describeStacks
                   -- & dStackName ?~ name

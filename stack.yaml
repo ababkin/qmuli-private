@@ -26,6 +26,11 @@ packages:
     commit: a388e98e5bd4b9d7fc610a193f614d45c539aa54
   extra-dep: true
 
+- location:
+    git: https://github.com/isovector/polysemy.git
+    commit: d886b32fe421d8fdca0da7c3f1188a60973f676a
+  extra-dep: true
+
 extra-deps: 
   - random-string-0.1.0.1
   - base58-bytestring-0.1.0

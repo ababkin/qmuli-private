@@ -3,7 +3,6 @@
 module Qi.AWS.CW where
 
 import           Control.Lens
-import           Control.Monad.Freer
 import           Data.Aeson
 import           Data.Aeson.Types
 import qualified Data.ByteString.Lazy.Char8 as LBS
@@ -11,12 +10,14 @@ import           Data.Default               (Default, def)
 import           Data.HashMap.Strict        (HashMap)
 import qualified Data.HashMap.Strict        as SHM
 import           Protolude
+import           Polysemy
+
 import           Qi.AWS.Types
 
 
 type LambdaId       = LogicalId 'LambdaResource
 type CwEventsRuleId = LogicalId 'CwEventsRuleResource
-type CwLambdaProgram effs = CwEvent -> Eff effs LBS.ByteString
+type CwLambdaProgram effs = CwEvent -> Sem effs LBS.ByteString
 
 data CwEventsRule = CwEventsRule {
     _cerName    :: Text

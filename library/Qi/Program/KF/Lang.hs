@@ -1,26 +1,31 @@
+{-# LANGUAGE TemplateHaskell     #-}
+
 module Qi.Program.KF.Lang where
 
-import           Control.Monad.Freer
 import           Data.Aeson          (ToJSON)
 import           Protolude
+import           Data.Composition
+import           Polysemy
+
 import           Qi.AWS.S3
 import           Qi.AWS.KF
 import           Qi.AWS.Types
-import           Qi.Core.Curry
 
 
-data KfEff r where
+data KfEff m r where
 
   Put
     :: ToJSON a
     => KfId
     -> a
-    -> KfEff ()
+    -> KfEff m ()
 
-put
-  :: (Member KfEff effs, ToJSON a)
-  => KfId
-  -> a
-  -> Eff effs ()
-put id =
-  send . Put id
+makeSem ''KfEff
+
+-- put
+--   :: (Member KfEff effs, ToJSON a)
+--   => KfId
+--   -> a
+--   -> Eff effs ()
+-- put id =
+--   send . Put id

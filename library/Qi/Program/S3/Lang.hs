@@ -1,11 +1,4 @@
-{-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE FlexibleContexts  #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GADTs             #-}
-{-# LANGUAGE LambdaCase        #-}
-{-# LANGUAGE NamedFieldPuns    #-}
-{-# LANGUAGE RankNTypes        #-}
-{-# LANGUAGE TypeOperators     #-}
+{-# LANGUAGE TemplateHaskell     #-}
 
 module Qi.Program.S3.Lang (
     S3Eff (..)
@@ -18,25 +11,43 @@ module Qi.Program.S3.Lang (
   , deleteObjects
   ) where
 
-import           Control.Monad.Freer
 import qualified Data.ByteString.Lazy   as LBS
 import           Network.AWS.S3.Types   (ETag)
 import           Protolude
+import           Data.Composition
+import           Polysemy
+
 import           Qi.AWS.S3
 import           Qi.AWS.Types
-import           Qi.Core.Curry
 import           Qi.Program.Gen.Lang
 import           Qi.Program.S3.Internal (ListToken)
 
 
-type S3LambdaProgram effs = S3Event -> Eff effs LBS.ByteString
+type S3LambdaProgram effs = S3Event -> Sem effs LBS.ByteString
 
-data S3Eff r where
-
+data S3Eff m r where
 
   GetContent
     :: S3Object
-    -> S3Eff (Either Text LBS.ByteString)
+    -> S3Eff m (Either Text LBS.ByteString)
+
+  PutContent
+    :: S3Object
+    -> LBS.ByteString
+    -> S3Eff m ()
+
+  ListObjects
+    :: S3BucketId
+    -> Maybe ListToken
+    -> S3Eff m ([S3Object], Maybe ListToken)
+
+  DeleteObject
+    :: S3Object
+    -> S3Eff m ()
+
+  DeleteObjects
+    :: [S3Object]
+    -> S3Eff m ()
 
 {-
   MultipartS3Upload
@@ -51,30 +62,13 @@ data S3Eff r where
     -> S3Eff (Maybe (Int, ETag))
 -}
 
-  PutContent
-    :: S3Object
-    -> LBS.ByteString
-    -> S3Eff ()
+makeSem ''S3Eff
 
-  ListObjects
-    :: S3BucketId
-    -> Maybe ListToken
-    -> S3Eff ([S3Object], Maybe ListToken)
-
-  DeleteObject
-    :: S3Object
-    -> S3Eff ()
-
-  DeleteObjects
-    :: [S3Object]
-    -> S3Eff ()
-
-
-getContent
-  :: (Member S3Eff effs)
-  => S3Object
-  -> Eff effs (Either Text LBS.ByteString)
-getContent = send . GetContent
+-- getContent
+--   :: (Member S3Eff effs)
+--   => S3Object
+--   -> Eff effs (Either Text LBS.ByteString)
+-- getContent = send . GetContent
 
 {-
 multipartS3Upload
@@ -93,32 +87,30 @@ uploadS3Chunk
 uploadS3Chunk = send .:: UploadS3Chunk
 -}
 
-putContent
-  :: (Member S3Eff effs)
-  => S3Object
-  -> LBS.ByteString
-  -> Eff effs ()
-putContent = send .: PutContent
+-- putContent
+--   :: (Member S3Eff effs)
+--   => S3Object
+--   -> LBS.ByteString
+--   -> Eff effs ()
+-- putContent = send .: PutContent
 
 
-listObjects
-  :: (Member S3Eff effs)
-  => S3BucketId
-  -> Maybe ListToken
-  -> Eff effs ([S3Object], Maybe ListToken)
-listObjects = send .: ListObjects
+-- listObjects
+--   :: (Member S3Eff effs)
+--   => S3BucketId
+--   -> Maybe ListToken
+--   -> Eff effs ([S3Object], Maybe ListToken)
+-- listObjects = send .: ListObjects
 
 
-deleteObject
-  :: (Member S3Eff effs)
-  => S3Object
-  -> Eff effs ()
-deleteObject = send . DeleteObject
+-- deleteObject
+--   :: (Member S3Eff effs)
+--   => S3Object
+--   -> Eff effs ()
+-- deleteObject = send . DeleteObject
 
-deleteObjects
-  :: (Member S3Eff effs)
-  => [S3Object]
-  -> Eff effs ()
-deleteObjects = send . DeleteObjects
-
-
+-- deleteObjects
+--   :: (Member S3Eff effs)
+--   => [S3Object]
+--   -> Eff effs ()
+-- deleteObjects = send . DeleteObjects

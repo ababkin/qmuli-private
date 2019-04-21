@@ -1,15 +1,8 @@
-{-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE FlexibleContexts  #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GADTs             #-}
-{-# LANGUAGE LambdaCase        #-}
-{-# LANGUAGE NamedFieldPuns    #-}
-{-# LANGUAGE RankNTypes        #-}
-{-# LANGUAGE TypeOperators     #-}
+{-# LANGUAGE TemplateHaskell     #-}
 
 module Qi.Program.Gen.Lang where
 
-import           Control.Monad.Freer
+-- import           Control.Monad.Freer
 import qualified Control.Monad.Trans.AWS as AWS (send)
 import           Data.Aeson              (FromJSON, ToJSON, Value)
 import qualified Data.ByteString         as BS
@@ -19,64 +12,66 @@ import           Network.AWS             hiding (Request, Response, send)
 import           Network.AWS.Data.Body   (RsBody (..))
 import           Network.HTTP.Client
 import           Protolude
-import           Qi.AWS.Types
-import           Qi.Core.Curry
 import           Servant.Client          (BaseUrl, ClientM, ServantError)
+import           Polysemy
+
+import           Qi.AWS.Types
 
 
-data GenEff r where
+data GenEff m r where
   GetAppName
-    :: GenEff AppName
+    :: GenEff m AppName
 
   Http
     :: ManagerSettings
     -> Request
-    -> GenEff (Response LBS.ByteString)
+    -> GenEff m (Response LBS.ByteString)
 
   RunServant
     :: ManagerSettings
     -> BaseUrl
     -> ClientM a
-    -> GenEff (Either ServantError a)
+    -> GenEff m (Either ServantError a)
 
   Amazonka
     :: (AWSRequest a)
     => Service
     -> a
-    -> GenEff (Rs a)
+    -> GenEff m (Rs a)
 
   AmazonkaPostBodyExtract
     :: (AWSRequest a)
     => Service
     -> a
     -> (Rs a -> RsBody)
-    -> GenEff (Either Text LBS.ByteString)
+    -> GenEff m (Either Text LBS.ByteString)
 
   Say
     :: Text
-    -> GenEff ()
+    -> GenEff m ()
 
   GetCurrentTime
-    :: GenEff UTCTime
+    :: GenEff m UTCTime
 
   Sleep
     :: Int
-    -> GenEff ()
+    -> GenEff m ()
 
   Build
-    :: GenEff Text -- TODO return status
+    :: GenEff m Text -- TODO return status
 
   ReadFileLazy
     :: Text
-    -> GenEff LBS.ByteString
-
-  {- GetReq -}
-    {- :: GenEff BS.ByteString -}
+    -> GenEff m LBS.ByteString
 
   PutStr
     :: LBS.ByteString
-    -> GenEff ()
+    -> GenEff m ()
 
+
+makeSem ''GenEff
+
+{-
 getAppName
   :: (Member GenEff effs)
   => Eff effs AppName
@@ -165,3 +160,4 @@ putStr
 putStr = send . PutStr
 
 
+-}

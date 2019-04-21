@@ -1,21 +1,18 @@
-{-# LANGUAGE DataKinds                  #-}
-{-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE KindSignatures              #-}
 {-# LANGUAGE OverloadedLists            #-}
-{-# LANGUAGE TypeOperators              #-}
 
 module Qi.Program.S3.Ipret.Gen (run) where
 
 import           Control.Exception.Lens (handling)
 import           Control.Lens           (Getting, (.~), (?~), (^.))
-import           Control.Monad.Freer    hiding (run)
 import qualified Data.Map.Strict        as Map
 import           Network.AWS            hiding (Request, Response, send)
 import           Network.AWS.Data.Body  (RsBody (..))
 import           Network.AWS.Data.Text  (ToText (..))
 import           Network.AWS.S3         hiding (bucket)
 import           Protolude              hiding ((<&>))
+import           Polysemy hiding (run)
+
 import           Qi.AWS.Resource
 import           Qi.AWS.Types
 import           Qi.Config
@@ -29,7 +26,7 @@ import           Qi.Program.S3.Lang     (S3Eff (..))
 run
   :: forall effs a
   .  (Member GenEff effs, Member ConfigEff effs)
-  => (Eff (S3Eff ': effs) a -> Eff effs a)
+  => (Sem (S3Eff ': effs) a -> Sem effs a)
 run = interpret (\case
 
   GetContent S3Object{ _s3oBucketId, _s3oKey = S3Key (ObjectKey -> objKey) } ->

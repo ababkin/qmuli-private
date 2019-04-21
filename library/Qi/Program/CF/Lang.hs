@@ -1,6 +1,4 @@
-{-# LANGUAGE GADTs                      #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE TemplateHaskell     #-}
 
 module Qi.Program.CF.Lang (
     CfEff (..)
@@ -16,17 +14,18 @@ module Qi.Program.CF.Lang (
   )where
 
 
-import           Control.Monad.Freer
 import           Data.Aeson                 hiding ((.:))
 import qualified Data.ByteString.Lazy       as LBS
 import           Data.HashMap.Strict        (fromList)
 import           Data.Map                   (Map)
+import           Data.Composition
 import           Network.AWS.CloudFormation (StackStatus (..))
 import           Network.AWS.S3.Types       (ETag)
 import           Protolude
+import           Polysemy
+
 import           Qi.AWS.S3
 import           Qi.AWS.Types
-import           Qi.Core.Curry
 import           Qi.Program.Gen.Lang
 
 
@@ -47,61 +46,62 @@ instance ToJSON StackDescription where
 data AbsentDirective = AbsentOk | NoAbsent
   deriving Eq
 
-data CfEff r where
+data CfEff m r where
 
   CreateStack
     :: AppName
     -> LBS.ByteString
-    -> CfEff ()
+    -> CfEff m ()
 
   DescribeStacks
-    :: CfEff StackDescriptionDict
+    :: CfEff m StackDescriptionDict
 
   UpdateStack
     :: AppName
     -> LBS.ByteString
-    -> CfEff ()
+    -> CfEff m ()
 
   DeleteStack
     :: AppName
-    -> CfEff ()
+    -> CfEff m ()
 
   WaitOnStackStatus
     :: AppName
     -> StackStatus
     -> AbsentDirective
-    -> CfEff ()
+    -> CfEff m ()
 
-createStack
-  :: (Member CfEff effs)
-  => AppName
-  -> LBS.ByteString -- S3Object
-  -> Eff effs ()
-createStack = send .: CreateStack
+makeSem ''CfEff
 
-describeStacks
-  :: (Member CfEff effs)
-  => Eff effs StackDescriptionDict
-describeStacks = send DescribeStacks
+-- createStack
+--   :: (Member CfEff effs)
+--   => AppName
+--   -> LBS.ByteString -- S3Object
+--   -> Eff effs ()
+-- createStack = send .: CreateStack
 
-updateStack
-  :: (Member CfEff effs)
-  => AppName
-  -> LBS.ByteString
-  -> Eff effs ()
-updateStack = send .: UpdateStack
+-- describeStacks
+--   :: (Member CfEff effs)
+--   => Eff effs StackDescriptionDict
+-- describeStacks = send DescribeStacks
 
-deleteStack
-  :: (Member CfEff effs)
-  => AppName
-  -> Eff effs ()
-deleteStack = send . DeleteStack
+-- updateStack
+--   :: (Member CfEff effs)
+--   => AppName
+--   -> LBS.ByteString
+--   -> Eff effs ()
+-- updateStack = send .: UpdateStack
 
-waitOnStackStatus
-  :: (Member CfEff effs)
-  => AppName
-  -> StackStatus
-  -> AbsentDirective
-  -> Eff effs ()
-waitOnStackStatus = send .:: WaitOnStackStatus
+-- deleteStack
+--   :: (Member CfEff effs)
+--   => AppName
+--   -> Eff effs ()
+-- deleteStack = send . DeleteStack
 
+-- waitOnStackStatus
+--   :: (Member CfEff effs)
+--   => AppName
+--   -> StackStatus
+--   -> AbsentDirective
+--   -> Eff effs ()
+-- waitOnStackStatus = send .:: WaitOnStackStatus

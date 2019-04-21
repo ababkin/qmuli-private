@@ -1,129 +1,122 @@
-{-# LANGUAGE DataKinds           #-}
-{-# LANGUAGE GADTs               #-}
-{-# LANGUAGE TypeOperators       #-}
+{-# LANGUAGE TemplateHaskell     #-}
+{-# LANGUAGE ConstraintKinds     #-}
 
 module Qi.Program.Config.Lang where
 
-import           Control.Monad.Freer
 import           Data.Aeson                 (FromJSON, ToJSON)
 import           Data.ByteString            (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as LBS
 import           Data.Default               (Default, def)
 import           Protolude
+import           Polysemy
+
 import           Qi.Config              (Config)
 import           Qi.AWS.Lambda       (LambdaProfile)
 import           Qi.AWS.S3           (S3BucketProfile)
 import           Qi.AWS.KF
 import           Qi.AWS.CW
 import           Qi.AWS.IAM
-import           Qi.Core.Curry
 import           Qi.Program.Gen.Lang
 import           Qi.Program.S3.Lang
 import           Qi.Program.KF.Lang
 import           Qi.AWS.Types
 
 
--- type LambdaId = LogicalId 'LambdaResource
 type S3BucketId = LogicalId 'S3BucketResource
+type AllLambdaEffects effs = (Member GenEff effs, Member KfEff effs, Member S3Eff effs)
 
--- data ConfigError = NameAlreadyUsed
---                  | NameInvalid Text
-
--- data ConfigResult a = ConfigFailure ConfigError
---                     | ConfigSuccess a
-
-data ConfigEff r where
+data ConfigEff m r where
 
   GetConfig
-    :: ConfigEff Config
+    :: ConfigEff m Config
 
-  RegGenericLambda
-    :: forall a b
-    .  (FromJSON a, ToJSON b)
+  GenericLambda
+    :: (FromJSON a, ToJSON b)
     => Proxy a
     -> Proxy b
     -> Text
-    -> (forall effs . Members [GenEff, S3Eff] effs => a -> Eff effs b)
+    -> (forall effs . AllLambdaEffects effs => a -> Sem effs b)
     -> LambdaProfile
-    -> ConfigEff LambdaId
+    -> ConfigEff m LambdaId
 
 -- S3
-  RegS3Bucket
+  S3Bucket
     :: Text
     -> S3BucketProfile
-    -> ConfigEff S3BucketId
+    -> ConfigEff m S3BucketId
 
-  RegS3BucketLambda
+  S3BucketLambda
     :: Text
     -> S3BucketId
-    -> (forall effs . Members [GenEff, S3Eff] effs => S3LambdaProgram effs)
+    -> (forall effs . AllLambdaEffects effs => S3LambdaProgram effs)
     -> LambdaProfile
-    -> ConfigEff LambdaId
+    -> ConfigEff m LambdaId
 
-  RegCwEventLambda
+  CwEventLambda
     :: Text
     -> CwEventsRuleProfile
-    -> (forall effs . Members [GenEff, KfEff] effs => CwLambdaProgram effs)
+    -> (forall effs . AllLambdaEffects effs => CwLambdaProgram effs)
     -> LambdaProfile
-    -> ConfigEff LambdaId
+    -> ConfigEff m LambdaId
 
-  RegS3BucketKf
+  S3BucketKf
     :: Text
     -> S3BucketId
-    -> ConfigEff KfId
+    -> ConfigEff m KfId
 
-getConfig
-  :: forall effs
-  .  (Member ConfigEff effs)
-  => Eff effs Config
-getConfig = send GetConfig
+makeSem ''ConfigEff
 
-genericLambda
-  :: forall a b resEffs
-  .  (Member ConfigEff resEffs, FromJSON a, ToJSON b)
-  => Text
-  -> (forall effs . (Member GenEff effs, Member S3Eff effs) => a -> Eff effs b)
-  -> LambdaProfile
-  -> Eff resEffs LambdaId
-genericLambda name f =
-  send . RegGenericLambda (Proxy :: Proxy a) (Proxy :: Proxy b) name f
+-- getConfig
+--   :: forall effs
+--   .  (Member ConfigEff effs)
+--   => Eff effs Config
+-- getConfig = send GetConfig
 
-s3Bucket
-  :: (Member ConfigEff effs)
-  => Text
-  -> S3BucketProfile
-  -> Eff effs S3BucketId
-s3Bucket =
-  send .: RegS3Bucket
+-- genericLambda
+--   :: forall a b resEffs
+--   .  (Member ConfigEff resEffs, FromJSON a, ToJSON b)
+--   => Text
+--   -> (forall effs . (Member GenEff effs, Member S3Eff effs) => a -> Eff effs b)
+--   -> LambdaProfile
+--   -> Eff resEffs LambdaId
+-- genericLambda name f =
+--   send . RegGenericLambda (Proxy :: Proxy a) (Proxy :: Proxy b) name f
 
-s3BucketLambda
-  :: forall resEffs
-  .  (Member ConfigEff resEffs)
-  => Text
-  -> S3BucketId
-  -> (forall effs . (Member GenEff effs, Member S3Eff effs) => S3LambdaProgram effs)
-  -> LambdaProfile
-  -> Eff resEffs LambdaId
-s3BucketLambda name bucketId f =
-  send . RegS3BucketLambda name bucketId f
+-- s3Bucket
+--   :: (Member ConfigEff effs)
+--   => Text
+--   -> S3BucketProfile
+--   -> Eff effs S3BucketId
+-- s3Bucket =
+--   send .: RegS3Bucket
 
-cwEventLambda
-  :: forall resEffs
-  .  (Member ConfigEff resEffs)
-  => Text
-  -> CwEventsRuleProfile
-  -> (forall effs . (Members [GenEff, KfEff] effs) => CwLambdaProgram effs)
-  -> LambdaProfile
-  -> Eff resEffs LambdaId
-cwEventLambda name ruleProfile f =
-  send . RegCwEventLambda name ruleProfile f
+-- s3BucketLambda
+--   :: forall resEffs
+--   .  (Member ConfigEff resEffs)
+--   => Text
+--   -> S3BucketId
+--   -> (forall effs . (Member GenEff effs, Member S3Eff effs) => S3LambdaProgram effs)
+--   -> LambdaProfile
+--   -> Eff resEffs LambdaId
+-- s3BucketLambda name bucketId f =
+--   send . RegS3BucketLambda name bucketId f
 
-s3Kf
-  :: forall resEffs
-  .  (Member ConfigEff resEffs)
-  => Text
-  -> S3BucketId
-  -> Eff resEffs KfId
-s3Kf name =
-  send . RegS3BucketKf name
+-- cwEventLambda
+--   :: forall resEffs
+--   .  (Member ConfigEff resEffs)
+--   => Text
+--   -> CwEventsRuleProfile
+--   -> (forall effs . (Members [GenEff, KfEff] effs) => CwLambdaProgram effs)
+--   -> LambdaProfile
+--   -> Eff resEffs LambdaId
+-- cwEventLambda name ruleProfile f =
+--   send . RegCwEventLambda name ruleProfile f
 
+-- s3Kf
+--   :: forall resEffs
+--   .  (Member ConfigEff resEffs)
+--   => Text
+--   -> S3BucketId
+--   -> Eff resEffs KfId
+-- s3Kf =
+--   send .: RegS3BucketKf

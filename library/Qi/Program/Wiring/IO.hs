@@ -5,9 +5,10 @@
 
 module Qi.Program.Wiring.IO  where
 
-import           Control.Monad.Freer
-import           Control.Monad.Freer.State
 import           Protolude                     hiding (State, runState, (<&>))
+import           Polysemy
+import           Polysemy.State
+
 import           Qi.AWS.Logger                 (Logger)
 import           Qi.AWS.Types                  (AwsMode (..))
 import           Qi.Config
@@ -29,18 +30,18 @@ run
   :: Config
   -> AwsMode
   -> IO Logger
-  -> (Eff '[ CfEff
+  -> (Sem '[ CfEff
            , S3Eff
            , KfEff
            , LambdaEff
            , GenEff
            , ConfigEff
            , State Config
-           , IO
+           , Lift IO
            ] a -> IO a)
 run config awsMode mkLogger =
     runM
-  . map fst
+  . map snd
   . runState config
   . Config.run
   . Gen.run awsMode mkLogger

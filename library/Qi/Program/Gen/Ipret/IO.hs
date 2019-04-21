@@ -5,10 +5,9 @@
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE TypeOperators              #-}
 
-module Qi.Program.Gen.Ipret.IO  where
+module Qi.Program.Gen.Ipret.IO (run) where
 
 import           Control.Lens                  hiding ((.=))
-import           Control.Monad.Freer           hiding (run)
 import           Control.Monad.Trans.AWS       (runAWST)
 import qualified Control.Monad.Trans.AWS       as AWS (send)
 import           Data.Aeson
@@ -19,12 +18,6 @@ import           Network.AWS                   hiding (Request, Response, send)
 import           Network.AWS.Types             (Service (..))
 import           Network.HTTP.Client           (httpLbs, newManager)
 import           Protolude                     hiding ((<&>))
-import           Qi.Amazonka                   (currentRegion)
-import           Qi.AWS.Types                  (AwsMode (..))
-import           Qi.Config                 (appName)
-import           Qi.Program.Config.Lang        (ConfigEff, getConfig)
-import           Qi.Program.Gen.Lang           (GenEff (..))
-import           Qi.Util                       (callProcess, printPending)
 import           Servant.Client    hiding (Http)
 import           System.Build                  (BuildArgs (SimpleTarget),
                                                 stackInDocker)
@@ -35,52 +28,57 @@ import           System.Environment.Executable (splitExecutablePath)
 import           System.IO                     (stderr)
 import           System.Posix.Files
 import           System.Posix.Types            (FileMode)
+import           Polysemy hiding (run)
 
+import           Qi.Amazonka                   (currentRegion)
+import           Qi.AWS.Types                  (AwsMode (..))
+import           Qi.Config                 (appName)
+import           Qi.Program.Config.Lang        (ConfigEff, getConfig)
+import           Qi.Program.Gen.Lang           (GenEff (..))
+import           Qi.Util                       (callProcess, printPending)
 
 run
   :: forall effs a
-  .  (Members '[ IO, ConfigEff ] effs)
+  .  (Member (Lift IO) effs, Member ConfigEff effs)
   => AwsMode
   -> IO Logger
-  -> (Eff (GenEff ': effs) a -> Eff effs a)
+  -> (Sem (GenEff ': effs) a -> Sem effs a)
 run mode mkLogger = interpret (\case
 
   GetAppName ->
     (^. appName) <$> getConfig
 
-  Http mgrSettings req -> send $
+  Http mgrSettings req -> sendM $
     httpLbs req =<< newManager mgrSettings
 
-  RunServant mgrSettings baseUrl req -> send $ do
+  RunServant mgrSettings baseUrl req -> sendM $ do
     mgr <- newManager mgrSettings
     runClientM req $ mkClientEnv mgr baseUrl
 
 
   Amazonka svc req ->
-    send . runAmazonka svc $ AWS.send req
+    sendM . runAmazonka svc $ AWS.send req
 
   AmazonkaPostBodyExtract svc req post ->
-    send $ runAmazonka svc $
+    sendM $ runAmazonka svc $
       map Right . (`sinkBody` sinkLbs) . post =<< AWS.send req
 
-  Say msg -> send $ do
+  Say msg -> sendM $ do
     hPutStrLn stderr . encode $ object ["message" .= String msg]
     putStrLn msg :: IO ()
 
-  GetCurrentTime -> send C.getCurrentTime
+  GetCurrentTime -> sendM C.getCurrentTime
 
-  Sleep us -> send $ threadDelay us
+  Sleep us -> sendM $ threadDelay us
 
-  Build -> send $ do
+  Build -> sendM $ do
     (_, execFilename) <- splitExecutablePath -- get the current executable filename
     toS <$> build "." (toS execFilename)
 
   ReadFileLazy path ->
-    send . LBS.readFile $ toS path
+    sendM . LBS.readFile $ toS path
 
-  {- GetReq -> send $ do -}
-
-  PutStr content -> send $ LBS.putStr content
+  PutStr content -> sendM $ LBS.putStr content
 
   )
 

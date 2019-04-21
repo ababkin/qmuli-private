@@ -3,9 +3,10 @@
 module Main where
 
 import           Control.Lens
-import           Control.Monad.Freer
 import           Data.Default           (def)
 import           Protolude
+import           Polysemy
+
 import           Qi                     (withConfig)
 import           Qi.AWS.Lambda          (LambdaMemorySize (..), lpMemorySize)
 import           Qi.AWS.Resource        (S3BucketId)
@@ -38,7 +39,7 @@ main = withConfig config
         def & lpMemorySize .~ M1536
 
     copyContentsLambda
-      :: Members [S3Eff, GenEff] effs
+      :: (Member S3Eff effs, Member GenEff effs)
       => S3BucketId
       -> S3LambdaProgram effs
     copyContentsLambda sinkBucketId = lbd
