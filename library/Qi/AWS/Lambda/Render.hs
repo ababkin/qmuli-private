@@ -3,7 +3,6 @@
 module Qi.AWS.Lambda.Render (toResources) where
 
 import           Protolude             hiding (all)
-import qualified Qi.AWS.IAMRole.Render as Role
 import           Qi.AWS.Resource
 import           Qi.AWS.Types
 import           Qi.AWS.Lambda
@@ -21,7 +20,7 @@ toResources config@Config{ _appName } = Resources $ map toLambdaResource lbds
         lambdaFunction
           lbdCode
           "index.handler"
-          (GetAtt Role.lambdaBasicExecutionIAMRoleLogicalName "Arn")
+          (GetAtt (show roleId) "Arn")
           (Literal $ OtherRuntime "provided")
         & lfFunctionName  ?~ Literal (show $ toPhysicalId _appName lbdLogicalId)
         & lfMemorySize    ?~ Literal memorySize
@@ -29,6 +28,7 @@ toResources config@Config{ _appName } = Resources $ map toLambdaResource lbds
       )
 
       where
+        roleId      = lbd ^. lbdRole
         memorySize  = fromIntegral . fromEnum $ lbd ^. lbdProfile . lpMemorySize
         timeOut     = fromIntegral $ lbd ^. lbdProfile . lpTimeoutSeconds
 

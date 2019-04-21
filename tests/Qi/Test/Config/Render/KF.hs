@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedLists #-}
+
 {-# OPTIONS_GHC -fno-warn-incomplete-uni-patterns #-}
 
 module Qi.Test.Config.Render.KF where
@@ -34,13 +36,15 @@ spec = parallel $
   describe "ConfigEff" $ do
     let Right appName = mkAppName "testapp"
         bucketName = "mybucket"
+        roleName = "mykfrole"
         kfName = "mykf"
 
     describe "renders a CF stack spec with KF" $ do
 
       let config = runConfig $ do
                      bucketId <- Config.s3Bucket bucketName def
-                     Config.s3Kf kfName bucketId
+                     roleId <- Config.iamRole roleName
+                     Config.s3Kf kfName roleId bucketId
 
           runConfig configProgram =
                 snd
@@ -49,15 +53,22 @@ spec = parallel $
               $ Config.run configProgram
 
       it "KF resource is rendered correctly" $ do
-        let expectedKfLogicalId = kfName <> "KinesisFirehose"
+        let expectedBucketLogicalId = bucketName <> "S3Bucket"
+            expectedRoleLogicalId = roleName <> "IAMRole"
+            expectedKfLogicalId = kfName <> "KinesisFirehose"
             expectedKfPhysicalId = show appName <> "." <> kfName <> ".kinesis-firehose"
+            expectedBucketArn = arnRef expectedBucketLogicalId
+            expectedRoleArn = arnRef expectedRoleLogicalId
+            arnRef id = Object [("Fn::GetAtt"
+                                , Array [ String id
+                                        , String "Arn"
+                                        ]
+                                )]
 
         case KF.toResources config of
-          Resources [Resource kfLogicalId (ResourceProperties _ props) _ _ _ _ _ _
-                    ] -> do
+          Resources [Resource kfLogicalId (ResourceProperties _ props) _ _ _ _ _ _] -> do
 
             kfLogicalId `shouldBe` expectedKfLogicalId
-
 
             withProps props $ \(propShouldBe, subProps) -> do
               "DeliveryStreamName" `propShouldBe` String expectedKfPhysicalId
@@ -65,13 +76,14 @@ spec = parallel $
 
               withProps (subProps "S3DestinationConfiguration") $
                 \(propShouldBe', subProps') -> do
-                  "BucketARN" `propShouldBe'` String "aws:s3::testapp.mybucket.s3-bucket"
+                  "BucketARN" `propShouldBe'` expectedBucketArn
+
                   withProps (subProps' "BufferingHints") $
                     \(propShouldBe'', _subProps'') -> do
-                      "IntervalInSeconds" `propShouldBe''` Number 1
-                      "SizeInMBs" `propShouldBe''` Number 3
+                      "IntervalInSeconds" `propShouldBe''` Number 60
+                      "SizeInMBs" `propShouldBe''` Number 1
                   "CompressionFormat" `propShouldBe'` String "UNCOMPRESSED"
                   "Prefix" `propShouldBe'` String "mydata"
-                  "RoleARN" `propShouldBe'` String "aws:iam::testapp.mykftos3.role"
+                  "RoleARN" `propShouldBe'` expectedRoleArn
 
           unexpected -> panic $ "unexpected number of resources created: " <> show unexpected

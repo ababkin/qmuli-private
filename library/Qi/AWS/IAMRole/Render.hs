@@ -2,67 +2,66 @@
 
 module Qi.AWS.IAMRole.Render (
     toResources
-  , lambdaBasicExecutionIAMRoleLogicalName
   ) where
 
-import           Data.Aeson   (Value (Array), object)
-import           Protolude
+import           Data.Aeson  
+import           Protolude hiding (all)
+import           Qi.AWS.Resource
 import           Qi.AWS.Types
+import           Qi.AWS.IAM
+import           Qi.AWS.ARN
 import           Qi.Config
 import           Stratosphere
-
-
-lambdaBasicExecutionIAMRoleLogicalName :: Text
-lambdaBasicExecutionIAMRoleLogicalName = "lambdaBasicExecutionRole"
-
--- authenticatedIAMRoleLogicalName :: Text
--- authenticatedIAMRoleLogicalName = "authenticatedIAMRole"
 
 
 toResources
   :: Config
   -> Resources
-toResources Config{ _appName } = Resources [lbdRoleRes]
+toResources config@Config{ _appName } = Resources $ toResource <$> roles
+
   where
-    lbdRoleRes = case mkLogicalId "LambdaBasicExecutionRole" of
-      -- TODO: Hack, get the physical ids for this some other way
-      Left err -> panic err
-      Right (lid :: LogicalId 'IAMRoleResource) ->
-        resource lambdaBasicExecutionIAMRoleLogicalName $
-          iamRole rolePolicyDocumentObject
-          & iamrPolicies ?~ [ executePolicy ]
-          & iamrRoleName ?~ Literal (show lid)
-          & iamrPath ?~ "/"
+    roles = all config
+
+    toResource (lid, IamRole{ principalArn }) =
+      let res = resource (show lid) $
+                  iamRole rolePolicyDocumentObject
+                  & iamrPolicies ?~ [ executePolicy ]
+                  & iamrRoleName ?~ Literal (show $ toPhysicalId _appName lid)
+                  & iamrPath ?~ "/"
+      in res -- & resourceDependsOn ?~ reqs
+
 
       where
+        -- reqs = [ "myEventLambdaLambda" ]
+
         rolePolicyDocumentObject =
           [ ("Version", "2012-10-17")
-          , ("Statement", statement)
+          , ("Statement", rolePolicyStatement)
           ]
 
-          where
-            statement = object
-              [ ("Effect", "Allow")
-              , ("Principal", principal)
-              , ("Action", "sts:AssumeRole")
-              ]
+        rolePolicyStatement = object
+          [ ("Effect", "Allow")
+          , ("Principal", principal)
+          , ("Action", "sts:AssumeRole")
+          ]
 
-            principal = object
-              [ ("Service", "lambda.amazonaws.com") ]
+        -- NOTE: it seems like we cannot use a specific lambda's ARN here. This may be ok
+        -- since we attach a particular role to a particular lambda anyway
+        -- (and we have one role per lambda)
+        -- principal = object [ ("AWS", String "arn:aws:lambda:us-east-1:445506728970:function:echo-access" )] -- toJSON principalArn) ]
+        -- principal = object [ ("AWS", toJSON principalArn) ]
+        principal = object [ ("Service", String $ toToken (service principalArn) <> ".amazonaws.com") ]
+          -- [ ("Service", "lambda.amazonaws.com")]
+          -- , ("Service", "firehose.amazonaws.com") ]
 
-      -- TODO: Hack, get the physical ids for this some other way
-        executePolicy = case mkLogicalId "LambdaExecutionPolicy" of
-                          Left err -> panic err
-                          Right (lid :: LogicalId 'IAMPolicyResource) ->
-                            iamRolePolicy
+        executePolicy = iamRolePolicy
                             [ ("Version", "2012-10-17")
-                            , ("Statement", statement)
+                            , ("Statement", execStatement)
                             ] $
-                            Literal . show $ toPhysicalId _appName lid
-
+                            Literal $ show lid <> "Policy"
 
           where
-            statement = object
+            execStatement = object
               [ ("Effect", "Allow")
               , ("Action", actions)
               , ("Resource", "*")
@@ -93,6 +92,7 @@ toResources Config{ _appName } = Resources [lbdRoleRes]
               , "s3:RestoreObject"
               , "s3:CreateBucket"
               , "s3:DeleteBucket"
+              , "s3:GetBucketLocation"
               , "s3:ListBucket"
               , "s3:ListBucketVersions"
               , "s3:ListAllMyBuckets"
@@ -127,6 +127,8 @@ toResources Config{ _appName } = Resources [lbdRoleRes]
               , "lambda:InvokeFunction"
 
               , "lex:*"
+
+              , "firehose:*"
               ]
 
 

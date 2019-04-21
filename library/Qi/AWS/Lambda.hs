@@ -20,6 +20,9 @@ import           Qi.Program.Gen.Lang
 import           Qi.Program.S3.Lang         (S3Eff, S3LambdaProgram)
 import           Stratosphere
 import           Qi.AWS.Types
+import           Qi.AWS.IAM
+import           Qi.Program.KF.Lang (KfEff)
+import           Qi.AWS.CW                     (CwEvent, CwLambdaProgram)
 
 
 type LambdaId = LogicalId 'LambdaResource
@@ -34,20 +37,30 @@ instance Default LambdaConfig where
   }
 
 
--- TODO: turn this into a good sum type
+-- TODO: FIX this: turn this into a good sum type
 data Lambda =
     forall a b
   . (FromJSON a, ToJSON b)
   => GenericLambda {
-    _lbdProfile              :: LambdaProfile
-  , _lbdInputProxy           :: Proxy a
-  , _lbdOutputProxy          :: Proxy b
-  , _lbdGenericLambdaProgram :: forall effs . Members '[ GenEff, S3Eff ] effs => a -> Eff effs b
-  }
+      _lbdRole                 :: RoleId
+    , _lbdProfile              :: LambdaProfile
+    , _lbdInputProxy           :: Proxy a
+    , _lbdOutputProxy          :: Proxy b
+    , _lbdGenericLambdaProgram :: forall effs . Members '[ GenEff, S3Eff ] effs
+                                  => a -> Eff effs b
+    }
   | S3BucketLambda {
-    _lbdProfile               :: LambdaProfile
-  , _lbdS3BucketLambdaProgram :: forall effs . Members '[ GenEff, S3Eff ] effs => S3LambdaProgram effs
-  }
+      _lbdRole                  :: RoleId
+    , _lbdProfile               :: LambdaProfile
+    , _lbdS3BucketLambdaProgram :: forall effs . Members '[ GenEff, S3Eff ] effs
+                                   => S3LambdaProgram effs
+    }
+  | CwEventLambda {
+      _lbdRole                  :: RoleId
+    , _lbdProfile               :: LambdaProfile
+    , _lbdCwLambdaProgram       :: forall effs . Members '[ GenEff, KfEff ] effs
+                                   => CwLambdaProgram effs
+    }
 
 
 instance Eq Lambda where
@@ -56,6 +69,7 @@ instance Eq Lambda where
 instance Show Lambda where
   show GenericLambda{}  = "GenericLambda"
   show S3BucketLambda{} = "S3BucketLambda"
+  show CwEventLambda{}  = "CwEventLambda"
 
 data LambdaPermission
 

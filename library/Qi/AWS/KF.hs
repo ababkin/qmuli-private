@@ -14,6 +14,7 @@ import qualified Data.HashMap.Strict as SHM
 import           GHC.Show            (Show (..))
 import           Protolude
 import           Qi.AWS.Types
+import           Qi.AWS.IAM
 import Qi.AWS.S3
 
 
@@ -30,14 +31,10 @@ instance Default KfConfig where
 
 data Kf = Kf {
     _kfProfile :: KfProfile
-  , _kfBucket :: S3BucketId
+  , _kfRole    :: RoleId
+  , _kfBucket  :: S3BucketId
   }
   deriving (Eq, Show)
--- instance Default Kf where
---   def = Kf {
---       _kfName         = "default"
---     , _kfProfile      = def
---     }
 
 data KfProfile = KfProfile
   { _kfpExistence    :: ResourceExistence

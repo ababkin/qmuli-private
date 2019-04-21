@@ -54,8 +54,9 @@ data AwsResourceType =
   | KinesisFirehoseResource
   | LambdaResource
   | LambdaPermissionResource
-  | IAMRoleResource
-  | IAMPolicyResource
+  | IamRoleResource
+  | CwEventsRuleResource
+  -- | IamPolicyResource
   deriving (Eq, Show)
 
 data ResourceExistence = AlreadyExists | ShouldCreate
@@ -93,10 +94,12 @@ instance Show (LogicalId 'LambdaPermissionResource) where
   show (LogicalId t) = toS t <> "LambdaPermission"
 instance Show (LogicalId 'KinesisFirehoseResource) where
   show (LogicalId t) = toS t <> "KinesisFirehose"
-instance Show (LogicalId 'IAMRoleResource) where
+instance Show (LogicalId 'IamRoleResource) where
   show (LogicalId t) = toS t <> "IAMRole"
-instance Show (LogicalId 'IAMPolicyResource) where
-  show (LogicalId t) = toS t <> "IAMPolicy"
+instance Show (LogicalId 'CwEventsRuleResource) where
+  show (LogicalId t) = toS t <> "CloudWatchEventsRule"
+-- instance Show (LogicalId 'IamPolicyResource) where
+  -- show (LogicalId t) = toS t <> "IAMPolicy"
 
 -- TODO: I think I need to remove this
 mkLogicalId :: Text -> Either Text (LogicalId r)
@@ -113,10 +116,12 @@ instance Show (PhysicalId 'LambdaPermissionResource) where
   show (PhysicalId appName id) = P.show appName <> "." <> toS id <> "." <> "lambda-permission"
 instance Show (PhysicalId 'KinesisFirehoseResource) where
   show (PhysicalId appName id) = P.show appName <> "." <> toS id <> "." <> "kinesis-firehose"
-instance Show (PhysicalId 'IAMRoleResource) where
+instance Show (PhysicalId 'IamRoleResource) where
   show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "iam-role"
-instance Show (PhysicalId 'IAMPolicyResource) where
-  show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "iam-policy"
+instance Show (PhysicalId 'CwEventsRuleResource) where
+  show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "cloud-watch-events-rule"
+-- instance Show (PhysicalId 'IamPolicyResource) where
+  -- show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "iam-policy"
 
 mkPhysicalId :: AppName -> Text -> Either Text (PhysicalId rt)
 mkPhysicalId appName t = Right $ PhysicalId appName t

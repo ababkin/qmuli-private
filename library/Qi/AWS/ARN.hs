@@ -7,9 +7,9 @@
 {-# LANGUAGE DeriveAnyClass #-}
 
 module Qi.AWS.ARN (
-    Arn
+    Arn(service)
   , ToArn(..)
-  -- , mkS3ObjectArn
+  , ArnToken(..)
   ) where
 
 import           Control.Monad.Fail
@@ -22,6 +22,9 @@ import           Qi.AWS.Types
 import GHC.Show (Show(..))
 import           Control.Lens
 
+
+type KfId = LogicalId 'KinesisFirehoseResource
+type LambdaId = LogicalId 'LambdaResource
 
 class ArnToken a where
   toToken :: a -> Text
@@ -40,19 +43,19 @@ instance ArnToken ArnPartition where
 
 data Service =
     S3
-  | KF
+  | Kf
   | Dynamo
   | Lambda
   deriving (Eq, Show)
 
 instance ArnToken Service where
         toToken S3     = "s3"
-        toToken KF     = "firehose"
+        toToken Kf     = "firehose"
         toToken Dynamo = "dynamodb"
         toToken Lambda = "lambda"
 
         fromToken "s3"       = Just S3
-        fromToken "firehose" = Just KF
+        fromToken "firehose" = Just Kf
         fromToken "dynamodb" = Just Dynamo
         fromToken "lambda"   = Just Lambda
         fromToken _          = Nothing
@@ -67,11 +70,15 @@ data Arn = Arn
 
 instance Show Arn where
   show Arn{ partition, service, region, resource } = toS $ mconcat
-        [ toToken partition
+        [ "arn"
+        , ":"
+        , toToken partition
         , ":"
         , toToken service
         , ":"
         , toToken region
+        , ":"
+        , "445506728970" -- account id
         , ":"
         , toToken resource
         ]
@@ -80,15 +87,14 @@ instance ToJSON Arn where
 instance FromJSON Arn where
   parseJSON = withText "Arn" $ \t ->
     case T.splitOn ":" t of
-      partition' : service' : region' : resource' ->
+      "arn" : partition' : service' : region' : resource' ->
         case Arn <$> fromToken partition'
-                <*> fromToken service'
-                <*> fromToken region'
-                <*> Just ( mconcat $ intersperse ":" resource' ) of
+                 <*> fromToken service'
+                 <*> fromToken region'
+                 <*> Just ( mconcat $ intersperse ":" resource' ) of
           Just arn -> pure arn
-          Nothing  -> fail "could not parse Arn"
+          Nothing  -> fail $ "could not parse Arn: " <> show t
       _ -> fail "could not parse Arn"
-
 
 
 -- arn:aws:s3:::my_corporate_bucket/exampleobject.png
@@ -105,6 +111,9 @@ instance FromJSON Arn where
 --   where
 --     arnRes = P.show s3BucketPhysicalId <> "/" <> key
 
+
+-- NOTE: for referring to ARNs while rendering CF template use this:
+-- `(GetAtt (show logicalId) "Arn") `
 class ToArn a where
   toArn :: a -> AppName -> Arn
 
@@ -112,7 +121,7 @@ instance ToArn S3BucketId where
   toArn id appName = Arn {
       partition = AwsPartition
     , service = S3
-    , region = ""
+    , region  = ""
     , resource = P.show $ toPhysicalId appName id
     }
 
@@ -120,10 +129,26 @@ instance ToArn S3Object where
   toArn s3obj appName = Arn {
       partition = AwsPartition
     , service = S3
-    , region = ""
+    , region  = ""
     , resource = arnRes
     }
     where
-      bucketId =  s3obj ^. s3oBucketId
-      objKey =  s3obj ^. s3oKey
+      bucketId = s3obj ^. s3oBucketId
+      objKey = s3obj ^. s3oKey
       arnRes = P.show (toPhysicalId appName bucketId) <> "/" <> P.show objKey
+
+instance ToArn LambdaId where
+  toArn id appName = Arn {
+      partition = AwsPartition
+    , service = Lambda
+    , region  = "us-east-1"
+    , resource = "function:" <> P.show (toPhysicalId appName id)
+    }
+
+instance ToArn KfId where
+  toArn id appName = Arn {
+      partition = AwsPartition
+    , service = Kf
+    , region  = ""
+    , resource = "deliverystream" <> P.show (toPhysicalId appName id)
+    }

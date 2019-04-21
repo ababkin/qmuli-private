@@ -1,12 +1,4 @@
-{-# LANGUAGE DataKinds                  #-}
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE GADTs                      #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE LambdaCase                 #-}
-{-# LANGUAGE NamedFieldPuns             #-}
 {-# LANGUAGE OverloadedLists            #-}
-{-# LANGUAGE RankNTypes                 #-}
-{-# LANGUAGE TypeOperators              #-}
 
 
 module Qi.Program.Lambda.Ipret.Gen  where

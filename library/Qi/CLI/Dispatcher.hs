@@ -141,6 +141,10 @@ withConfig configProgram = do
                       _lbdS3BucketLambdaProgram
                       $ parseEither S3Event.parse =<< eitherDecode (toS req)
 
+            CwEventLambda{ _lbdCwLambdaProgram } ->
+              either  (reportBadArgument "CW")
+                      _lbdCwLambdaProgram
+                      $ eitherDecode (toS req)
 
 deployApp
   :: Members '[ S3Eff, GenEff, ConfigEff ] effs

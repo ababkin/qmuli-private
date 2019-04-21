@@ -51,13 +51,15 @@ spec = parallel $
         bucketName = "mybucket"
         lambdaName = "mylambda"
         lambdaProgram _ = pure "blah"
+        roleName = "myExecRole"
 
     describe "inserts an S3 bucket, lambda into the S3 config and attaches them correctly" $ do
 
       let expectedLambdaLogicalId = lambdaName <> "Lambda"
           config = runConfig $ do
-                        bid <- s3Bucket bucketName def
-                        void $ s3BucketLambda lambdaName bid lambdaProgram $
+                        bucketId <- s3Bucket bucketName def
+                        roleId <- iamRole roleName
+                        void $ s3BucketLambda lambdaName roleId bucketId lambdaProgram $
                                 def & lpMemorySize .~ M1536
 
           runConfig configProgram =

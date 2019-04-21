@@ -38,7 +38,7 @@ main = withConfig config
         def & lpMemorySize .~ M1536
 
     copyContentsLambda
-      :: (Member S3Eff effs, Member GenEff effs)
+      :: Members [S3Eff, GenEff] effs
       => S3BucketId
       -> S3LambdaProgram effs
     copyContentsLambda sinkBucketId = lbd

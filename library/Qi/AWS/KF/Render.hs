@@ -5,11 +5,6 @@ module Qi.AWS.KF.Render (toResources) where
 import           Data.Aeson
 import           Control.Lens
 import           Protolude        hiding (all)
-import           Qi.AWS.Resource
-import           Qi.AWS.ARN
-import           Qi.AWS.Types
-import           Qi.Config
-import           Qi.AWS.KF
 import           Stratosphere
 import qualified Stratosphere     as S (kfdsDeliveryStreamName,
                                         kfdsDeliveryStreamType,
@@ -20,6 +15,12 @@ import qualified Stratosphere     as S (kfdsDeliveryStreamName,
                                         kinesisFirehoseDeliveryStreamS3DestinationConfiguration,
                                         resource, resourceDependsOn)
 
+import           Qi.AWS.Resource
+import           Qi.AWS.ARN
+import           Qi.AWS.Types
+import           Qi.Config
+import           Qi.AWS.KF
+
 
 toResources
   :: Config
@@ -28,7 +29,7 @@ toResources config@Config{ _appName } = Resources $ toResource <$> kfs
   where
     kfs = all config
 
-    toResource (lid, Kf{ _kfBucket }) = (
+    toResource (lid, Kf{ _kfRole, _kfBucket }) = (
       S.resource (show lid) $
         -- https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-kinesisfirehose-deliverystream.html
         S.kinesisFirehoseDeliveryStream
@@ -53,14 +54,14 @@ toResources config@Config{ _appName } = Resources $ toResource <$> kfs
                   {- & kfdssdcEncryptionConfiguration ?~ -}
                    & kfdssdcPrefix ?~ prefix
 
-        bucketArn = Literal . show $ toArn _kfBucket _appName
+        bucketArn = GetAtt (show _kfBucket) "Arn" -- Literal . show $ toArn _kfBucket _appName
         -- TODO: put this in profile
-        bufferingHints = KinesisFirehoseDeliveryStreamBufferingHints (Literal 1) (Literal 3) -- & kfdsbhIntervalInSeconds ?~ Literal 1
+        bufferingHints = KinesisFirehoseDeliveryStreamBufferingHints (Literal 60) (Literal 1) -- & kfdsbhIntervalInSeconds ?~ Literal 1
                                                                       -- & kfdsbhSizeInMBs .~ Literal 3
         compressionFormat = Literal KFS3Uncompressed
 
         -- The ARN of an AWS Identity and Access Management (IAM) role that grants Kinesis Data Firehose access to your Amazon S3 bucket and AWS KMS (if you enable data encryption).
-        roleArn = Literal "aws:iam::testapp.mykftos3.role"
+        roleArn = GetAtt (show _kfRole) "Arn"
 
         -- A prefix that Kinesis Data Firehose adds to the files that it delivers to the Amazon S3 bucket. The prefix helps you identify the files that Kinesis Data Firehose delivered.
         prefix = "mydata"

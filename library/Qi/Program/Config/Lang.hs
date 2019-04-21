@@ -14,13 +14,16 @@ import           Qi.Config              (Config)
 import           Qi.AWS.Lambda       (LambdaProfile)
 import           Qi.AWS.S3           (S3BucketProfile)
 import           Qi.AWS.KF
+import           Qi.AWS.CW
+import           Qi.AWS.IAM
 import           Qi.Core.Curry
 import           Qi.Program.Gen.Lang
 import           Qi.Program.S3.Lang
+import           Qi.Program.KF.Lang
 import           Qi.AWS.Types
 
 
-type LambdaId = LogicalId 'LambdaResource
+-- type LambdaId = LogicalId 'LambdaResource
 type S3BucketId = LogicalId 'S3BucketResource
 
 -- data ConfigError = NameAlreadyUsed
@@ -40,7 +43,7 @@ data ConfigEff r where
     => Proxy a
     -> Proxy b
     -> Text
-    -> (forall effs . (Member GenEff effs, Member S3Eff effs) => a -> Eff effs b)
+    -> (forall effs . Members [GenEff, S3Eff] effs => a -> Eff effs b)
     -> LambdaProfile
     -> ConfigEff LambdaId
 
@@ -53,7 +56,14 @@ data ConfigEff r where
   RegS3BucketLambda
     :: Text
     -> S3BucketId
-    -> (forall effs . (Member GenEff effs, Member S3Eff effs) => S3LambdaProgram effs)
+    -> (forall effs . Members [GenEff, S3Eff] effs => S3LambdaProgram effs)
+    -> LambdaProfile
+    -> ConfigEff LambdaId
+
+  RegCwEventLambda
+    :: Text
+    -> CwEventsRuleProfile
+    -> (forall effs . Members [GenEff, KfEff] effs => CwLambdaProgram effs)
     -> LambdaProfile
     -> ConfigEff LambdaId
 
@@ -97,6 +107,17 @@ s3BucketLambda
 s3BucketLambda name bucketId f =
   send . RegS3BucketLambda name bucketId f
 
+cwEventLambda
+  :: forall resEffs
+  .  (Member ConfigEff resEffs)
+  => Text
+  -> CwEventsRuleProfile
+  -> (forall effs . (Members [GenEff, KfEff] effs) => CwLambdaProgram effs)
+  -> LambdaProfile
+  -> Eff resEffs LambdaId
+cwEventLambda name ruleProfile f =
+  send . RegCwEventLambda name ruleProfile f
+
 s3Kf
   :: forall resEffs
   .  (Member ConfigEff resEffs)
@@ -105,3 +126,4 @@ s3Kf
   -> Eff resEffs KfId
 s3Kf name =
   send . RegS3BucketKf name
+

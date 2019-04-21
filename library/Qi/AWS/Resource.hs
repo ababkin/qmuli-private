@@ -18,6 +18,8 @@ import           Qi.Config
 import Qi.AWS.S3
 import Qi.AWS.Lambda
 import Qi.AWS.KF
+import Qi.AWS.IAM
+import Qi.AWS.CW
 
 
 class (Show (LogicalId (ResourceType r)), Hashable (LogicalId (ResourceType r))) => AwsResource r where
@@ -57,3 +59,13 @@ type S3BucketId = LogicalId (ResourceType S3Bucket)
 instance AwsResource S3Bucket where
   type ResourceType S3Bucket = 'S3BucketResource
   mapping = view $ s3Config . s3IdToBucket
+
+type RoleId = LogicalId (ResourceType IamRole)
+instance AwsResource IamRole where
+  type ResourceType IamRole = 'IamRoleResource
+  mapping = view $ iamConfig . idToRole
+
+type CwEventsRuleId = LogicalId (ResourceType CwEventsRule)
+instance AwsResource CwEventsRule where
+  type ResourceType CwEventsRule = 'CwEventsRuleResource
+  mapping = view $ cwConfig . ccRules

@@ -21,13 +21,23 @@ import qualified Qi.Program.Lambda.Ipret.Gen   as Lbd
 import           Qi.Program.Lambda.Lang        (LambdaEff)
 import qualified Qi.Program.S3.Ipret.Gen       as S3
 import           Qi.Program.S3.Lang            (S3Eff)
+import qualified Qi.Program.KF.Ipret.Gen       as Kf
+import           Qi.Program.KF.Lang            (KfEff)
 
 
 run
   :: Config
   -> AwsMode
   -> IO Logger
-  -> (Eff '[CfEff, S3Eff, LambdaEff, GenEff, ConfigEff, State Config, IO] a -> IO a)
+  -> (Eff '[ CfEff
+           , S3Eff
+           , KfEff
+           , LambdaEff
+           , GenEff
+           , ConfigEff
+           , State Config
+           , IO
+           ] a -> IO a)
 run config awsMode mkLogger =
     runM
   . map fst
@@ -35,5 +45,6 @@ run config awsMode mkLogger =
   . Config.run
   . Gen.run awsMode mkLogger
   . Lbd.run
+  . Kf.run
   . S3.run
   . CF.run
