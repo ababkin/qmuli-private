@@ -11,23 +11,19 @@ import           Protolude
 import           Polysemy
 
 import           Qi.Config              (Config)
-import           Qi.AWS.Lambda       (LambdaProfile)
+import           Qi.AWS.Lambda       (LambdaProfile, AllLambdaEffects)
 import           Qi.AWS.S3           (S3BucketProfile)
 import           Qi.AWS.KF
-import           Qi.AWS.CW
+import           Qi.AWS.CW (CwLambdaProgram, CwEventsRuleProfile)
 import           Qi.AWS.IAM
 import           Qi.Program.Gen.Lang
 import           Qi.Program.S3.Lang
 import           Qi.Program.KF.Lang
+import           Qi.Program.Lambda.Lang
 import           Qi.AWS.Types
 
 
 type S3BucketId = LogicalId 'S3BucketResource
-
-type AllLambdaEffects effs = ( Member GenEff effs
-                             , Member KfEff effs
-                             , Member S3Eff effs
-                             )
 
 data ConfigEff m r where
 

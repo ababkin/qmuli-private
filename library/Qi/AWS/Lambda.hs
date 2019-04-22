@@ -24,13 +24,13 @@ import           Qi.AWS.Types
 import           Qi.AWS.IAM
 import           Qi.Program.KF.Lang (KfEff)
 import           Qi.AWS.CW                     (CwEvent, CwLambdaProgram)
+import           Qi.Program.Lambda.Lang
 
-
-type LambdaId = LogicalId 'LambdaResource
 
 type AllLambdaEffects effs = ( Member GenEff effs
                              , Member KfEff effs
                              , Member S3Eff effs
+                             , Member LambdaEff effs
                              )
 
 data LambdaConfig = LambdaConfig {

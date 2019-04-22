@@ -13,14 +13,14 @@ import           Protolude                 hiding (State, get, gets, modify,
 import           Polysemy
 import           Polysemy.State
 
-import           Qi.AWS.Lambda             hiding (LambdaId)
+import           Qi.AWS.Lambda 
 import           Qi.AWS.S3
 import           Qi.AWS.KF
 import           Qi.AWS.CW
 import           Qi.AWS.IAM
 import           Qi.AWS.Types
 import           Qi.Config
-import qualified          Qi.Program.Config.Lang as Lang
+import qualified Qi.Program.Config.Lang as Lang
 import           Qi.AWS.ARN
 
 
