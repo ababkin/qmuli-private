@@ -4,12 +4,13 @@ module Qi.Test.Config.Render where
 
 import Data.Aeson
 import           Control.Lens
-import           Control.Monad.Freer
-import           Control.Monad.Freer.State
 import           Data.Default                          (def)
 import qualified Data.HashMap.Strict                   as SHM
 import           Protolude                             hiding (State, get, put,
                                                         runState)
+import Polysemy
+import Polysemy.State (runState)
+
 import           Qi.AWS.Lambda
 import qualified Qi.AWS.Lambda.Render                  as Lambda
 import qualified Qi.AWS.LambdaPermission.Render        as LambdaPermission
@@ -51,19 +52,17 @@ spec = parallel $
         bucketName = "mybucket"
         lambdaName = "mylambda"
         lambdaProgram _ = pure "blah"
-        roleName = "myExecRole"
 
     describe "inserts an S3 bucket, lambda into the S3 config and attaches them correctly" $ do
 
       let expectedLambdaLogicalId = lambdaName <> "Lambda"
           config = runConfig $ do
                         bucketId <- s3Bucket bucketName def
-                        roleId <- iamRole roleName
-                        void $ s3BucketLambda lambdaName roleId bucketId lambdaProgram $
+                        void $ s3BucketLambda lambdaName bucketId lambdaProgram $
                                 def & lpMemorySize .~ M1536
 
           runConfig configProgram =
-                snd
+                fst
               . run
               . runState (mkConfig appName)
               $ Config.run configProgram

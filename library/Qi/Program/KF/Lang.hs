@@ -21,11 +21,3 @@ data KfEff m r where
     -> KfEff m ()
 
 makeSem ''KfEff
-
--- put
---   :: (Member KfEff effs, ToJSON a)
---   => KfId
---   -> a
---   -> Eff effs ()
--- put id =
---   send . Put id

@@ -27,22 +27,3 @@ data LambdaEff m r where
     -> LambdaEff m ()
 
 makeSem ''LambdaEff
-
--- invoke
---   :: (Member LambdaEff effs, ToJSON a)
---   => LambdaId
---   -> a
---   -> Eff effs ()
--- invoke =
---   send .: Invoke
-
-
--- update
---   :: (Member LambdaEff effs)
---   => LambdaId
---   -> S3Object
---   -> Eff effs ()
--- update =
---   send .: Update
-
-

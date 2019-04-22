@@ -6,11 +6,12 @@ module Qi.Test.Config.Render.KF where
 
 import Data.Aeson
 import           Control.Lens
-import           Control.Monad.Freer
-import           Control.Monad.Freer.State
 import           Data.Default                          (def)
 import           Protolude                             hiding (State, get, put,
                                                         runState)
+import Polysemy
+import Polysemy.State (runState)
+
 import           Qi.AWS.Resource
 import           Qi.AWS.S3
 import qualified Qi.AWS.S3.Render                      as S3
@@ -36,25 +37,23 @@ spec = parallel $
   describe "ConfigEff" $ do
     let Right appName = mkAppName "testapp"
         bucketName = "mybucket"
-        roleName = "mykfrole"
         kfName = "mykf"
 
     describe "renders a CF stack spec with KF" $ do
 
       let config = runConfig $ do
                      bucketId <- Config.s3Bucket bucketName def
-                     roleId <- Config.iamRole roleName
-                     Config.s3Kf kfName roleId bucketId
+                     Config.s3BucketKf kfName bucketId
 
           runConfig configProgram =
-                snd
+                fst
               . run
               . runState (mkConfig appName)
               $ Config.run configProgram
 
       it "KF resource is rendered correctly" $ do
         let expectedBucketLogicalId = bucketName <> "S3Bucket"
-            expectedRoleLogicalId = roleName <> "IAMRole"
+            expectedRoleLogicalId = kfName <> "IAMRole"
             expectedKfLogicalId = kfName <> "KinesisFirehose"
             expectedKfPhysicalId = show appName <> "." <> kfName <> ".kinesis-firehose"
             expectedBucketArn = arnRef expectedBucketLogicalId

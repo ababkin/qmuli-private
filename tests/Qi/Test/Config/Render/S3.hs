@@ -5,12 +5,13 @@ module Qi.Test.Config.Render.S3 where
 
 import Data.Aeson
 import           Control.Lens
-import           Control.Monad.Freer
-import           Control.Monad.Freer.State
 import           Data.Default                          (def)
 import qualified Data.HashMap.Strict                   as SHM
 import           Protolude                             hiding (State, get, put,
                                                         runState)
+import Polysemy
+import Polysemy.State (runState)
+
 import           Qi.AWS.Resource
 import           Qi.AWS.S3
 import qualified Qi.AWS.S3.Render                      as S3
@@ -39,7 +40,7 @@ spec = parallel $
                      Config.s3Bucket bucketName def
 
           runConfig configProgram =
-                snd
+                fst
               . run
               . runState (mkConfig appName)
               $ Config.run configProgram

@@ -27,7 +27,11 @@ import           Qi.AWS.CW                     (CwEvent, CwLambdaProgram)
 
 
 type LambdaId = LogicalId 'LambdaResource
-type AllLambdaEffects effs = (Member GenEff effs, Member KfEff effs, Member S3Eff effs)
+
+type AllLambdaEffects effs = ( Member GenEff effs
+                             , Member KfEff effs
+                             , Member S3Eff effs
+                             )
 
 data LambdaConfig = LambdaConfig {
     _lbdIdToLambda :: HashMap LambdaId Lambda

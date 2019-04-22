@@ -23,7 +23,11 @@ import           Qi.AWS.Types
 
 
 type S3BucketId = LogicalId 'S3BucketResource
-type AllLambdaEffects effs = (Member GenEff effs, Member KfEff effs, Member S3Eff effs)
+
+type AllLambdaEffects effs = ( Member GenEff effs
+                             , Member KfEff effs
+                             , Member S3Eff effs
+                             )
 
 data ConfigEff m r where
 
@@ -66,57 +70,3 @@ data ConfigEff m r where
 
 makeSem ''ConfigEff
 
--- getConfig
---   :: forall effs
---   .  (Member ConfigEff effs)
---   => Eff effs Config
--- getConfig = send GetConfig
-
--- genericLambda
---   :: forall a b resEffs
---   .  (Member ConfigEff resEffs, FromJSON a, ToJSON b)
---   => Text
---   -> (forall effs . (Member GenEff effs, Member S3Eff effs) => a -> Eff effs b)
---   -> LambdaProfile
---   -> Eff resEffs LambdaId
--- genericLambda name f =
---   send . RegGenericLambda (Proxy :: Proxy a) (Proxy :: Proxy b) name f
-
--- s3Bucket
---   :: (Member ConfigEff effs)
---   => Text
---   -> S3BucketProfile
---   -> Eff effs S3BucketId
--- s3Bucket =
---   send .: RegS3Bucket
-
--- s3BucketLambda
---   :: forall resEffs
---   .  (Member ConfigEff resEffs)
---   => Text
---   -> S3BucketId
---   -> (forall effs . (Member GenEff effs, Member S3Eff effs) => S3LambdaProgram effs)
---   -> LambdaProfile
---   -> Eff resEffs LambdaId
--- s3BucketLambda name bucketId f =
---   send . RegS3BucketLambda name bucketId f
-
--- cwEventLambda
---   :: forall resEffs
---   .  (Member ConfigEff resEffs)
---   => Text
---   -> CwEventsRuleProfile
---   -> (forall effs . (Members [GenEff, KfEff] effs) => CwLambdaProgram effs)
---   -> LambdaProfile
---   -> Eff resEffs LambdaId
--- cwEventLambda name ruleProfile f =
---   send . RegCwEventLambda name ruleProfile f
-
--- s3Kf
---   :: forall resEffs
---   .  (Member ConfigEff resEffs)
---   => Text
---   -> S3BucketId
---   -> Eff resEffs KfId
--- s3Kf =
---   send .: RegS3BucketKf
