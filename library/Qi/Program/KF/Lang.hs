@@ -4,7 +4,6 @@ module Qi.Program.KF.Lang where
 
 import           Data.Aeson          (ToJSON)
 import           Protolude
-import           Data.Composition
 import           Polysemy
 
 import           Qi.AWS.S3

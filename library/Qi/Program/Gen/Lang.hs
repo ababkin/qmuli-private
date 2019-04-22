@@ -2,7 +2,6 @@
 
 module Qi.Program.Gen.Lang where
 
--- import           Control.Monad.Freer
 import qualified Control.Monad.Trans.AWS as AWS (send)
 import           Data.Aeson              (FromJSON, ToJSON, Value)
 import qualified Data.ByteString         as BS

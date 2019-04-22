@@ -14,6 +14,7 @@ import           Qi.AWS.Types
 import           Qi.Config
 import qualified Qi.Program.Config.Ipret.State as Config
 import           Qi.Program.Config.Lang (s3Bucket, getConfig)
+import           Qi.Program.S3.Lang (getContent)
 import qualified Qi.Program.Wiring.IO          as IO
 import           Qi.Test.Logger
 import           Test.Tasty.Hspec
@@ -26,7 +27,8 @@ spec = parallel $
       let bucketName = "mybucket"
           Right initialConfig = mkConfig <$> mkAppName "testApp"
           exec = IO.run initialConfig LocalStack mkTestLogger $ do
-            s3Bucket bucketName def
+            bucketId <- s3Bucket bucketName def
+            -- getContent $ S3Object bucketId (S3Key "someKey")
             getConfig
 
           expected = initialConfig & s3Config . s3IdToBucket .~ expectedS3Buckets

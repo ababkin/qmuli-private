@@ -18,7 +18,6 @@ import           Data.Aeson                 hiding ((.:))
 import qualified Data.ByteString.Lazy       as LBS
 import           Data.HashMap.Strict        (fromList)
 import           Data.Map                   (Map)
-import           Data.Composition
 import           Network.AWS.CloudFormation (StackStatus (..))
 import           Network.AWS.S3.Types       (ETag)
 import           Protolude

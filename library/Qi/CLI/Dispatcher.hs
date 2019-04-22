@@ -75,8 +75,7 @@ withConfig configProgram = do
           let appName = toAppName pid
               lambdaLogicalId = toLogicalId pid
               config = runConfig appName
-              runLambda = IO.run config RealDeal mkLambdaLogger
-          either panic (loop config lambdaLogicalId runLambda) =<< getEndpoint
+          either panic (loop config lambdaLogicalId) =<< getEndpoint
 
 
     Management ManagementOptions{ appName, cmd, awsMode } -> do
@@ -106,49 +105,48 @@ withConfig configProgram = do
 
   where
     -- this loops over accumulated lambda calls and handles them
-    loop config lid runLambda endpoint = loop'
+    loop config lid endpoint = loop'
       where
         loop' = do
           req' <- getWithRetries 3 endpoint
-          pass
-        --   case req' of
-        --     SuccessResponse HandlerRequest{ payload, requestId } -> do
-        --       resp <- runLambda $ lbdHandler payload
-        --       respond endpoint requestId $ SuccessHandlerResponse (toS resp) (Just "application/json")
-        --       loop'
+          case req' of
+            SuccessResponse HandlerRequest{ payload, requestId } -> do
+              resp <- IO.run config RealDeal mkLambdaLogger $ lbdHandler payload
+              respond endpoint requestId $ SuccessHandlerResponse (toS resp) (Just "application/json")
+              loop'
 
-        --     ErrorResponse code ->
-        --       case code of
-        --         ErrorCode (-1) ->
-        --           panic ("Failed to send HTTP request to retrieve next task." :: Text)
-        --         _ -> do
-        --           print ("HTTP request was not successful. HTTP response code: " <>
-        --              show code <>
-        --              ". Retrying.." :: Text)
-        --           loop'
+            ErrorResponse code ->
+              case code of
+                ErrorCode (-1) ->
+                  panic ("Failed to send HTTP request to retrieve next task." :: Text)
+                _ -> do
+                  print ("HTTP request was not successful. HTTP response code: " <>
+                     show code <>
+                     ". Retrying.." :: Text)
+                  loop'
 
 
-        -- lbdHandler req =
-        --   let reportBadArgument lbdType err =
-        --         panic $ "Could not parse event: '" <> toS req <>
-        --           "', for lambda type: '" <> lbdType <> "' error was: '" <> toS err <> "'"
-        --   in
-        --   case getById config lid of
+        lbdHandler req =
+          let reportBadArgument lbdType err =
+                panic $ "Could not parse event: '" <> toS req <>
+                  "', for lambda type: '" <> lbdType <> "' error was: '" <> toS err <> "'"
+          in
+          case getById config lid of
 
-        --     GenericLambda{ _lbdGenericLambdaProgram } ->
-        --       either  (reportBadArgument "Generic")
-        --               (map encode . _lbdGenericLambdaProgram)
-        --               $ eitherDecode (toS req)
+            GenericLambda{ _lbdGenericLambdaProgram } ->
+              either  (reportBadArgument "Generic")
+                      (map encode . _lbdGenericLambdaProgram)
+                      $ eitherDecode (toS req)
 
-        --     S3BucketLambda{ _lbdS3BucketLambdaProgram } ->
-        --       either  (reportBadArgument "S3")
-        --               _lbdS3BucketLambdaProgram
-        --               $ parseEither S3Event.parse =<< eitherDecode (toS req)
+            S3BucketLambda{ _lbdS3BucketLambdaProgram } ->
+              either  (reportBadArgument "S3")
+                      _lbdS3BucketLambdaProgram
+                      $ parseEither S3Event.parse =<< eitherDecode (toS req)
 
-        --     CwEventLambda{ _lbdCwLambdaProgram } ->
-        --       either  (reportBadArgument "CW")
-        --               _lbdCwLambdaProgram
-        --               $ eitherDecode (toS req)
+            CwEventLambda{ _lbdCwLambdaProgram } ->
+              either  (reportBadArgument "CW")
+                      _lbdCwLambdaProgram
+                      $ eitherDecode (toS req)
 
 type Basic effs = (Member GenEff effs, Member ConfigEff effs)
 

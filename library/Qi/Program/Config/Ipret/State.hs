@@ -33,7 +33,7 @@ run = interpret (\case
   Lang.GetConfig -> get
 
   Lang.GenericLambda inProxy outProxy name f profile ->
-    withLogicalId name $ \(lid :: LambdaId) -> do
+    withLogicalId name $ \lid -> do
       roleId <- insertRole name lid
       let lbd = GenericLambda roleId profile inProxy outProxy f
       modify (lbdConfig . lbdIdToLambda %~ SHM.insert lid lbd)
@@ -70,7 +70,7 @@ run = interpret (\case
       pure lid
 
   Lang.S3BucketKf name bucketId -> do
-    withLogicalId name $ \(lid :: KfId) -> do
+    withLogicalId name $ \lid -> do
       roleId <- insertRole name lid
       let kf = Kf def roleId bucketId
       modify (kfConfig . kfIdToKf %~ SHM.insert lid kf)
@@ -86,13 +86,12 @@ run = interpret (\case
       -> principalId
       -> Sem effs (LogicalId 'IamRoleResource)
     insertRole name lid =
-      withLogicalId name $ \(roleId :: RoleId) -> do
+      withLogicalId name $ \roleId -> do
         config <- get
         let role = IamRole $ toArn lid $ config ^. appName
         modify (iamConfig . idToRole %~ SHM.insert roleId role)
         pure roleId
 
-    -- withLogicalId :: Text -> (forall principalId . LogicalId principalId -> b) -> b
     withLogicalId name cont =
       case mkLogicalId name of
         Left err -> panic $ "invalid name used for logical name: " <> show err

@@ -14,7 +14,6 @@ module Qi.Program.S3.Lang (
 import qualified Data.ByteString.Lazy   as LBS
 import           Network.AWS.S3.Types   (ETag)
 import           Protolude
-import           Data.Composition
 import           Polysemy
 
 import           Qi.AWS.S3

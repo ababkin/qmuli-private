@@ -1,5 +1,4 @@
 read up on:
-  - CW alerts
   - explore Serverless and how it approaches things (for inspiration and education)
 
 on the fresh brain: 
@@ -9,17 +8,11 @@ on the fresh brain:
   figure out:
     - how to call lambda straight from the ng2 app with auth
       - make possible defining standalone lambdas
-    - use CW alerts
     - how to test qmuli apps
 
   fix:
-    - logging!
     - qmuli.yaml
     
-
-
-features:
-  - add more DDB functionality
 
 
 use cases:
