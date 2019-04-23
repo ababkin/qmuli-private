@@ -10,6 +10,7 @@ import qualified Qi.AWS.Lambda.Render           as Lambda
 import qualified Qi.AWS.LambdaPermission.Render as LambdaPermission
 import qualified Qi.AWS.S3.Render               as S3
 import qualified Qi.AWS.CW.Render               as CW
+import qualified Qi.AWS.SQS.Render              as SQS
 import           Qi.Config
 import           Stratosphere
 
@@ -34,4 +35,5 @@ toResources config = mconcat $ ($ config) <$>
   , Lambda.toResources
   , KF.toResources
   , CW.toResources
+  , SQS.toResources
   ]

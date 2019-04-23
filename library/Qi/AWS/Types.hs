@@ -156,6 +156,8 @@ instance Show (PhysicalId 'IamRoleResource) where
   show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "iam-role"
 instance Show (PhysicalId 'CwEventsRuleResource) where
   show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "cloud-watch-events-rule"
+instance Show (PhysicalId 'SqsQueueResource) where
+  show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "sqs-queue"
 -- instance Show (PhysicalId 'IamPolicyResource) where
   -- show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "iam-policy"
 
