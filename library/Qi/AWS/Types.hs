@@ -37,7 +37,7 @@ module Qi.AWS.Types ( AwsMode (..)
                     -- ^ AWS services
                     , toNamespace
                     , fromNamespace
-                    , toPrincipal
+                    , toUrl
                     )
                      where
 
@@ -75,8 +75,8 @@ fromNamespace "lambda"   = Just Lambda
 fromNamespace "events"   = Just CwEvents
 fromNamespace _          = Nothing
 
-toPrincipal :: Service -> Text
-toPrincipal s = toNamespace s <> ".amazonaws.com"
+toUrl :: Service -> Text
+toUrl s = toNamespace s <> ".amazonaws.com"
 
 
 data AwsResourceType =

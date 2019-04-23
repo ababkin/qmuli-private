@@ -18,11 +18,11 @@ toResources config@Config{ _appName } = Resources $ map toLambdaPermissionResour
   where
     lbds :: [ (LambdaId, LambdaFunction) ] = all config
 
-    toLambdaPermissionResource (lid, lbd) =
+    toLambdaPermissionResource (lid, lbd@LambdaFunction{ principal }) =
       resource (show lbdPermissionLogicalId) $
         lambdaPermission
           "lambda:*"
           (GetAtt (show lid) "Arn")
-          (Literal $ toPrincipal $ lbd ^. lfPrincipal)
+          (Literal . toUrl $ principal)
       where
         lbdPermissionLogicalId :: LogicalId 'LambdaPermissionResource = castLogicalIdResource lid

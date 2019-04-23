@@ -9,7 +9,6 @@
 module Qi.AWS.ARN (
     Arn(service)
   , ToArn(..)
-  , toPrincipal
   ) where
 
 import           Control.Monad.Fail

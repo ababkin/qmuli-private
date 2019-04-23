@@ -2,7 +2,16 @@
 {-# LANGUAGE TemplateHaskell           #-}
 {-# LANGUAGE ConstraintKinds     #-}
 
-module Qi.AWS.Lambda where
+module Qi.AWS.Lambda  ( LambdaId
+                      , AllLambdaEffects
+                      , LambdaConfig
+                      , LambdaFunction (..)
+                      , LambdaFunctionMemorySize (..)
+                      , LambdaFunctionProfile
+                      , lbdIdToFunction
+                      , lfpMemorySize
+                      , lfpTimeoutSeconds
+                      ) where
 
 import           Control.Lens
 import           Data.Aeson                 (FromJSON, ToJSON)
@@ -48,13 +57,13 @@ data LambdaFunction =
     forall a b
   . (FromJSON a, ToJSON b)
   => LambdaFunction {
-      _lfPrincipal :: Service -- what service can call the lambda function
-    , _lfRole      :: RoleId
-    , _lfProfile   :: LambdaFunctionProfile
-    , _lfInType    :: Proxy a
-    , _lfOutType   :: Proxy b
-    , _lfProgram   :: forall effs . AllLambdaEffects effs
-                        => a -> Sem effs b
+      principal :: Service -- what service can call the lambda function
+    , roleId    :: RoleId
+    , profile   :: LambdaFunctionProfile
+    , inType    :: Proxy a
+    , outType   :: Proxy b
+    , program   :: forall effs . AllLambdaEffects effs
+                     => a -> Sem effs b
     }
 
 
@@ -120,5 +129,4 @@ instance Default LambdaFunctionProfile where
     }
 
 makeLenses ''LambdaConfig
-makeLenses ''LambdaFunction
 makeLenses ''LambdaFunctionProfile

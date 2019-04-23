@@ -15,7 +15,7 @@ toResources config@Config{ _appName } = Resources $ map toLambdaResource lbds
   where
     lbds :: [ (LambdaId, LambdaFunction) ] = all config
 
-    toLambdaResource (lbdLogicalId, lbd) = (
+    toLambdaResource (lbdLogicalId, lbd@LambdaFunction{ roleId, profile }) = (
       resource (show lbdLogicalId) $
         lambdaFunction
           lbdCode
@@ -28,9 +28,8 @@ toResources config@Config{ _appName } = Resources $ map toLambdaResource lbds
       )
 
       where
-        roleId      = lbd ^. lfRole
-        memorySize  = fromIntegral . fromEnum $ lbd ^. lfProfile . lfpMemorySize
-        timeOut     = fromIntegral $ lbd ^. lfProfile . lfpTimeoutSeconds
+        memorySize  = fromIntegral . fromEnum $ profile ^. lfpMemorySize
+        timeOut     = fromIntegral $ profile ^. lfpTimeoutSeconds
 
         lbdCode :: LambdaFunctionCode
         lbdCode = lambdaFunctionCode

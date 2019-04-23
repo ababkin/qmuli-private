@@ -125,17 +125,20 @@ withConfig configProgram = do
                   loop'
 
 
+
         lbdHandler req =
-          let reportBadArgument lbdType err =
+          let
+            reportBadArgument lbdType err =
                 panic $ "Could not parse event: '" <> toS req <>
                   "', for lambda type: '" <> lbdType <> "' error was: '" <> toS err <> "'"
           in
-          -- TODO: make this better
-          case getById config lid of
-            LambdaFunction{ _lfProgram } ->
-              either  (reportBadArgument "Lambda")
-                      (map encode . _lfProgram)
-                      $ eitherDecode (toS req)
+            -- NOTE: not sure how to improve this, seems to require pattern-matching
+            case getById config lid of
+              LambdaFunction{ program } ->
+                either  (reportBadArgument "Lambda")
+                        (map encode . program)
+                        $ eitherDecode (toS req)
+
 
 type Basic effs = (Member GenEff effs, Member ConfigEff effs)
 
