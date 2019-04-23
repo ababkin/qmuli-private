@@ -15,7 +15,7 @@ data KfEff m r where
 
   Put
     :: ToJSON a
-    => KfId
+    => KfStreamId
     -> a
     -> KfEff m ()
 

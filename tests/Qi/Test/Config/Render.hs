@@ -55,11 +55,11 @@ spec = parallel $
 
     describe "inserts an S3 bucket, lambda into the S3 config and attaches them correctly" $ do
 
-      let expectedLambdaLogicalId = lambdaName <> "Lambda"
+      let expectedLambdaLogicalId = lambdaName <> "LambdaFunction"
           config = runConfig $ do
                         bucketId <- s3Bucket bucketName def
                         void $ s3BucketLambda lambdaName bucketId lambdaProgram $
-                                def & lpMemorySize .~ M1536
+                                def & lfpMemorySize .~ M1536
 
           runConfig configProgram =
                 fst

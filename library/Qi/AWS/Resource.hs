@@ -45,15 +45,15 @@ class (Show (LogicalId (ResourceType r)), Hashable (LogicalId (ResourceType r)))
       $ SHM.lookup lid $ mapping config
 
 
-type LambdaId = LogicalId (ResourceType Lambda)
-instance AwsResource Lambda where
-  type ResourceType Lambda = 'LambdaResource
-  mapping = view $ lbdConfig . lbdIdToLambda
+type LambdaFunctionId = LogicalId (ResourceType LambdaFunction)
+instance AwsResource LambdaFunction where
+  type ResourceType LambdaFunction = 'LambdaFunctionResource
+  mapping = view $ lbdConfig . lbdIdToFunction
 
-type KfId = LogicalId (ResourceType Kf)
-instance AwsResource Kf where
-  type ResourceType Kf = 'KinesisFirehoseResource
-  mapping = view $ kfConfig . kfIdToKf
+type KfStreamId = LogicalId (ResourceType KfStream)
+instance AwsResource KfStream where
+  type ResourceType KfStream = 'KfStreamResource
+  mapping = view $ kfConfig . kfIdToStream
 
 type S3BucketId = LogicalId (ResourceType S3Bucket)
 instance AwsResource S3Bucket where

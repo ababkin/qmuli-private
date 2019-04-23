@@ -9,7 +9,7 @@
 module Qi.AWS.ARN (
     Arn(service)
   , ToArn(..)
-  , ArnToken(..)
+  , toPrincipal
   ) where
 
 import           Control.Monad.Fail
@@ -23,64 +23,29 @@ import GHC.Show (Show(..))
 import           Control.Lens
 
 
-type KfId = LogicalId 'KinesisFirehoseResource
-type LambdaId = LogicalId 'LambdaResource
-
-class ArnToken a where
-  toToken :: a -> Text
-  fromToken :: Text -> Maybe a
-
-instance ArnToken Text where
-  toToken = identity
-  fromToken = Just
-
-data ArnPartition = AwsPartition
-  deriving (Eq, Show)
-instance ArnToken ArnPartition where
-  toToken AwsPartition = "aws"
-  fromToken "aws" = Just AwsPartition
-  fromToken _     = Nothing
-
-data Service =
-    S3
-  | Kf
-  | Dynamo
-  | Lambda
-  deriving (Eq, Show)
-
-instance ArnToken Service where
-        toToken S3     = "s3"
-        toToken Kf     = "firehose"
-        toToken Dynamo = "dynamodb"
-        toToken Lambda = "lambda"
-
-        fromToken "s3"       = Just S3
-        fromToken "firehose" = Just Kf
-        fromToken "dynamodb" = Just Dynamo
-        fromToken "lambda"   = Just Lambda
-        fromToken _          = Nothing
+type KfId = LogicalId 'KfStreamResource
+type LambdaFunctionId = LogicalId 'LambdaFunctionResource
 
 data Arn = Arn
-  { partition :: ArnPartition
-  , service   :: Service
+  { service   :: Service
   , region    :: Text
   , resource  :: Text
   }
   deriving (Eq)
 
 instance Show Arn where
-  show Arn{ partition, service, region, resource } = toS $ mconcat
+  show Arn{ service, region, resource } = toS $ mconcat
         [ "arn"
         , ":"
-        , toToken partition
+        , "aws"
         , ":"
-        , toToken service
+        , toNamespace service
         , ":"
-        , toToken region
+        , region
         , ":"
-        , "445506728970" -- account id
+        , "445506728970" -- account id TODO: dont hardcode this
         , ":"
-        , toToken resource
+        , resource
         ]
 instance ToJSON Arn where
   toJSON = String . P.show
@@ -88,28 +53,13 @@ instance FromJSON Arn where
   parseJSON = withText "Arn" $ \t ->
     case T.splitOn ":" t of
       "arn" : partition' : service' : region' : resource' ->
-        case Arn <$> fromToken partition'
-                 <*> fromToken service'
-                 <*> fromToken region'
+        case Arn <$> fromNamespace service'
+                 <*> pure region'
                  <*> Just ( mconcat $ intersperse ":" resource' ) of
           Just arn -> pure arn
           Nothing  -> fail $ "could not parse Arn: " <> show t
       _ -> fail "could not parse Arn"
 
-
--- arn:aws:s3:::my_corporate_bucket/exampleobject.png
--- mkS3ObjectArn
---   :: PhysicalId 'S3BucketResource
---   -> S3Key
---   -> Arn
--- mkS3ObjectArn s3BucketPhysicalId (S3Key key) = Arn {
---     partition = AwsPartition
---   , service = S3
---   , region = ""
---   , resource = arnRes
---   }
---   where
---     arnRes = P.show s3BucketPhysicalId <> "/" <> key
 
 
 -- NOTE: for referring to ARNs while rendering CF template use this:
@@ -119,16 +69,14 @@ class ToArn a where
 
 instance ToArn S3BucketId where
   toArn id appName = Arn {
-      partition = AwsPartition
-    , service = S3
+      service = S3
     , region  = ""
     , resource = P.show $ toPhysicalId appName id
     }
 
 instance ToArn S3Object where
   toArn s3obj appName = Arn {
-      partition = AwsPartition
-    , service = S3
+      service = S3
     , region  = ""
     , resource = arnRes
     }
@@ -137,18 +85,16 @@ instance ToArn S3Object where
       objKey = s3obj ^. s3oKey
       arnRes = P.show (toPhysicalId appName bucketId) <> "/" <> P.show objKey
 
-instance ToArn LambdaId where
+instance ToArn LambdaFunctionId where
   toArn id appName = Arn {
-      partition = AwsPartition
-    , service = Lambda
+      service = Lambda
     , region  = "us-east-1"
-    , resource = "function:" <> P.show (toPhysicalId appName id)
+    , resource = "function" <> ":" <> P.show (toPhysicalId appName id)
     }
 
 instance ToArn KfId where
   toArn id appName = Arn {
-      partition = AwsPartition
-    , service = Kf
-    , region  = ""
-    , resource = "deliverystream" <> P.show (toPhysicalId appName id)
+      service = KinesisFirehose
+    , region  = "us-east-1"
+    , resource = "deliverystream" <> ":" <> P.show (toPhysicalId appName id)
     }

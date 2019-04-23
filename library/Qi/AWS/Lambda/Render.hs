@@ -7,13 +7,13 @@ import           Qi.AWS.Resource
 import           Qi.AWS.Types
 import           Qi.AWS.Lambda
 import           Qi.Config
-import           Stratosphere
+import           Stratosphere hiding (lfRole, LambdaFunction)
 
 
 toResources :: Config -> Resources
 toResources config@Config{ _appName } = Resources $ map toLambdaResource lbds
   where
-    lbds :: [ (LogicalId 'LambdaResource, Lambda) ] = all config
+    lbds :: [ (LambdaId, LambdaFunction) ] = all config
 
     toLambdaResource (lbdLogicalId, lbd) = (
       resource (show lbdLogicalId) $
@@ -28,9 +28,9 @@ toResources config@Config{ _appName } = Resources $ map toLambdaResource lbds
       )
 
       where
-        roleId      = lbd ^. lbdRole
-        memorySize  = fromIntegral . fromEnum $ lbd ^. lbdProfile . lpMemorySize
-        timeOut     = fromIntegral $ lbd ^. lbdProfile . lpTimeoutSeconds
+        roleId      = lbd ^. lfRole
+        memorySize  = fromIntegral . fromEnum $ lbd ^. lfProfile . lfpMemorySize
+        timeOut     = fromIntegral $ lbd ^. lfProfile . lfpTimeoutSeconds
 
         lbdCode :: LambdaFunctionCode
         lbdCode = lambdaFunctionCode

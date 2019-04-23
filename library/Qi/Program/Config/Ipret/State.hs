@@ -5,6 +5,7 @@
 module Qi.Program.Config.Ipret.State where
 
 import           Control.Lens              hiding (view)
+import Data.Aeson (Value)
 import           Data.Default              (def)
 import qualified Data.HashMap.Strict       as SHM
 import           Data.Proxy                (Proxy (Proxy))
@@ -13,15 +14,15 @@ import           Protolude                 hiding (State, get, gets, modify,
 import           Polysemy
 import           Polysemy.State
 
-import           Qi.AWS.Lambda 
-import           Qi.AWS.S3
-import           Qi.AWS.KF
+import           Qi.AWS.ARN
 import           Qi.AWS.CW
 import           Qi.AWS.IAM
+import           Qi.AWS.KF
+import           Qi.AWS.Lambda
+import           Qi.AWS.S3
 import           Qi.AWS.Types
 import           Qi.Config
 import qualified Qi.Program.Config.Lang as Lang
-import           Qi.AWS.ARN
 
 
 run
@@ -35,8 +36,8 @@ run = interpret (\case
   Lang.GenericLambda inProxy outProxy name f profile ->
     withLogicalId name $ \lid -> do
       roleId <- insertRole name lid
-      let lbd = GenericLambda roleId profile inProxy outProxy f
-      modify (lbdConfig . lbdIdToLambda %~ SHM.insert lid lbd)
+      let lbd = LambdaFunction Lambda roleId profile inProxy outProxy f
+      modify (lbdConfig . lbdIdToFunction %~ SHM.insert lid lbd)
       pure lid
 
 -- S3
@@ -49,16 +50,16 @@ run = interpret (\case
   Lang.S3BucketLambda name bucketId f profile -> do
     withLogicalId name $ \lid -> do
       roleId <- insertRole name lid
-      let lbd = S3BucketLambda roleId profile f
+      let lbd = LambdaFunction S3 roleId profile (Proxy :: Proxy S3Event) (Proxy :: Proxy Value) f
           modifyBucket = s3bEventConfigs %~ ((S3EventConfig S3ObjectCreatedAll lid):)
       modify (s3Config . s3IdToBucket %~ SHM.adjust modifyBucket bucketId)
-      modify (lbdConfig . lbdIdToLambda %~ SHM.insert lid lbd)
+      modify (lbdConfig . lbdIdToFunction %~ SHM.insert lid lbd)
       pure lid
 
   Lang.CwEventLambda name ruleProfile programFunc profile -> do
     withLogicalId name $ \lid -> do
       roleId <- insertRole name lid
-      let lbd = CwEventLambda roleId profile programFunc
+      let lbd = LambdaFunction CwEvents roleId profile (Proxy :: Proxy CwEvent) (Proxy :: Proxy Value) programFunc
           eventsRule = CwEventsRule {
             _cerName    = name
           , _cerProfile = ruleProfile
@@ -66,14 +67,14 @@ run = interpret (\case
           }
       withLogicalId (name <> "EventsRule") $ \eventsRuleId -> do
         modify $ cwConfig . ccRules %~ SHM.insert eventsRuleId eventsRule
-        modify (lbdConfig . lbdIdToLambda %~ SHM.insert lid lbd)
+        modify (lbdConfig . lbdIdToFunction %~ SHM.insert lid lbd)
       pure lid
 
-  Lang.S3BucketKf name bucketId -> do
+  Lang.KfStreamS3 name bucketId -> do
     withLogicalId name $ \lid -> do
       roleId <- insertRole name lid
-      let kf = Kf def roleId bucketId
-      modify (kfConfig . kfIdToKf %~ SHM.insert lid kf)
+      let kfStream = KfStream def roleId bucketId
+      modify (kfConfig . kfIdToStream %~ SHM.insert lid kfStream)
       pure lid
 
   )

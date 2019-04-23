@@ -2,13 +2,14 @@
 
 module Main where
 
+import Data.Aeson (Value(String))
 import           Control.Lens
 import           Data.Default           (def)
 import           Protolude
 import           Polysemy
 
 import           Qi                     (withConfig)
-import           Qi.AWS.Lambda          (LambdaMemorySize (..), lpMemorySize)
+import           Qi.AWS.Lambda
 import           Qi.AWS.Resource        (S3BucketId)
 import           Qi.AWS.S3              (s3eObject, s3oBucketId)
 import           Qi.Program.Config.Lang (s3Bucket, s3BucketLambda)
@@ -36,7 +37,7 @@ main = withConfig config
       -- function itself and a lambda profile, that specifies attributes like memory size and
       -- timeout, and has meaningful defaults for those.
       void $ s3BucketLambda "copyS3Object" incoming (copyContentsLambda outgoing) $
-        def & lpMemorySize .~ M1536
+        def & lfpMemorySize .~ M1536
 
     copyContentsLambda
       :: (Member S3Eff effs, Member GenEff effs)
@@ -58,8 +59,7 @@ main = withConfig config
               -- write the content into a new file in the "output" bucket
               putContent outgoingS3Obj content
 
-              pure "lambda had executed successfully"
+              pure $ String "lambda had executed successfully"
 
             Left err ->
-              pure . toS $ "error: '" <> err <> "'"
-
+              pure . String . toS $ "error: '" <> err <> "'"

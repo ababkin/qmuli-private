@@ -13,11 +13,10 @@ import           Protolude
 import           Polysemy
 
 import           Qi.AWS.Types
+import           Qi.AWS.Lambda (LambdaId)
 
-
-type LambdaId       = LogicalId 'LambdaResource
 type CwEventsRuleId = LogicalId 'CwEventsRuleResource
-type CwLambdaProgram effs = CwEvent -> Sem effs LBS.ByteString
+type CwLambdaProgram effs = CwEvent -> Sem effs Value
 
 data CwEventsRule = CwEventsRule {
     _cerName    :: Text

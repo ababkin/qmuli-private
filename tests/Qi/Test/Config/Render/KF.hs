@@ -43,7 +43,7 @@ spec = parallel $
 
       let config = runConfig $ do
                      bucketId <- Config.s3Bucket bucketName def
-                     Config.s3BucketKf kfName bucketId
+                     Config.kfStreamS3 kfName bucketId
 
           runConfig configProgram =
                 fst
@@ -53,11 +53,11 @@ spec = parallel $
 
       it "KF resource is rendered correctly" $ do
         let expectedBucketLogicalId = bucketName <> "S3Bucket"
-            expectedRoleLogicalId = kfName <> "IAMRole"
-            expectedKfLogicalId = kfName <> "KinesisFirehose"
-            expectedKfPhysicalId = show appName <> "." <> kfName <> ".kinesis-firehose"
-            expectedBucketArn = arnRef expectedBucketLogicalId
-            expectedRoleArn = arnRef expectedRoleLogicalId
+            expectedRoleLogicalId   = kfName <> "IAMRole"
+            expectedKfLogicalId     = kfName <> "KinesisFirehoseDeliveryStream"
+            expectedKfPhysicalId    = show appName <> "." <> kfName <> ".kinesis-firehose-delivery-stream"
+            expectedBucketArn       = arnRef expectedBucketLogicalId
+            expectedRoleArn         = arnRef expectedRoleLogicalId
             arnRef id = Object [("Fn::GetAtt"
                                 , Array [ String id
                                         , String "Arn"

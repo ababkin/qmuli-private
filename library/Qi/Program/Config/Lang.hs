@@ -3,7 +3,7 @@
 
 module Qi.Program.Config.Lang where
 
-import           Data.Aeson                 (FromJSON, ToJSON)
+import           Data.Aeson                 (FromJSON, ToJSON, Value)
 import           Data.ByteString            (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as LBS
 import           Data.Default               (Default, def)
@@ -11,10 +11,10 @@ import           Protolude
 import           Polysemy
 
 import           Qi.Config              (Config)
-import           Qi.AWS.Lambda       (LambdaProfile, AllLambdaEffects)
-import           Qi.AWS.S3           (S3BucketProfile)
+import           Qi.AWS.Lambda       (LambdaFunctionProfile, AllLambdaEffects, LambdaFunction)
+import           Qi.AWS.S3           (S3BucketProfile, S3Event)
 import           Qi.AWS.KF
-import           Qi.AWS.CW (CwLambdaProgram, CwEventsRuleProfile)
+import           Qi.AWS.CW (CwLambdaProgram, CwEventsRuleProfile, CwEvent)
 import           Qi.AWS.IAM
 import           Qi.Program.Gen.Lang
 import           Qi.Program.S3.Lang
@@ -36,8 +36,8 @@ data ConfigEff m r where
     -> Proxy b
     -> Text
     -> (forall effs . AllLambdaEffects effs => a -> Sem effs b)
-    -> LambdaProfile
-    -> ConfigEff m LambdaId
+    -> LambdaFunctionProfile
+    -> ConfigEff m LambdaFunctionId
 
 -- S3
   S3Bucket
@@ -48,21 +48,21 @@ data ConfigEff m r where
   S3BucketLambda
     :: Text
     -> S3BucketId
-    -> (forall effs . AllLambdaEffects effs => S3LambdaProgram effs)
-    -> LambdaProfile
-    -> ConfigEff m LambdaId
+    -> (forall effs . AllLambdaEffects effs => S3Event -> Sem effs Value)
+    -> LambdaFunctionProfile
+    -> ConfigEff m LambdaFunctionId
 
   CwEventLambda
     :: Text
     -> CwEventsRuleProfile
-    -> (forall effs . AllLambdaEffects effs => CwLambdaProgram effs)
-    -> LambdaProfile
-    -> ConfigEff m LambdaId
+    -> (forall effs . AllLambdaEffects effs => CwEvent -> Sem effs Value)
+    -> LambdaFunctionProfile
+    -> ConfigEff m LambdaFunctionId
 
-  S3BucketKf
+  KfStreamS3
     :: Text
     -> S3BucketId
-    -> ConfigEff m KfId
+    -> ConfigEff m KfStreamId
 
 makeSem ''ConfigEff
 

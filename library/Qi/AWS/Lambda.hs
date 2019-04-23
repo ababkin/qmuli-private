@@ -15,17 +15,16 @@ import           Data.Text                  (Text)
 import           GHC.Show                   (Show (..))
 import           Protolude                  as P
 import           Polysemy
-import           Stratosphere
 
-import           Qi.AWS.S3           (S3Event)
 import           Qi.Program.Gen.Lang
-import           Qi.Program.S3.Lang         (S3Eff, S3LambdaProgram)
+import           Qi.Program.S3.Lang         (S3Eff)
 import           Qi.AWS.Types
 import           Qi.AWS.IAM
 import           Qi.Program.KF.Lang (KfEff)
-import           Qi.AWS.CW                     (CwEvent, CwLambdaProgram)
 import           Qi.Program.Lambda.Lang
 
+
+type LambdaId = LogicalId 'LambdaFunctionResource
 
 type AllLambdaEffects effs = ( Member GenEff effs
                              , Member KfEff effs
@@ -34,51 +33,35 @@ type AllLambdaEffects effs = ( Member GenEff effs
                              )
 
 data LambdaConfig = LambdaConfig {
-    _lbdIdToLambda :: HashMap LambdaId Lambda
+    _lbdIdToFunction :: HashMap LambdaId LambdaFunction
   }
   deriving (Eq, Show)
 instance Default LambdaConfig where
   def = LambdaConfig {
-    _lbdIdToLambda  = SHM.empty
+    _lbdIdToFunction  = SHM.empty
   }
 
--- TODO: FIX this: turn this into a good sum type
-data Lambda =
+data LambdaFunction =
     forall a b
   . (FromJSON a, ToJSON b)
-  => GenericLambda {
-      _lbdRole                  :: RoleId
-    , _lbdProfile               :: LambdaProfile
-    , _lbdInputProxy            :: Proxy a
-    , _lbdOutputProxy           :: Proxy b
-    , _lbdGenericLambdaProgram  :: forall effs . AllLambdaEffects effs
-                                   => a -> Sem effs b
-    }
-  | S3BucketLambda {
-      _lbdRole                  :: RoleId
-    , _lbdProfile               :: LambdaProfile
-    , _lbdS3BucketLambdaProgram :: forall effs . AllLambdaEffects effs
-                                   => S3LambdaProgram effs
-    }
-  | CwEventLambda {
-      _lbdRole                  :: RoleId
-    , _lbdProfile               :: LambdaProfile
-    , _lbdCwLambdaProgram       :: forall effs . AllLambdaEffects effs
-                                   => CwLambdaProgram effs
+  => LambdaFunction {
+      _lfPrincipal :: Service -- what service can call the lambda function
+    , _lfRole      :: RoleId
+    , _lfProfile   :: LambdaFunctionProfile
+    , _lfInType    :: Proxy a
+    , _lfOutType   :: Proxy b
+    , _lfProgram   :: forall effs . AllLambdaEffects effs
+                        => a -> Sem effs b
     }
 
 
-instance Eq Lambda where
+instance Eq LambdaFunction where
   _ == _ = True -- TODO: do something about this aweful hack
 
-instance Show Lambda where
-  show GenericLambda{}  = "GenericLambda"
-  show S3BucketLambda{} = "S3BucketLambda"
-  show CwEventLambda{}  = "CwEventLambda"
+instance Show LambdaFunction where
+  show LambdaFunction{}  = "LambdaFunction"
 
-data LambdaPermission
-
-data LambdaMemorySize =
+data LambdaFunctionMemorySize =
     M128
   | M192
   | M256
@@ -93,7 +76,7 @@ data LambdaMemorySize =
   | M3008
   deriving (Eq, Show)
 
-instance Enum LambdaMemorySize where
+instance Enum LambdaFunctionMemorySize where
   toEnum 128  = M128
   toEnum 192  = M192
   toEnum 256  = M256
@@ -121,20 +104,19 @@ instance Enum LambdaMemorySize where
   fromEnum M2560 = 2560
   fromEnum M3008 = 3008
 
-data LambdaProfile = LambdaProfile {
-    _lpMemorySize     :: LambdaMemorySize
-  , _lpTimeoutSeconds :: Int
+data LambdaFunctionProfile = LambdaFunctionProfile {
+    _lfpMemorySize     :: LambdaFunctionMemorySize
+  , _lfpTimeoutSeconds :: Int
   }
   deriving (Eq, Show)
 
-instance Default LambdaProfile where
-  def = LambdaProfile {
-      _lpMemorySize     = M128
-    , _lpTimeoutSeconds = 30
+instance Default LambdaFunctionProfile where
+  def = LambdaFunctionProfile {
+      _lfpMemorySize     = M128
+    , _lfpTimeoutSeconds = 30
     }
 
 
-makeLenses ''Lambda
 makeLenses ''LambdaConfig
-makeLenses ''LambdaProfile
-
+makeLenses ''LambdaFunction
+makeLenses ''LambdaFunctionProfile
