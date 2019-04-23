@@ -31,7 +31,7 @@ spec = parallel $
             -- getContent $ S3Object bucketId (S3Key "someKey")
             getConfig
 
-          expected = initialConfig & s3Config . s3IdToBucket .~ expectedS3Buckets
+          expected = initialConfig & s3Config . idToBucket .~ expectedS3Buckets
           Right lid = mkLogicalId bucketName
           expectedS3Buckets = SHM.singleton lid (S3Bucket def [])
 

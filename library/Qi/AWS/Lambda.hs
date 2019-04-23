@@ -8,7 +8,7 @@ module Qi.AWS.Lambda  ( LambdaId
                       , LambdaFunction (..)
                       , LambdaFunctionMemorySize (..)
                       , LambdaFunctionProfile
-                      , lbdIdToFunction
+                      , idToFunction
                       , lfpMemorySize
                       , lfpTimeoutSeconds
                       ) where
@@ -42,12 +42,12 @@ type AllLambdaEffects effs = ( Member GenEff effs
                              )
 
 data LambdaConfig = LambdaConfig {
-    _lbdIdToFunction :: HashMap LambdaId LambdaFunction
+    _idToFunction :: HashMap LambdaId LambdaFunction
   }
   deriving (Eq, Show)
 instance Default LambdaConfig where
   def = LambdaConfig {
-    _lbdIdToFunction  = SHM.empty
+    _idToFunction  = SHM.empty
   }
 
 -- We hide the in ond out types from the LambdaFunction type

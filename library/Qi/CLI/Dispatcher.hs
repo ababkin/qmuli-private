@@ -83,18 +83,18 @@ withConfig configProgram = do
           template = R.render config
 
       runCli $ case cmd of
-        CfRenderTemplate     -> Gen.say $ toS template
-        CfDeploy             ->
+        CfRenderTemplate -> Gen.say $ toS template
+        CfDeploy         ->
                 Gen.build
             >>= Gen.readFileLazy
             >>= deployApp template
 
-        CfCreate             -> createCfStack template
-        CfUpdate             -> updateCfStack template
-        CfDescribe           -> describeCfStack
-        CfDestroy            -> destroyCfStack $ pure ()
+        CfCreate   -> createCfStack template
+        CfUpdate   -> updateCfStack template
+        CfDescribe -> describeCfStack
+        CfDestroy  -> destroyCfStack $ pure ()
 
-        CfCycle              ->
+        CfCycle    ->
                 Gen.build
             >>= Gen.readFileLazy
             >>= cycleStack template
@@ -123,8 +123,6 @@ withConfig configProgram = do
                      show code <>
                      ". Retrying.." :: Text)
                   loop'
-
-
 
         lbdHandler req =
           let

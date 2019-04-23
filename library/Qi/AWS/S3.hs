@@ -12,7 +12,7 @@ module Qi.AWS.S3 (
   , S3Event (..)
   , S3EventType (..)
   , S3EventConfig (..)
-  , s3IdToBucket
+  , idToBucket
   , event
   , lbdId
   , s3bEventConfigs
@@ -39,12 +39,12 @@ type LambdaId = LogicalId 'LambdaFunctionResource
 
 -- | This represents config for the S3 resources
 data S3Config = S3Config {
-    _s3IdToBucket :: HashMap S3BucketId S3Bucket
+    _idToBucket :: HashMap S3BucketId S3Bucket
   }
   deriving (Eq, Show)
 instance Default S3Config where
   def = S3Config {
-      _s3IdToBucket     = SHM.empty
+      _idToBucket     = SHM.empty
     }
 -- https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket.html
 -- | Representation of a S3 Bucket resource

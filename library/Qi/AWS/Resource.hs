@@ -20,6 +20,7 @@ import Qi.AWS.Lambda
 import Qi.AWS.KF
 import Qi.AWS.IAM
 import Qi.AWS.CW
+import Qi.AWS.SQS
 
 
 class (Show (LogicalId (ResourceType r)), Hashable (LogicalId (ResourceType r))) => AwsResource r where
@@ -48,17 +49,17 @@ class (Show (LogicalId (ResourceType r)), Hashable (LogicalId (ResourceType r)))
 type LambdaFunctionId = LogicalId (ResourceType LambdaFunction)
 instance AwsResource LambdaFunction where
   type ResourceType LambdaFunction = 'LambdaFunctionResource
-  mapping = view $ lbdConfig . lbdIdToFunction
+  mapping = view $ lbdConfig . idToFunction
 
 type KfStreamId = LogicalId (ResourceType KfStream)
 instance AwsResource KfStream where
   type ResourceType KfStream = 'KfStreamResource
-  mapping = view $ kfConfig . kfIdToStream
+  mapping = view $ kfConfig . idToStream
 
 type S3BucketId = LogicalId (ResourceType S3Bucket)
 instance AwsResource S3Bucket where
   type ResourceType S3Bucket = 'S3BucketResource
-  mapping = view $ s3Config . s3IdToBucket
+  mapping = view $ s3Config . idToBucket
 
 type RoleId = LogicalId (ResourceType IamRole)
 instance AwsResource IamRole where
@@ -68,4 +69,9 @@ instance AwsResource IamRole where
 type CwEventsRuleId = LogicalId (ResourceType CwEventsRule)
 instance AwsResource CwEventsRule where
   type ResourceType CwEventsRule = 'CwEventsRuleResource
-  mapping = view $ cwConfig . ccRules
+  mapping = view $ cwConfig . idToRule
+
+type QueueId = LogicalId (ResourceType SqsQueue)
+instance AwsResource SqsQueue where
+  type ResourceType SqsQueue = 'SqsQueueResource
+  mapping = view $ sqsConfig . idToQueue

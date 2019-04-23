@@ -7,6 +7,7 @@ module Qi.Config ( Config (..)
                  , kfConfig
                  , iamConfig
                  , cwConfig
+                 , sqsConfig
                  , mkConfig
                  ) where
 
@@ -18,6 +19,7 @@ import           Qi.AWS.S3
 import           Qi.AWS.Types
 import           Qi.AWS.IAM
 import           Qi.AWS.CW
+import           Qi.AWS.SQS
 import           Protolude
 
 
@@ -28,6 +30,7 @@ data Config = Config {
   , _kfConfig  :: KfConfig
   , _iamConfig :: IamConfig
   , _cwConfig  :: CwConfig
+  , _sqsConfig :: SqsConfig
 
 }
   deriving (Eq, Show)
@@ -41,6 +44,7 @@ mkConfig appName =
     , _kfConfig   = def
     , _iamConfig  = def
     , _cwConfig   = def
+    , _sqsConfig  = def
   }
 
 makeLenses ''Config

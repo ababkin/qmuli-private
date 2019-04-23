@@ -21,12 +21,12 @@ import Qi.AWS.S3
 type KfStreamId = LogicalId 'KfStreamResource
 
 data KfConfig = KfConfig {
-    _kfIdToStream :: HashMap KfStreamId KfStream
+    _idToStream :: HashMap KfStreamId KfStream
   }
   deriving (Eq, Show)
 instance Default KfConfig where
   def = KfConfig {
-      _kfIdToStream     = SHM.empty
+      _idToStream     = SHM.empty
     }
 -- TODO: parameterize the dest
 data KfStream = KfStream {

@@ -58,6 +58,7 @@ data Service =
   | Dynamo
   | CwEvents
   | Lambda
+  | Sqs
   deriving (Eq, Show)
 
 toNamespace :: Service -> Text
@@ -66,6 +67,7 @@ toNamespace KinesisFirehose = "firehose"
 toNamespace Dynamo          = "dynamodb"
 toNamespace Lambda          = "lambda"
 toNamespace CwEvents        = "events"
+toNamespace Sqs             = "sqs"
 
 fromNamespace :: Text -> Maybe Service
 fromNamespace "s3"       = Just S3
@@ -73,6 +75,7 @@ fromNamespace "firehose" = Just KinesisFirehose
 fromNamespace "dynamodb" = Just Dynamo
 fromNamespace "lambda"   = Just Lambda
 fromNamespace "events"   = Just CwEvents
+fromNamespace "sqs"      = Just Sqs
 fromNamespace _          = Nothing
 
 toUrl :: Service -> Text
@@ -85,8 +88,9 @@ data AwsResourceType =
   | LambdaFunctionResource
   | LambdaPermissionResource
   | IamRoleResource
-  | CwEventsRuleResource
   -- | IamPolicyResource
+  | CwEventsRuleResource
+  | SqsQueueResource
   deriving (Eq, Show)
 
 data ResourceExistence = AlreadyExists | ShouldCreate
@@ -128,6 +132,8 @@ instance Show (LogicalId 'IamRoleResource) where
   show (LogicalId t) = toS t <> "IAMRole"
 instance Show (LogicalId 'CwEventsRuleResource) where
   show (LogicalId t) = toS t <> "CloudWatchEventsRule"
+instance Show (LogicalId 'SqsQueueResource) where
+  show (LogicalId t) = toS t <> "SqsQueue"
 -- instance Show (LogicalId 'IamPolicyResource) where
   -- show (LogicalId t) = toS t <> "IAMPolicy"
 

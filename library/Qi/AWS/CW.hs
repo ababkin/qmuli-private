@@ -26,13 +26,13 @@ data CwEventsRule = CwEventsRule {
   deriving (Eq, Show)
 
 data CwConfig = CwConfig {
-    _ccRules :: HashMap CwEventsRuleId CwEventsRule
+    _idToRule :: HashMap CwEventsRuleId CwEventsRule
   }
   deriving (Eq, Show)
 
 instance Default CwConfig where
   def = CwConfig {
-    _ccRules = SHM.empty
+    _idToRule = SHM.empty
   }
 
 
