@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds         #-}
 {-# LANGUAGE DeriveAnyClass    #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
@@ -22,18 +23,19 @@ module Qi.AWS.S3 (
   , s3oKey
   ) where
 
+import           Control.Monad.Fail (fail)
 import           Control.Lens
-import           Data.Aeson          (FromJSON, ToJSON)
+import           Data.Aeson        
 import           Data.Default        (Default, def)
 import           Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as SHM
 import           GHC.Show            (Show (..))
-import           Protolude
+import           Protolude as P
 import           Qi.AWS.Types
 
 
 type S3BucketId = LogicalId 'S3BucketResource
-type LambdaId = LogicalId 'LambdaResource
+type LambdaId = LogicalId 'LambdaFunctionResource
 
 -- | This represents config for the S3 resources
 data S3Config = S3Config {
@@ -89,6 +91,23 @@ data S3Event = S3Event {
     _s3eObject :: S3Object
   }
   deriving (Eq, Show)
+
+instance FromJSON S3Event where
+  parseJSON = withObject "S3Event" $ \o -> do
+    firstRecord <- headMay <$> o .: "Records"
+    -- TODO: should we consider cases where there are more than one records? (probably yes)
+    case firstRecord of
+      Nothing ->
+        fail "no records"
+      Just record -> do
+        s3        <- record .: "s3"
+        bucketId  <- (.: "name") =<< s3 .: "bucket"
+        key       <- (.: "key")  =<< s3 .: "object"
+        case parseS3BucketPhysicalId bucketId of
+          Left err -> fail $ "could not parse s3 bucket physical id: " <> P.show bucketId <>
+                      ", error was: " <> P.show err
+          Right pid ->
+            pure . S3Event $ S3Object (toLogicalId pid) (S3Key key)
 
 
 data S3EventConfig = S3EventConfig {

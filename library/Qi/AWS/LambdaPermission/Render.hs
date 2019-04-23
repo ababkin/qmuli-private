@@ -8,7 +8,7 @@ import           Qi.AWS.Resource
 import           Qi.AWS.Types
 import           Qi.AWS.Lambda
 import           Qi.Config
-import           Stratosphere
+import           Stratosphere hiding (LambdaFunction)
 
 
 -- this creates a permission for the source (e.g. S3 bucket, another Lambda, etc) to call the Lambda
@@ -16,18 +16,13 @@ import           Stratosphere
 toResources :: Config -> Resources
 toResources config@Config{ _appName } = Resources $ map toLambdaPermissionResource lbds
   where
-    lbds :: [ (LogicalId 'LambdaResource, Lambda) ] = all config
+    lbds :: [ (LambdaId, LambdaFunction) ] = all config
 
-    toLambdaPermissionResource (lbdLogicalId, lbd) =
+    toLambdaPermissionResource (lid, lbd) =
       resource (show lbdPermissionLogicalId) $
         lambdaPermission
           "lambda:*"
-          (GetAtt (show lbdLogicalId) "Arn")
-          principal
+          (GetAtt (show lid) "Arn")
+          (Literal $ toPrincipal $ lbd ^. lfPrincipal)
       where
-        lbdPermissionLogicalId :: LogicalId 'LambdaPermissionResource = castLogicalIdResource lbdLogicalId
-
-        principal = case lbd of
-          GenericLambda{}  -> "lambda.amazonaws.com"
-          S3BucketLambda{} -> "s3.amazonaws.com"
-          CwEventLambda{}  -> "events.amazonaws.com"
+        lbdPermissionLogicalId :: LogicalId 'LambdaPermissionResource = castLogicalIdResource lid

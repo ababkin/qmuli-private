@@ -9,9 +9,9 @@ import           Polysemy
 
 import           Qi                     (withConfig)
 import           Qi.AWS.Lambda
-import           Qi.AWS.KF        (KfId)
+import           Qi.AWS.KF        (KfStreamId)
 import           Qi.AWS.S3              (s3eObject, s3oBucketId)
-import           Qi.Program.Config.Lang (s3BucketKf, s3Bucket, cwEventLambda)
+import           Qi.Program.Config.Lang (kfStreamS3, s3Bucket, cwEventLambda)
 import           Qi.Program.Gen.Lang    (GenEff, say)
 import           Qi.Program.KF.Lang    (KfEff, put)
 import           Qi.AWS.CW 
@@ -22,16 +22,16 @@ main = withConfig config
   where
     config = do
       bucketId <- s3Bucket "kfdest" def
-      kfId <- s3BucketKf "mykf" bucketId
+      kfStreamId <- kfStreamS3 "mykf" bucketId
 
       let ruleProfile = ScheduledEventProfile "cron(* * * * ? *)"
-      void $ cwEventLambda "myEventLambda" ruleProfile (eventLambda kfId) def
+      void $ cwEventLambda "myEventLambda" ruleProfile (eventLambda kfStreamId) def
 
     eventLambda
       :: (Member GenEff effs, Member KfEff effs)
-      => KfId
+      => KfStreamId
       -> CwLambdaProgram effs
-    eventLambda kfId _ = do
+    eventLambda kfStreamId _ = do
       -- emit log messages that end up in the appropriate cloudwatch group/stream
-      put kfId $ object [ "da" .= Number 3 ]
-      pure "lambda had executed successfully"
+      put kfStreamId $ object [ "da" .= Number 3 ]
+      pure $ String "lambda had executed successfully"

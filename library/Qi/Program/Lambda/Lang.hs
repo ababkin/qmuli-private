@@ -10,18 +10,18 @@ import           Qi.AWS.S3           (S3Object)
 import           Qi.AWS.Types
 
 
-type LambdaId = LogicalId 'LambdaResource
+type LambdaFunctionId = LogicalId 'LambdaFunctionResource
 
 data LambdaEff m r where
 
   Invoke
     :: ToJSON a
-    => LambdaId
+    => LambdaFunctionId
     -> a
     -> LambdaEff m ()
 
   Update
-    :: LambdaId
+    :: LambdaFunctionId
     -> S3Object
     -> LambdaEff m ()
 

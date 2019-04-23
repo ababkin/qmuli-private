@@ -1,6 +1,5 @@
 {-# LANGUAGE DeriveAnyClass             #-}
 {-# LANGUAGE DerivingStrategies         #-}
-{-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Qi.AWS.Types ( AwsMode (..)
@@ -21,7 +20,7 @@ module Qi.AWS.Types ( AwsMode (..)
                     , PhysicalId
                     -- ^ Physical Id for a resource (hide the constructor)
                     , mkPhysicalId
-                    , parseLambdaPhysicalId
+                    , parseLambdaFunctionPhysicalId
                     , parseS3BucketPhysicalId
                     -- ^ Physical Id parser
                     , toLogicalId
@@ -34,6 +33,11 @@ module Qi.AWS.Types ( AwsMode (..)
                     -- ^ cast Logical Id resource type to a different one (while retaining the same base resource identifier)
                     , ResourceExistence (..)
                     -- ^ Whether a resource already exists or needs to be created as part of the stack
+                    , Service(..)
+                    -- ^ AWS services
+                    , toNamespace
+                    , fromNamespace
+                    , toPrincipal
                     )
                      where
 
@@ -48,11 +52,37 @@ import qualified GHC.Show (Show(..))
 data AwsMode = RealDeal | LocalStack
   deriving Eq
 
+data Service =
+    S3
+  | KinesisFirehose
+  | Dynamo
+  | CwEvents
+  | Lambda
+  deriving (Eq, Show)
+
+toNamespace :: Service -> Text
+toNamespace S3              = "s3"
+toNamespace KinesisFirehose = "firehose"
+toNamespace Dynamo          = "dynamodb"
+toNamespace Lambda          = "lambda"
+toNamespace CwEvents        = "events"
+
+fromNamespace :: Text -> Maybe Service
+fromNamespace "s3"       = Just S3
+fromNamespace "firehose" = Just KinesisFirehose
+fromNamespace "dynamodb" = Just Dynamo
+fromNamespace "lambda"   = Just Lambda
+fromNamespace "events"   = Just CwEvents
+fromNamespace _          = Nothing
+
+toPrincipal :: Service -> Text
+toPrincipal s = toNamespace s <> ".amazonaws.com"
+
 
 data AwsResourceType =
     S3BucketResource
-  | KinesisFirehoseResource
-  | LambdaResource
+  | KfStreamResource
+  | LambdaFunctionResource
   | LambdaPermissionResource
   | IamRoleResource
   | CwEventsRuleResource
@@ -88,12 +118,12 @@ newtype LogicalId (r :: AwsResourceType) = LogicalId Text
   deriving newtype (ToJSON, FromJSON, Hashable)
 instance Show (LogicalId 'S3BucketResource) where
   show (LogicalId t) = toS t <> "S3Bucket"
-instance Show (LogicalId 'LambdaResource) where
-  show (LogicalId t) = toS t <> "Lambda"
+instance Show (LogicalId 'LambdaFunctionResource) where
+  show (LogicalId t) = toS t <> "LambdaFunction"
 instance Show (LogicalId 'LambdaPermissionResource) where
   show (LogicalId t) = toS t <> "LambdaPermission"
-instance Show (LogicalId 'KinesisFirehoseResource) where
-  show (LogicalId t) = toS t <> "KinesisFirehose"
+instance Show (LogicalId 'KfStreamResource) where
+  show (LogicalId t) = toS t <> "KinesisFirehoseDeliveryStream"
 instance Show (LogicalId 'IamRoleResource) where
   show (LogicalId t) = toS t <> "IAMRole"
 instance Show (LogicalId 'CwEventsRuleResource) where
@@ -110,12 +140,12 @@ data PhysicalId (rt :: AwsResourceType) = PhysicalId AppName Text
   deriving Eq
 instance Show (PhysicalId 'S3BucketResource) where
   show (PhysicalId appName id) = P.show appName <> "." <> toS id <> "." <> "s3-bucket"
-instance Show (PhysicalId 'LambdaResource) where
-  show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "lambda"
+instance Show (PhysicalId 'LambdaFunctionResource) where
+  show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "lambda-function"
 instance Show (PhysicalId 'LambdaPermissionResource) where
   show (PhysicalId appName id) = P.show appName <> "." <> toS id <> "." <> "lambda-permission"
-instance Show (PhysicalId 'KinesisFirehoseResource) where
-  show (PhysicalId appName id) = P.show appName <> "." <> toS id <> "." <> "kinesis-firehose"
+instance Show (PhysicalId 'KfStreamResource) where
+  show (PhysicalId appName id) = P.show appName <> "." <> toS id <> "." <> "kinesis-firehose-delivery-stream"
 instance Show (PhysicalId 'IamRoleResource) where
   show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "iam-role"
 instance Show (PhysicalId 'CwEventsRuleResource) where
@@ -130,8 +160,8 @@ mkPhysicalId appName t = Right $ PhysicalId appName t
 parseS3BucketPhysicalId :: Text -> Either Text (PhysicalId 'S3BucketResource)
 parseS3BucketPhysicalId t = parsePhysicalId "s3-bucket" '.' t
 
-parseLambdaPhysicalId :: Text -> Either Text (PhysicalId 'LambdaResource)
-parseLambdaPhysicalId t = parsePhysicalId "lambda" '_' t
+parseLambdaFunctionPhysicalId :: Text -> Either Text (PhysicalId 'LambdaFunctionResource)
+parseLambdaFunctionPhysicalId t = parsePhysicalId "lambda-function" '_' t
 
 parsePhysicalId :: Text -> Char -> Text -> Either Text (PhysicalId r)
 parsePhysicalId resourceSuffix appNameSeparator t =

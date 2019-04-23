@@ -29,7 +29,7 @@ toResources config@Config{ _appName } = Resources $ toResource <$> kfs
   where
     kfs = all config
 
-    toResource (lid, Kf{ _kfRole, _kfBucket }) = (
+    toResource (lid, KfStream{ _kfRole, _kfBucket }) = (
       S.resource (show lid) $
         -- https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-kinesisfirehose-deliverystream.html
         S.kinesisFirehoseDeliveryStream

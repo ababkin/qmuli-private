@@ -50,7 +50,7 @@ toResources config@Config{ _appName } = Resources $ toResource <$> roles
         -- (and we have one role per lambda)
         -- principal = object [ ("AWS", String "arn:aws:lambda:us-east-1:445506728970:function:echo-access" )] -- toJSON principalArn) ]
         -- principal = object [ ("AWS", toJSON principalArn) ]
-        principal = object [ ("Service", String $ toToken (service principalArn) <> ".amazonaws.com") ]
+        principal = object [ ("Service", String . toPrincipal $ service principalArn) ]
           -- [ ("Service", "lambda.amazonaws.com")]
           -- , ("Service", "firehose.amazonaws.com") ]
 

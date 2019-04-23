@@ -14,7 +14,7 @@ import           Protolude
 import           Servant.Client          (BaseUrl, ClientM, ServantError)
 import           Polysemy
 
-import           Qi.AWS.Types
+import           Qi.AWS.Types hiding (Service)
 
 
 data GenEff m r where

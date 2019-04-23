@@ -3,14 +3,15 @@
 module Qi.Program.S3.Lang (
     S3Eff (..)
   , ListToken
-  , S3LambdaProgram
   , getContent
   , putContent
   , listObjects
   , deleteObject
   , deleteObjects
+  , S3LambdaProgram
   ) where
 
+import Data.Aeson (Value)
 import qualified Data.ByteString.Lazy   as LBS
 import           Network.AWS.S3.Types   (ETag)
 import           Protolude
@@ -22,7 +23,7 @@ import           Qi.Program.Gen.Lang
 import           Qi.Program.S3.Internal (ListToken)
 
 
-type S3LambdaProgram effs = S3Event -> Sem effs LBS.ByteString
+type S3LambdaProgram effs = S3Event -> Sem effs Value
 
 data S3Eff m r where
 

@@ -16,4 +16,4 @@ spec = parallel $
     it "parse physical id" $ do
       let Right appName = mkAppName "testApp"
       let Right pid = mkPhysicalId appName "mybucket"
-      parseLambdaPhysicalId "testApp_mybucket_lambda" `shouldBe` Right pid
+      parseLambdaFunctionPhysicalId "testApp_mybucket_lambda-function" `shouldBe` Right pid

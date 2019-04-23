@@ -29,7 +29,6 @@ import           Qi.Program.S3.Lang
 import           Qi.Config hiding (appName)
 import           Qi.AWS.Lambda
 import           Qi.AWS.S3
-import qualified Qi.AWS.S3.Event         as S3Event
 import qualified Qi.AWS.Render           as R
 import           Qi.CLI.Options
 import           Qi.AWS.Types
@@ -69,7 +68,7 @@ withConfig configProgram = do
                     (panic "AWS_LAMBDA_FUNCTION_NAME not found in ENV")
                     toS
                     <$> lookupEnv "AWS_LAMBDA_FUNCTION_NAME"
-      case parseLambdaPhysicalId lambdaId of
+      case parseLambdaFunctionPhysicalId lambdaId of
         Left err -> panic err
         Right pid -> do
           let appName = toAppName pid
@@ -131,21 +130,11 @@ withConfig configProgram = do
                 panic $ "Could not parse event: '" <> toS req <>
                   "', for lambda type: '" <> lbdType <> "' error was: '" <> toS err <> "'"
           in
+          -- TODO: make this better
           case getById config lid of
-
-            GenericLambda{ _lbdGenericLambdaProgram } ->
-              either  (reportBadArgument "Generic")
-                      (map encode . _lbdGenericLambdaProgram)
-                      $ eitherDecode (toS req)
-
-            S3BucketLambda{ _lbdS3BucketLambdaProgram } ->
-              either  (reportBadArgument "S3")
-                      _lbdS3BucketLambdaProgram
-                      $ parseEither S3Event.parse =<< eitherDecode (toS req)
-
-            CwEventLambda{ _lbdCwLambdaProgram } ->
-              either  (reportBadArgument "CW")
-                      _lbdCwLambdaProgram
+            LambdaFunction{ _lfProgram } ->
+              either  (reportBadArgument "Lambda")
+                      (map encode . _lfProgram)
                       $ eitherDecode (toS req)
 
 type Basic effs = (Member GenEff effs, Member ConfigEff effs)
@@ -210,7 +199,7 @@ updateLambdas = do
   let lbdS3Obj = S3Object (either (panic "unexpected") identity $ mkLogicalId "app") $ S3Key "lambda.zip"
 
   say "updating the lambdas..."
-  traverse_ ((`Lbd.update` lbdS3Obj) . fst) (all config :: [ (LogicalId 'LambdaResource, Lambda) ])
+  traverse_ ((`Lbd.update` lbdS3Obj) . fst) (all config :: [ (LambdaId, LambdaFunction) ])
 
 
 describeCfStack

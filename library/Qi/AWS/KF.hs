@@ -18,33 +18,33 @@ import           Qi.AWS.IAM
 import Qi.AWS.S3
 
 
-type KfId = LogicalId 'KinesisFirehoseResource
+type KfStreamId = LogicalId 'KfStreamResource
 
 data KfConfig = KfConfig {
-    _kfIdToKf :: HashMap KfId Kf
+    _kfIdToStream :: HashMap KfStreamId KfStream
   }
   deriving (Eq, Show)
 instance Default KfConfig where
   def = KfConfig {
-      _kfIdToKf     = SHM.empty
+      _kfIdToStream     = SHM.empty
     }
-
-data Kf = Kf {
-    _kfProfile :: KfProfile
+-- TODO: parameterize the dest
+data KfStream = KfStream {
+    _kfProfile :: KfStreamProfile
   , _kfRole    :: RoleId
   , _kfBucket  :: S3BucketId
   }
   deriving (Eq, Show)
 
-data KfProfile = KfProfile
+data KfStreamProfile = KfStreamProfile
   { _kfpExistence    :: ResourceExistence
   }
   deriving (Eq, Show)
-instance Default KfProfile where
-  def = KfProfile
+instance Default KfStreamProfile where
+  def = KfStreamProfile
     { _kfpExistence = ShouldCreate
     }
 
 makeLenses ''KfConfig
-makeLenses ''Kf
-makeLenses ''KfProfile
+makeLenses ''KfStream
+makeLenses ''KfStreamProfile
