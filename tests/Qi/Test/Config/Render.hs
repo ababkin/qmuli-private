@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeApplications   #-}
+
 {-# OPTIONS_GHC -fno-warn-incomplete-uni-patterns #-}
 
 module Qi.Test.Config.Render where
@@ -11,12 +13,10 @@ import           Protolude                             hiding (State, get, put,
 import Polysemy
 import Polysemy.State (runState)
 
-import           Qi.AWS.Lambda
-import qualified Qi.AWS.Lambda.Render                  as Lambda
-import qualified Qi.AWS.LambdaPermission.Render        as LambdaPermission
-import           Qi.AWS.Resource
+import           Qi.AWS.Render
+import           Qi.AWS.Lambda.Function
+import           Qi.AWS.Lambda.Permission
 import           Qi.AWS.S3
-import qualified Qi.AWS.S3.Render                      as S3
 import           Qi.AWS.Types
 import           Qi.Config                             hiding (appName)
 import qualified Qi.Program.Config.Ipret.State         as Config
@@ -75,7 +75,7 @@ spec = parallel $
             expectedFilters  = Nothing -- Just (S.S3BucketNotificationFilter (S.S3BucketS3KeyFilter []))
             expectedBucketPhysicalId = show appName <> "." <> bucketName <> ".s3-bucket"
 
-        case S3.toResources config of
+        case toResources @S3Bucket config of
           S.Resources [ S.Resource bucketLogicalId (S.ResourceProperties _type props) _ _ _ _ _ _ ] -> do
             bucketLogicalId `shouldBe` expectedBucketLogicalId
 
@@ -104,7 +104,7 @@ spec = parallel $
 
 -}
       it "Lambda resource is rendered correctly" $ do
-        case Lambda.toResources config of
+        case toResources @LambdaFunction config of
           S.Resources [ S.Resource lambdaId (S.ResourceProperties _ _lbd) _ _ _ _ _ _ ] -> do
             lambdaId `shouldBe` expectedLambdaLogicalId
 
@@ -112,7 +112,7 @@ spec = parallel $
 
       it "LambdaPermission resource is rendered correctly" $ do
         let expectedLogicalRoleId = lambdaName <> "LambdaPermission"
-        case LambdaPermission.toResources config of
+        case toResources @LambdaPermission config of
           S.Resources [ S.Resource roleId _ _ _ _ _ _ _ ] -> do
             roleId `shouldBe` expectedLogicalRoleId
 

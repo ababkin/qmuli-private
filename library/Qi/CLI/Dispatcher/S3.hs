@@ -6,7 +6,6 @@ import           Control.Lens
 import           Polysemy
 import           Protolude              hiding (all)
 
-import           Qi.AWS.Resource
 import           Qi.AWS.S3              (S3Bucket, S3Object)
 import           Qi.AWS.Types
 import           Qi.Config

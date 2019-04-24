@@ -13,7 +13,6 @@ import           Network.AWS.S3         hiding (bucket)
 import           Protolude              hiding ((<&>))
 import           Polysemy hiding (run)
 
-import           Qi.AWS.Resource
 import           Qi.AWS.Types
 import           Qi.Config
 import           Qi.AWS.S3

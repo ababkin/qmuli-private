@@ -11,11 +11,13 @@ import           Protolude
 import           Polysemy
 
 import           Qi.Config              (Config)
-import           Qi.AWS.Lambda       (LambdaFunctionProfile, AllLambdaEffects, LambdaFunction)
+import           Qi.AWS.Lambda.Function
+import           Qi.AWS.Lambda.EventSourceMapping
 import           Qi.AWS.S3           (S3BucketProfile, S3Event)
 import           Qi.AWS.KF
-import           Qi.AWS.CW (CwLambdaProgram, CwEventsRuleProfile, CwEvent)
+import           Qi.AWS.CW
 import           Qi.AWS.IAM
+import           Qi.AWS.SQS
 import           Qi.Program.Gen.Lang
 import           Qi.Program.S3.Lang
 import           Qi.Program.KF.Lang
@@ -23,12 +25,21 @@ import           Qi.Program.Lambda.Lang
 import           Qi.AWS.Types
 
 
-type S3BucketId = LogicalId 'S3BucketResource
-
 data ConfigEff m r where
 
   GetConfig
     :: ConfigEff m Config
+
+  S3Bucket
+    :: Text
+    -> S3BucketProfile
+    -> ConfigEff m S3BucketId
+
+  KfStreamS3
+    :: Text
+    -> S3BucketId
+    -> ConfigEff m KfStreamId
+
 
   GenericLambda
     :: (FromJSON a, ToJSON b)
@@ -38,12 +49,6 @@ data ConfigEff m r where
     -> (forall effs . AllLambdaEffects effs => a -> Sem effs b)
     -> LambdaFunctionProfile
     -> ConfigEff m LambdaFunctionId
-
--- S3
-  S3Bucket
-    :: Text
-    -> S3BucketProfile
-    -> ConfigEff m S3BucketId
 
   S3BucketLambda
     :: Text
@@ -59,10 +64,14 @@ data ConfigEff m r where
     -> LambdaFunctionProfile
     -> ConfigEff m LambdaFunctionId
 
-  KfStreamS3
+  SqsLambda
     :: Text
-    -> S3BucketId
-    -> ConfigEff m KfStreamId
+    -> QueueId
+    -> LambdaEventSourceMappingProfile
+    -> (forall effs . AllLambdaEffects effs => SqsEvent -> Sem effs Value)
+    -> LambdaFunctionProfile
+    -> ConfigEff m LambdaFunctionId
+
 
 makeSem ''ConfigEff
 

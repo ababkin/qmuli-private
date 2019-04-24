@@ -7,7 +7,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 
 module Qi.AWS.ARN (
-    Arn(service)
+    Arn(..)
   , ToArn(..)
   ) where
 
@@ -16,14 +16,12 @@ import           Data.Aeson
 import qualified Data.Text          as T
 import           Protolude hiding (show)
 import qualified          Protolude as P
-import           Qi.AWS.S3
-import           Qi.AWS.Types
 import GHC.Show (Show(..))
 import           Control.Lens
 
+import           Qi.AWS.Types
+import           Qi.AWS.Service
 
-type KfId = LogicalId 'KfStreamResource
-type LambdaFunctionId = LogicalId 'LambdaFunctionResource
 
 data Arn = Arn
   { service   :: Service
@@ -73,27 +71,23 @@ instance ToArn S3BucketId where
     , resource = P.show $ toPhysicalId appName id
     }
 
-instance ToArn S3Object where
-  toArn s3obj appName = Arn {
-      service = S3
-    , region  = ""
-    , resource = arnRes
-    }
-    where
-      bucketId = s3obj ^. s3oBucketId
-      objKey = s3obj ^. s3oKey
-      arnRes = P.show (toPhysicalId appName bucketId) <> "/" <> P.show objKey
-
-instance ToArn LambdaFunctionId where
+instance ToArn LambdaId where
   toArn id appName = Arn {
       service = Lambda
     , region  = "us-east-1"
     , resource = "function" <> ":" <> P.show (toPhysicalId appName id)
     }
 
-instance ToArn KfId where
+instance ToArn KfStreamId where
   toArn id appName = Arn {
       service = KinesisFirehose
     , region  = "us-east-1"
     , resource = "deliverystream" <> ":" <> P.show (toPhysicalId appName id)
+    }
+
+instance ToArn QueueId where
+  toArn id appName = Arn {
+      service = Sqs
+    , region  = "us-east-1"
+    , resource = P.show (toPhysicalId appName id)
     }

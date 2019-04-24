@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeApplications #-}
+
 {-# OPTIONS_GHC -fno-warn-incomplete-uni-patterns #-}
 
 module Qi.Test.Config.Render.S3 where
@@ -12,9 +14,8 @@ import           Protolude                             hiding (State, get, put,
 import Polysemy
 import Polysemy.State (runState)
 
-import           Qi.AWS.Resource
+import           Qi.AWS.Render
 import           Qi.AWS.S3
-import qualified Qi.AWS.S3.Render                      as S3
 import           Qi.AWS.Types
 import           Qi.Config                             hiding (appName)
 import qualified Qi.Program.Config.Ipret.State         as Config
@@ -22,9 +23,9 @@ import           Qi.Program.Config.Lang as Config
 import           Qi.Test.Logger
 import           Test.Tasty.Hspec
 
-import  Stratosphere
-import  Stratosphere.Resources
-import  Stratosphere.Resources.S3Bucket  
+import qualified  Stratosphere as S
+-- import  Stratosphere.Resources
+-- import qualified Stratosphere.Resources.S3Bucket as S
 import  Stratosphere.Values
 
 
@@ -51,16 +52,16 @@ spec = parallel $
         -- https://github.com/frontrowed/stratosphere/blob/master/library-gen/Stratosphere/ResourceProperties/S3BucketS3KeyFilter.hs
         let expectedBucketLogicalId = bucketName <> "S3Bucket"
             expectedBucketPhysicalId = show appName <> "." <> bucketName <> ".s3-bucket"
-            expectedNotificationConfig = Just (S3BucketNotificationConfiguration {
-                                                  _s3BucketNotificationConfigurationLambdaConfigurations = Just []
-                                                , _s3BucketNotificationConfigurationQueueConfigurations = Nothing
-                                                , _s3BucketNotificationConfigurationTopicConfigurations = Nothing
+            expectedNotificationConfig = Just (S.S3BucketNotificationConfiguration {
+                                                  S._s3BucketNotificationConfigurationLambdaConfigurations = Just []
+                                                , S._s3BucketNotificationConfigurationQueueConfigurations = Nothing
+                                                , S._s3BucketNotificationConfigurationTopicConfigurations = Nothing
                                                 })
 
 
 
-        case S3.toResources config of
-          Resources [ Resource bucketLogicalId (ResourceProperties _type props) _ _ _ _ _ _ ] -> do
+        case toResources @S3Bucket config of
+          S.Resources [ S.Resource bucketLogicalId (S.ResourceProperties _type props) _ _ _ _ _ _ ] -> do
             bucketLogicalId `shouldBe` expectedBucketLogicalId
 
             let propShouldBe propKey expectedTextValue =

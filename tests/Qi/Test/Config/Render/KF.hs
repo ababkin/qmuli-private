@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE TypeApplications #-}
 
 {-# OPTIONS_GHC -fno-warn-incomplete-uni-patterns #-}
 
@@ -12,11 +13,9 @@ import           Protolude                             hiding (State, get, put,
 import Polysemy
 import Polysemy.State (runState)
 
-import           Qi.AWS.Resource
+import           Qi.AWS.Render
 import           Qi.AWS.S3
-import qualified Qi.AWS.S3.Render                      as S3
 import           Qi.AWS.KF
-import qualified Qi.AWS.KF.Render                      as KF
 import           Qi.AWS.Types
 import           Qi.Config                             hiding (appName)
 import qualified Qi.Program.Config.Ipret.State         as Config
@@ -64,7 +63,7 @@ spec = parallel $
                                         ]
                                 )]
 
-        case KF.toResources config of
+        case toResources @KfStream config of
           Resources [Resource kfLogicalId (ResourceProperties _ props) _ _ _ _ _ _] -> do
 
             kfLogicalId `shouldBe` expectedKfLogicalId

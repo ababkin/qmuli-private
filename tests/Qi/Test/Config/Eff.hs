@@ -8,7 +8,6 @@ import qualified Data.HashMap.Strict           as SHM
 import           Protolude
 import Polysemy
 
-import           Qi.AWS.Resource
 import           Qi.AWS.S3
 import           Qi.AWS.Types
 import           Qi.Config

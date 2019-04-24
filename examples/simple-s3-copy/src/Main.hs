@@ -9,8 +9,8 @@ import           Protolude
 import           Polysemy
 
 import           Qi                     (withConfig)
-import           Qi.AWS.Lambda
-import           Qi.AWS.Resource        (S3BucketId)
+import           Qi.AWS.Lambda.Function
+import           Qi.AWS.Types        (S3BucketId)
 import           Qi.AWS.S3              (s3eObject, s3oBucketId)
 import           Qi.Program.Config.Lang (s3Bucket, s3BucketLambda)
 import           Qi.Program.Gen.Lang    (GenEff, say)

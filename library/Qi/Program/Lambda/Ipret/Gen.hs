@@ -13,7 +13,6 @@ import           Protolude              hiding ((<&>))
 import           Polysemy hiding (run)
 
 import           Qi.AWS.Lambda
-import           Qi.AWS.Resource
 import           Qi.AWS.S3
 import           Qi.AWS.Types
 import           Qi.Config

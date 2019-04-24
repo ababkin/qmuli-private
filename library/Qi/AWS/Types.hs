@@ -4,7 +4,17 @@
 
 module Qi.AWS.Types ( AwsMode (..)
                     -- ^ Local stack simulation or the real cloud AWS resources
+                    , AwsResource(..)
                     , AwsResourceType (..)
+                    , LambdaId
+                    , S3BucketId
+                    , QueueId
+                    , KfStreamId
+                    , LambdaMappingId
+                    , RoleId
+                    , CwEventsRuleId
+                    , LambdaPermissionId
+
                     , AppName
                     -- ^ Name of an app (hide the constructor)
                     , mkAppName
@@ -33,11 +43,6 @@ module Qi.AWS.Types ( AwsMode (..)
                     -- ^ cast Logical Id resource type to a different one (while retaining the same base resource identifier)
                     , ResourceExistence (..)
                     -- ^ Whether a resource already exists or needs to be created as part of the stack
-                    , Service(..)
-                    -- ^ AWS services
-                    , toNamespace
-                    , fromNamespace
-                    , toUrl
                     )
                      where
 
@@ -48,54 +53,14 @@ import qualified          Protolude as P
 import qualified Data.Text          as T
 import qualified GHC.Show (Show(..))
 
+import Qi.AWS.Service
+
 
 data AwsMode = RealDeal | LocalStack
   deriving Eq
 
-data Service =
-    S3
-  | KinesisFirehose
-  | Dynamo
-  | CwEvents
-  | Lambda
-  | Sqs
-  deriving (Eq, Show)
-
-toNamespace :: Service -> Text
-toNamespace S3              = "s3"
-toNamespace KinesisFirehose = "firehose"
-toNamespace Dynamo          = "dynamodb"
-toNamespace Lambda          = "lambda"
-toNamespace CwEvents        = "events"
-toNamespace Sqs             = "sqs"
-
-fromNamespace :: Text -> Maybe Service
-fromNamespace "s3"       = Just S3
-fromNamespace "firehose" = Just KinesisFirehose
-fromNamespace "dynamodb" = Just Dynamo
-fromNamespace "lambda"   = Just Lambda
-fromNamespace "events"   = Just CwEvents
-fromNamespace "sqs"      = Just Sqs
-fromNamespace _          = Nothing
-
-toUrl :: Service -> Text
-toUrl s = toNamespace s <> ".amazonaws.com"
-
-
-data AwsResourceType =
-    S3BucketResource
-  | KfStreamResource
-  | LambdaFunctionResource
-  | LambdaPermissionResource
-  | IamRoleResource
-  -- | IamPolicyResource
-  | CwEventsRuleResource
-  | SqsQueueResource
-  deriving (Eq, Show)
-
 data ResourceExistence = AlreadyExists | ShouldCreate
   deriving (Eq, Show)
-
 
 newtype AppName = AppName Text
   deriving (Eq, Ord)
@@ -105,6 +70,32 @@ instance Show AppName where
 
 mkAppName :: Text -> Either Text AppName
 mkAppName t = Right $ AppName t -- TODO: restrict app names according to validation rules
+
+
+
+data AwsResourceType =
+    S3BucketResource
+  | KfStreamResource
+  | LambdaFunctionResource
+  | LambdaPermissionResource
+  | LambdaEventSourceMappingResource
+  | IamRoleResource
+  -- | IamPolicyResource
+  | CwEventsRuleResource
+  | SqsQueueResource
+  deriving (Eq, Show)
+
+type LambdaId        = LogicalId 'LambdaFunctionResource
+type LambdaMappingId = LogicalId 'LambdaEventSourceMappingResource
+type LambdaPermissionId = LogicalId 'LambdaPermissionResource
+type S3BucketId      = LogicalId 'S3BucketResource
+type KfStreamId      = LogicalId 'KfStreamResource
+type QueueId         = LogicalId 'SqsQueueResource
+type RoleId          = LogicalId 'IamRoleResource
+type CwEventsRuleId  = LogicalId 'CwEventsRuleResource
+
+class AwsResource r where
+  type ResourceType r :: AwsResourceType
 
 -- newtype ResourceName (r :: AwsResourceType) = ResourceName Text
 --   deriving Eq
@@ -124,6 +115,8 @@ instance Show (LogicalId 'S3BucketResource) where
   show (LogicalId t) = toS t <> "S3Bucket"
 instance Show (LogicalId 'LambdaFunctionResource) where
   show (LogicalId t) = toS t <> "LambdaFunction"
+instance Show (LogicalId 'LambdaEventSourceMappingResource) where
+  show (LogicalId t) = toS t <> "LambdaEventSourceMapping"
 instance Show (LogicalId 'LambdaPermissionResource) where
   show (LogicalId t) = toS t <> "LambdaPermission"
 instance Show (LogicalId 'KfStreamResource) where
@@ -148,6 +141,8 @@ instance Show (PhysicalId 'S3BucketResource) where
   show (PhysicalId appName id) = P.show appName <> "." <> toS id <> "." <> "s3-bucket"
 instance Show (PhysicalId 'LambdaFunctionResource) where
   show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "lambda-function"
+instance Show (PhysicalId 'LambdaEventSourceMappingResource) where
+  show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "lambda-event-source-mapping"
 instance Show (PhysicalId 'LambdaPermissionResource) where
   show (PhysicalId appName id) = P.show appName <> "." <> toS id <> "." <> "lambda-permission"
 instance Show (PhysicalId 'KfStreamResource) where

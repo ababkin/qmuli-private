@@ -4,7 +4,6 @@ module Qi.Test.Resource where
 
 import           Control.Lens
 import           Protolude        hiding (State, get, put, runState)
-import           Qi.AWS.Resource
 import           Qi.AWS.Types
 import           Qi.Config        hiding (appName)
 import           Test.Tasty.Hspec

@@ -9,10 +9,14 @@ module Qi.Config ( Config (..)
                  , cwConfig
                  , sqsConfig
                  , mkConfig
+                 , Configable(..)
                  ) where
 
-import           Control.Lens (makeLenses)
+import           Control.Lens (view, makeLenses)
 import           Data.Default        (def)
+import qualified Data.HashMap.Strict        as SHM
+import           Protolude
+
 import           Qi.AWS.KF
 import           Qi.AWS.Lambda
 import           Qi.AWS.S3
@@ -20,7 +24,9 @@ import           Qi.AWS.Types
 import           Qi.AWS.IAM
 import           Qi.AWS.CW
 import           Qi.AWS.SQS
-import           Protolude
+import           Qi.AWS.Lambda.Function
+import           Qi.AWS.Lambda.EventSourceMapping
+import           Qi.AWS.Lambda.Permission
 
 
 data Config = Config {
@@ -48,3 +54,54 @@ mkConfig appName =
   }
 
 makeLenses ''Config
+
+-- TODO: only render non-existing resources
+--     buckets = filter (\(_, s3b) -> s3b ^. s3bProfile . s3bpExistence /= AlreadyExists) $ all config
+
+
+class ( AwsResource r
+      , Show (LogicalId (ResourceType r))
+      , Hashable (LogicalId (ResourceType r))
+      ) => Configable r where
+
+  mapping
+    :: Config
+    -> SHM.HashMap (LogicalId (ResourceType r)) r
+
+  all
+    :: Config
+    -> [ (LogicalId (ResourceType r), r) ]
+  all = SHM.toList . mapping
+
+  getById
+    :: Config
+    -> LogicalId (ResourceType r)
+    -> r
+  getById config lid =
+    fromMaybe
+      (panic $ "Could not reference resource with logical id: " <> show lid)
+      $ SHM.lookup lid $ mapping config
+
+instance Configable LambdaFunction where
+  mapping = view $ lbdConfig . idToFunction
+
+instance Configable LambdaPermission where
+  mapping = view $ lbdConfig . idToPermission
+
+instance Configable LambdaEventSourceMapping where
+  mapping = view $ lbdConfig . idToEventSourceMapping
+
+instance Configable KfStream where
+  mapping = view $ kfConfig . idToStream
+
+instance Configable S3Bucket where
+  mapping = view $ s3Config . idToBucket
+
+instance Configable IamRole where
+  mapping = view $ iamConfig . idToRole
+
+instance Configable CwEventsRule where
+  mapping = view $ cwConfig . idToRule
+
+instance Configable SqsQueue where
+  mapping = view $ sqsConfig . idToQueue

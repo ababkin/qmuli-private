@@ -27,12 +27,11 @@ import           Qi.Program.Lambda.Lang         (LambdaEff)
 import qualified Qi.Program.Lambda.Lang         as Lbd
 import           Qi.Program.S3.Lang
 import           Qi.Config hiding (appName)
-import           Qi.AWS.Lambda
+import           Qi.AWS.Lambda.Function
 import           Qi.AWS.S3
 import qualified Qi.AWS.Render           as R
 import           Qi.CLI.Options
 import           Qi.AWS.Types
-import           Qi.AWS.Resource
 import qualified Qi.Program.Config.Ipret.State  as Config
 import           Qi.Program.Config.Lang         (ConfigEff, s3Bucket)
 import qualified Qi.Program.Gen.Lang            as Gen

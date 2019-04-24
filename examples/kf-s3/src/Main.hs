@@ -8,8 +8,8 @@ import           Protolude hiding (put)
 import           Polysemy
 
 import           Qi                     (withConfig)
-import           Qi.AWS.Lambda
-import           Qi.AWS.KF        (KfStreamId)
+import           Qi.AWS.Lambda.Function
+import           Qi.AWS.Types        (KfStreamId)
 import           Qi.AWS.S3              (s3eObject, s3oBucketId)
 import           Qi.Program.Config.Lang (kfStreamS3, s3Bucket, cwEventLambda)
 import           Qi.Program.Gen.Lang    (GenEff, say)
@@ -30,7 +30,7 @@ main = withConfig config
     eventLambda
       :: (Member GenEff effs, Member KfEff effs)
       => KfStreamId
-      -> CwLambdaProgram effs
+      -> CwEvent -> Sem effs Value
     eventLambda kfStreamId _ = do
       -- emit log messages that end up in the appropriate cloudwatch group/stream
       put kfStreamId $ object [ "da" .= Number 3 ]

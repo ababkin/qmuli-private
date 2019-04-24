@@ -6,7 +6,6 @@ import           Network.AWS.Firehose
 import           Polysemy hiding (run)
 import           Protolude              hiding ((<&>))
 
-import           Qi.AWS.Resource
 import           Qi.AWS.KF
 import           Qi.AWS.Types
 import           Qi.Config

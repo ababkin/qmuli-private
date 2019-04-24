@@ -4,7 +4,7 @@
 
 module Qi.Program.Config.Ipret.State where
 
-import           Control.Lens              hiding (view)
+import           Control.Lens              hiding (view, mapping)
 import Data.Aeson (Value)
 import           Data.Default              (def)
 import qualified Data.HashMap.Strict       as SHM
@@ -18,10 +18,15 @@ import           Qi.AWS.ARN
 import           Qi.AWS.CW
 import           Qi.AWS.IAM
 import           Qi.AWS.KF
+import           Qi.AWS.SQS
+import           Qi.AWS.Lambda.EventSourceMapping as ESM
+import           Qi.AWS.Lambda.Function
+import           Qi.AWS.Lambda.Permission
 import           Qi.AWS.Lambda
 import           Qi.AWS.S3
 import           Qi.AWS.Types
-import           Qi.Config
+import           Qi.AWS.Service
+import           Qi.Config hiding (mapping)
 import qualified Qi.Program.Config.Lang as Lang
 
 
@@ -33,10 +38,11 @@ run = interpret (\case
 
   Lang.GetConfig -> get
 
-  Lang.GenericLambda inProxy outProxy name f profile ->
+  Lang.GenericLambda inProxy outProxy name program profile ->
     withLogicalId name $ \lid -> do
+      insertPermission name lid Lambda
       roleId <- insertRole name lid
-      let lbd = LambdaFunction Lambda roleId profile inProxy outProxy f
+      let lbd = LambdaFunction roleId profile inProxy outProxy program
       modify (lbdConfig . idToFunction %~ SHM.insert lid lbd)
       pure lid
 
@@ -47,19 +53,21 @@ run = interpret (\case
       modify (s3Config . idToBucket %~ SHM.insert lid newBucket)
       pure lid
 
-  Lang.S3BucketLambda name bucketId f profile -> do
+  Lang.S3BucketLambda name bucketId program profile -> do
     withLogicalId name $ \lid -> do
+      insertPermission name lid S3
       roleId <- insertRole name lid
-      let lbd = LambdaFunction S3 roleId profile (Proxy :: Proxy S3Event) (Proxy :: Proxy Value) f
+      let lbd = LambdaFunction roleId profile (Proxy :: Proxy S3Event) (Proxy :: Proxy Value) program
           modifyBucket = s3bEventConfigs %~ ((S3EventConfig S3ObjectCreatedAll lid):)
       modify (s3Config . idToBucket %~ SHM.adjust modifyBucket bucketId)
       modify (lbdConfig . idToFunction %~ SHM.insert lid lbd)
       pure lid
 
-  Lang.CwEventLambda name ruleProfile programFunc profile -> do
+  Lang.CwEventLambda name ruleProfile program profile -> do
     withLogicalId name $ \lid -> do
+      insertPermission name lid CwEvents
       roleId <- insertRole name lid
-      let lbd = LambdaFunction CwEvents roleId profile (Proxy :: Proxy CwEvent) (Proxy :: Proxy Value) programFunc
+      let lbd = LambdaFunction roleId profile (Proxy :: Proxy CwEvent) (Proxy :: Proxy Value) program
           eventsRule = CwEventsRule {
             _cerName    = name
           , _cerProfile = ruleProfile
@@ -67,6 +75,22 @@ run = interpret (\case
           }
       withLogicalId (name <> "EventsRule") $ \eventsRuleId -> do
         modify $ cwConfig . idToRule %~ SHM.insert eventsRuleId eventsRule
+        modify (lbdConfig . idToFunction %~ SHM.insert lid lbd)
+      pure lid
+
+  Lang.SqsLambda name queueId mappingProfile program profile -> do
+    Config{ _appName } <- get
+    withLogicalId name $ \lid -> do
+      insertPermission name lid CwEvents
+      roleId <- insertRole name lid
+      let lbd = LambdaFunction roleId profile (Proxy :: Proxy SqsEvent) (Proxy :: Proxy Value) program
+          mapping = LambdaEventSourceMapping {
+                                   source = toArn queueId _appName
+                                 , ESM.functionId = lid
+                                 , ESM.profile = mappingProfile
+                                 }
+      withLogicalId (name <> "EventSourceMapping") $ \mappingId -> do
+        modify $ lbdConfig . idToEventSourceMapping %~ SHM.insert mappingId mapping
         modify (lbdConfig . idToFunction %~ SHM.insert lid lbd)
       pure lid
 
@@ -80,12 +104,23 @@ run = interpret (\case
   )
 
   where
+    insertPermission
+      :: Text
+      -> LambdaId
+      -> Service
+      -> Sem effs LambdaPermissionId
+    insertPermission name lid service =
+      withLogicalId name $ \permissionId -> do
+        let permission = LambdaPermission service lid
+        modify (lbdConfig . idToPermission %~ SHM.insert permissionId permission)
+        pure permissionId
+
     insertRole
       :: forall principalId
       .  (ToArn principalId)
       => Text
       -> principalId
-      -> Sem effs (LogicalId 'IamRoleResource)
+      -> Sem effs RoleId
     insertRole name lid =
       withLogicalId name $ \roleId -> do
         config <- get
