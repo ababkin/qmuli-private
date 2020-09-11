@@ -17,8 +17,6 @@ import Servant.Client (BaseUrl, ClientM)
 import Servant.Client.Core.ClientError (ClientError)
 
 data GenEff m r where
-  GetAppName ::
-    GenEff m AppName
   Http ::
     ManagerSettings ->
     Request ->

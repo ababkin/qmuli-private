@@ -50,8 +50,6 @@ run ::
 run mode mkLogger =
   interpret
     ( \act -> liftIO $ case act of
-        GetAppName ->
-          pure $ either (panic . show) identity $ mkAppName "blah" -- (^. appName) <$> getConfig
         Http mgrSettings req ->
           httpLbs req =<< newManager mgrSettings
         RunServant mgrSettings baseUrl req -> do
