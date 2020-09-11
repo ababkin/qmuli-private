@@ -15,8 +15,6 @@ import qualified Qi.Program.Config.Ipret.State as Config
 import Qi.Program.Config.Lang (ConfigEff)
 import qualified Qi.Program.Gen.Ipret.IO as Gen
 import Qi.Program.Gen.Lang (GenEff)
-import qualified Qi.Program.KF.Ipret.Gen as Kf
-import Qi.Program.KF.Lang (KfEff)
 import qualified Qi.Program.Lambda.Ipret.Gen as Lbd
 import Qi.Program.Lambda.Lang (LambdaEff)
 import qualified Qi.Program.S3.Ipret.Gen as S3
@@ -29,7 +27,6 @@ run ::
   ( Sem
       '[ CfEff,
          S3Eff,
-         KfEff,
          LambdaEff,
          GenEff,
          ConfigEff,
@@ -46,6 +43,5 @@ run config awsMode mkLogger =
     . Config.run
     . Gen.run awsMode mkLogger
     . Lbd.run
-    . Kf.run
     . S3.run
     . CF.run

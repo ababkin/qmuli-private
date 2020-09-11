@@ -24,7 +24,6 @@ import Qi.AWS.Renderable
 import Qi.AWS.Service
 import Qi.AWS.Types
 import Qi.Program.Gen.Lang
-import Qi.Program.KF.Lang (KfEff)
 import Qi.Program.Lambda.Lang (LambdaEff)
 import Qi.Program.S3.Lang (S3Eff)
 import Stratosphere (Val (..))
@@ -32,7 +31,6 @@ import qualified Stratosphere as S
 
 type AllLambdaEffects effs =
   ( Member GenEff effs,
-    Member KfEff effs,
     Member S3Eff effs,
     Member LambdaEff effs
   )

@@ -6,15 +6,12 @@ module Qi.AWS.Render where
 import Control.Lens hiding (mapping, view)
 import qualified Data.ByteString.Lazy as LBS
 import Protolude hiding (all)
-import Qi.AWS.CW
 import Qi.AWS.IAM
-import Qi.AWS.KF
 import Qi.AWS.Lambda.EventSourceMapping
 import Qi.AWS.Lambda.Function
 import Qi.AWS.Lambda.Permission
 import qualified Qi.AWS.Renderable as R
 import Qi.AWS.S3
-import Qi.AWS.SQS
 import Qi.Config
 import qualified Stratosphere as S
 
@@ -48,8 +45,5 @@ toAllResources config =
             toResources @IamRole,
             toResources @LambdaPermission,
             toResources @LambdaEventSourceMapping,
-            toResources @LambdaFunction,
-            toResources @KfStream,
-            toResources @CwEventsRule,
-            toResources @SqsQueue
+            toResources @LambdaFunction
           ]

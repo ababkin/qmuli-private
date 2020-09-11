@@ -5,10 +5,7 @@ module Qi.Config
     appName,
     s3Config,
     lbdConfig,
-    kfConfig,
     iamConfig,
-    cwConfig,
-    sqsConfig,
     mkConfig,
     Configable (..),
   )
@@ -18,25 +15,19 @@ import Control.Lens (makeLenses, view)
 import Data.Default (def)
 import qualified Data.HashMap.Strict as SHM
 import Protolude
-import Qi.AWS.CW
 import Qi.AWS.IAM
-import Qi.AWS.KF
 import Qi.AWS.Lambda
 import Qi.AWS.Lambda.EventSourceMapping
 import Qi.AWS.Lambda.Function
 import Qi.AWS.Lambda.Permission
 import Qi.AWS.S3
-import Qi.AWS.SQS
 import Qi.AWS.Types
 
 data Config = Config
   { _appName :: AppName,
     _s3Config :: S3Config,
     _lbdConfig :: LambdaConfig,
-    _kfConfig :: KfConfig,
-    _iamConfig :: IamConfig,
-    _cwConfig :: CwConfig,
-    _sqsConfig :: SqsConfig
+    _iamConfig :: IamConfig
   }
   deriving (Eq, Show)
 
@@ -46,10 +37,7 @@ mkConfig appName =
     { _appName = appName,
       _s3Config = def,
       _lbdConfig = def,
-      _kfConfig = def,
-      _iamConfig = def,
-      _cwConfig = def,
-      _sqsConfig = def
+      _iamConfig = def
     }
 
 makeLenses ''Config
@@ -91,17 +79,8 @@ instance Configable LambdaPermission where
 instance Configable LambdaEventSourceMapping where
   mapping = view $ lbdConfig . idToEventSourceMapping
 
-instance Configable KfStream where
-  mapping = view $ kfConfig . idToStream
-
 instance Configable S3Bucket where
   mapping = view $ s3Config . idToBucket
 
 instance Configable IamRole where
   mapping = view $ iamConfig . idToRole
-
-instance Configable CwEventsRule where
-  mapping = view $ cwConfig . idToRule
-
-instance Configable SqsQueue where
-  mapping = view $ sqsConfig . idToQueue

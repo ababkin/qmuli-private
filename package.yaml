@@ -132,7 +132,7 @@ library:
     - amazonka-lambda
     # - amazonka-lex-models
     - amazonka-s3
-    - amazonka-kinesis-firehose
+    # - amazonka-kinesis-firehose
     # - amazonka-sqs
     - zip
 
@@ -158,18 +158,18 @@ executables:
       else:
         buildable: false
 
-  qmuli-kf-s3:
-    main: Main.hs
-    source-dirs: examples/kf-s3/src
-    dependencies:
-      - base
-      - qmuli
-    when:
-    - condition: flag(build-examples)
-      then:
-        buildable: true
-      else:
-        buildable: false
+  # qmuli-kf-s3:
+  #   main: Main.hs
+  #   source-dirs: examples/kf-s3/src
+  #   dependencies:
+  #     - base
+  #     - qmuli
+  #   when:
+  #   - condition: flag(build-examples)
+  #     then:
+  #       buildable: true
+  #     else:
+  #       buildable: false
 
 #  qmuli-fold-s3-content:
 #    main: Main.hs
