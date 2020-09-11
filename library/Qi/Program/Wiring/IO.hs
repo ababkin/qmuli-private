@@ -28,9 +28,9 @@ run ::
       '[ CfEff,
          S3Eff,
          LambdaEff,
-         GenEff,
          ConfigEff,
          State Config,
+         GenEff,
          Embed IO
        ]
       a ->
@@ -38,10 +38,10 @@ run ::
   )
 run config awsMode mkLogger =
   runM
+    . Gen.run awsMode mkLogger
     . map snd
     . runState config
     . Config.run
-    . Gen.run awsMode mkLogger
     . Lbd.run
     . S3.run
     . CF.run

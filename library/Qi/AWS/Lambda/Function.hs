@@ -16,8 +16,6 @@ import Data.Text (Text)
 import GHC.Show (Show (..))
 import Polysemy
 import Protolude as P
--- hiding (lfRole, LambdaFunction)
-
 import Qi.AWS.ARN
 import Qi.AWS.IAM
 import Qi.AWS.Renderable

@@ -19,6 +19,7 @@ import Network.AWS.Types (Service (..))
 import Network.HTTP.Client (httpLbs, newManager)
 import Polysemy hiding (run)
 import Protolude hiding ((<&>))
+import Qi.AWS.Types
 import Qi.AWS.Types (AwsMode (..))
 import Qi.Amazonka (currentRegion)
 import Qi.Config (appName)
@@ -42,38 +43,36 @@ import System.Posix.Types (FileMode)
 
 run ::
   forall effs a.
-  (Member (Embed IO) effs, Member ConfigEff effs) =>
+  (Member (Embed IO) effs) =>
   AwsMode ->
   IO Logger ->
   (Sem (GenEff ': effs) a -> Sem effs a)
 run mode mkLogger =
   interpret
-    ( \case
+    ( \act -> liftIO $ case act of
         GetAppName ->
-          (^. appName) <$> getConfig
+          pure $ either (panic . show) identity $ mkAppName "blah" -- (^. appName) <$> getConfig
         Http mgrSettings req ->
-          embed $
-            httpLbs req =<< newManager mgrSettings
-        RunServant mgrSettings baseUrl req -> embed $ do
+          httpLbs req =<< newManager mgrSettings
+        RunServant mgrSettings baseUrl req -> do
           mgr <- newManager mgrSettings
           runClientM req $ mkClientEnv mgr baseUrl
         Amazonka svc req ->
-          embed . runAmazonka svc $ AWS.send req
+          runAmazonka svc $ AWS.send req
         AmazonkaPostBodyExtract svc req post ->
-          embed $
-            runAmazonka svc $
-              map Right . (`sinkBody` sinkLbs) . post =<< AWS.send req
-        Say msg -> embed $ do
+          runAmazonka svc $
+            map Right . (`sinkBody` sinkLbs) . post =<< AWS.send req
+        Say msg -> do
           hPutStrLn stderr . encode $ object ["message" .= String msg]
           putStrLn msg :: IO ()
-        GetCurrentTime -> embed C.getCurrentTime
-        Sleep us -> embed $ threadDelay us
-        Build -> embed $ do
+        GetCurrentTime -> C.getCurrentTime
+        Sleep us -> threadDelay us
+        Build -> do
           (_, execFilename) <- splitExecutablePath -- get the current executable filename
           toS <$> build "." (toS execFilename)
         ReadFileLazy path ->
-          embed . LBS.readFile $ toS path
-        PutStr content -> embed $ LBS.putStr content
+          LBS.readFile $ toS path
+        PutStr content -> LBS.putStr content
     )
   where
     runAmazonka :: Service -> AWS b -> IO b
