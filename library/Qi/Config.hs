@@ -29,7 +29,6 @@ data Config = Config
     _lbdConfig :: LambdaConfig,
     _iamConfig :: IamConfig
   }
-  deriving (Eq, Show)
 
 mkConfig :: AppName -> Config
 mkConfig appName =

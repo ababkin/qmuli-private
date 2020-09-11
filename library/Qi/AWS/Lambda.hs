@@ -24,7 +24,6 @@ data LambdaConfig = LambdaConfig
     _idToEventSourceMapping :: HashMap LambdaMappingId LambdaEventSourceMapping,
     _idToPermission :: HashMap LambdaPermissionId LambdaPermission
   }
-  deriving (Eq, Show)
 
 instance Default LambdaConfig where
   def =

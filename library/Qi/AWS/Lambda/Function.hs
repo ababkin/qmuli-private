@@ -52,12 +52,6 @@ data LambdaFunction = forall a b.
       Sem effs b
   }
 
-instance Eq LambdaFunction where
-  _ == _ = True -- TODO: do something about this aweful hack
-
-instance Show LambdaFunction where
-  show LambdaFunction {} = "LambdaFunction"
-
 instance AwsResource LambdaFunction where
   type ResourceType LambdaFunction = 'LambdaFunctionResource
 
@@ -118,11 +112,6 @@ instance Default LambdaFunctionProfile where
       }
 
 makeLenses ''LambdaFunctionProfile
-
--- toResources :: Config -> Resources
--- toResources config@Config{ _appName } = Resources $ map toLambdaResource lbds
---   where
---     lbds :: [ (LambdaId, LambdaFunction) ] = all config
 
 instance Renderable LambdaFunction where
   render appName (lid, LambdaFunction {roleId, profile}) =
