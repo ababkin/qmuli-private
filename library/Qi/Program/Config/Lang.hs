@@ -9,7 +9,6 @@ import qualified Data.ByteString.Lazy.Char8 as LBS
 import Data.Default (Default, def)
 import Polysemy
 import Protolude
-import Qi.AWS.CW
 import Qi.AWS.IAM
 import Qi.AWS.Lambda.EventSourceMapping
 import Qi.AWS.Lambda.Function

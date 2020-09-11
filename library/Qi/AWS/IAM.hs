@@ -44,7 +44,7 @@ instance Renderable IamRole where
           S.resource (P.show lid) $
             S.iamRole rolePolicyDocumentObject
               & S.iamrPolicies ?~ [executePolicy]
-              & S.iamrRoleName ?~ Literal (P.show $ toPhysicalId appName lid)
+              & S.iamrRoleName ?~ Literal (showPhysicalId $ toPhysicalId appName lid)
               & S.iamrPath ?~ "/"
      in res -- & resourceDependsOn ?~ reqs
     where

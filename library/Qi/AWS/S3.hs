@@ -85,7 +85,7 @@ instance ToArn S3Object where
     where
       bucketId = s3obj ^. s3oBucketId
       objKey = s3obj ^. s3oKey
-      arnRes = P.show (toPhysicalId appName bucketId) <> "/" <> P.show objKey
+      arnRes = showPhysicalId (toPhysicalId appName bucketId) <> "/" <> P.show objKey
 
 data S3Event = S3Event
   { _s3eObject :: S3Object
@@ -103,7 +103,7 @@ instance FromJSON S3Event where
         s3 <- record .: "s3"
         bucketId <- (.: "name") =<< s3 .: "bucket"
         key <- (.: "key") =<< s3 .: "object"
-        case parseS3BucketPhysicalId bucketId of
+        case parsePhysicalId bucketId of
           Left err ->
             fail $
               "could not parse s3 bucket physical id: " <> P.show bucketId
@@ -147,7 +147,7 @@ instance Renderable S3Bucket where
   render appName (lid, bucket) =
     ( S.resource (P.show lid) $
         S.s3Bucket
-          & S.sbBucketName ?~ Literal (P.show pid)
+          & S.sbBucketName ?~ Literal (showPhysicalId pid)
           & S.sbAccessControl ?~ Literal S.PublicReadWrite
           & S.sbNotificationConfiguration ?~ lbdConfigs
     )

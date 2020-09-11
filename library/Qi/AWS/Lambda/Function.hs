@@ -119,7 +119,7 @@ instance Renderable LambdaFunction where
           "index.handler"
           (GetAtt (P.show roleId) "Arn")
           (Literal $ S.OtherRuntime "provided")
-          & S.lfFunctionName ?~ Literal (P.show $ toPhysicalId appName lid)
+          & S.lfFunctionName ?~ Literal (showPhysicalId $ toPhysicalId appName lid)
           & S.lfMemorySize ?~ Literal memorySize
           & S.lfTimeout ?~ Literal timeOut
     )

@@ -69,7 +69,7 @@ withConfig configProgram = do
           (panic "AWS_LAMBDA_FUNCTION_NAME not found in ENV")
           toS
           <$> lookupEnv "AWS_LAMBDA_FUNCTION_NAME"
-      case parseLambdaFunctionPhysicalId lambdaId of
+      case parsePhysicalId lambdaId of
         Left err -> panic err
         Right pid -> do
           let appName = toAppName pid

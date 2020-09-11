@@ -34,13 +34,13 @@ run =
         Invoke lid payload -> do
           Config {_appName} <- getConfig
           void . amazonka lambda $
-            invoke (show $ toPhysicalId _appName lid) (toS $ encode payload)
+            invoke (showPhysicalId $ toPhysicalId _appName lid) (toS $ encode payload)
               & iInvocationType ?~ Event
         Update lid S3Object {_s3oBucketId, _s3oKey = S3Key s3Key} -> do
           Config {_appName} <- getConfig
           let pid = toPhysicalId _appName lid
           void . amazonka lambda $
-            updateFunctionCode (show pid)
-              & uS3Bucket ?~ show (toPhysicalId _appName _s3oBucketId)
+            updateFunctionCode (showPhysicalId pid)
+              & uS3Bucket ?~ showPhysicalId (toPhysicalId _appName _s3oBucketId)
               & uS3Key ?~ s3Key
     )

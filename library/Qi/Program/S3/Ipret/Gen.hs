@@ -34,7 +34,7 @@ run =
             -- handling _KeyNotFound handler action
 
             action Config {_appName} =
-              let bucketName = BucketName . show $ toPhysicalId _appName _s3oBucketId
+              let bucketName = BucketName . showPhysicalId $ toPhysicalId _appName _s3oBucketId
                in amazonkaPostBodyExtract
                     s3
                     (getObject bucketName objKey)
@@ -49,11 +49,11 @@ run =
 
         PutContent S3Object {_s3oBucketId, _s3oKey = S3Key (ObjectKey -> objKey)} payload -> do
           Config {_appName} <- getConfig
-          let bucketName = BucketName . show $ toPhysicalId _appName _s3oBucketId
+          let bucketName = BucketName . showPhysicalId $ toPhysicalId _appName _s3oBucketId
           void $ amazonka s3 $ putObject bucketName objKey (toBody payload) & poACL ?~ OPublicReadWrite
         ListObjects bucketId maybeToken -> do
           Config {_appName} <- getConfig
-          let bucketName = BucketName . show $ toPhysicalId _appName bucketId
+          let bucketName = BucketName . showPhysicalId $ toPhysicalId _appName bucketId
           r <- amazonka s3 $ case maybeToken of
             Nothing ->
               -- first pagination call
@@ -65,7 +65,7 @@ run =
           pure $ (objs, ListToken <$> r ^. lovrsNextContinuationToken)
         DeleteObject S3Object {_s3oBucketId, _s3oKey = S3Key (ObjectKey -> objKey)} -> do
           Config {_appName} <- getConfig
-          let bucketName = BucketName . show $ toPhysicalId _appName _s3oBucketId
+          let bucketName = BucketName . showPhysicalId $ toPhysicalId _appName _s3oBucketId
           void $ amazonka s3 $ deleteObject bucketName objKey
         DeleteObjects s3objs -> do
           Config {_appName} <- getConfig
@@ -73,7 +73,7 @@ run =
 
               toPair :: S3Object -> (BucketName, [ObjectIdentifier])
               toPair S3Object {_s3oBucketId, _s3oKey = S3Key (ObjectKey -> objKey)} =
-                ( BucketName . show $ toPhysicalId _appName _s3oBucketId,
+                ( BucketName . showPhysicalId $ toPhysicalId _appName _s3oBucketId,
                   [objectIdentifier objKey]
                 )
 

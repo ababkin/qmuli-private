@@ -69,7 +69,7 @@ instance ToArn S3BucketId where
     Arn
       { service = S3,
         region = "",
-        resource = P.show $ toPhysicalId appName id
+        resource = showPhysicalId $ toPhysicalId appName id
       }
 
 instance ToArn LambdaId where
@@ -77,21 +77,5 @@ instance ToArn LambdaId where
     Arn
       { service = Lambda,
         region = "us-east-1",
-        resource = "function" <> ":" <> P.show (toPhysicalId appName id)
-      }
-
-instance ToArn KfStreamId where
-  toArn id appName =
-    Arn
-      { service = KinesisFirehose,
-        region = "us-east-1",
-        resource = "deliverystream" <> ":" <> P.show (toPhysicalId appName id)
-      }
-
-instance ToArn QueueId where
-  toArn id appName =
-    Arn
-      { service = Sqs,
-        region = "us-east-1",
-        resource = P.show (toPhysicalId appName id)
+        resource = "function" <> ":" <> showPhysicalId (toPhysicalId appName id)
       }

@@ -8,11 +8,8 @@ module Qi.AWS.Types
     AwsResourceType (..),
     LambdaId,
     S3BucketId,
-    QueueId,
-    KfStreamId,
     LambdaMappingId,
     RoleId,
-    CwEventsRuleId,
     LambdaPermissionId,
     AppName, -- Name of an app (hide the constructor)
     mkAppName,
@@ -22,13 +19,13 @@ module Qi.AWS.Types
     mkLogicalId,
     PhysicalId, -- Physical Id for a resource (hide the constructor)
     mkPhysicalId,
-    parseLambdaFunctionPhysicalId,
-    parseS3BucketPhysicalId, -- Physical Id parser
     toLogicalId, -- demote Physical Id to Logical Id
     toAppName, -- extract app name from the Physical Id
     toPhysicalId, -- promote Logical Id to Physical Id
     castLogicalIdResource, -- cast Logical Id resource type to a different one (while retaining the same base resource identifier)
     ResourceExistence (..), -- Whether a resource already exists or needs to be created as part of the stack
+    showPhysicalId,
+    parsePhysicalId,
   )
 where
 
@@ -50,6 +47,7 @@ newtype AppName = AppName Text
   deriving (Eq, Ord)
   deriving newtype (ToJSON, FromJSON)
 
+-- TODO: generate Show above into deriving newtype strategy
 instance Show AppName where
   show (AppName t) = toS t
 
@@ -58,14 +56,10 @@ mkAppName t = Right $ AppName t -- TODO: restrict app names according to validat
 
 data AwsResourceType
   = S3BucketResource
-  | KfStreamResource
   | LambdaFunctionResource
   | LambdaPermissionResource
   | LambdaEventSourceMappingResource
   | IamRoleResource
-  | -- | IamPolicyResource
-    CwEventsRuleResource
-  | SqsQueueResource
   deriving (Eq, Show)
 
 type LambdaId = LogicalId 'LambdaFunctionResource
@@ -76,23 +70,10 @@ type LambdaPermissionId = LogicalId 'LambdaPermissionResource
 
 type S3BucketId = LogicalId 'S3BucketResource
 
-type KfStreamId = LogicalId 'KfStreamResource
-
-type QueueId = LogicalId 'SqsQueueResource
-
 type RoleId = LogicalId 'IamRoleResource
-
-type CwEventsRuleId = LogicalId 'CwEventsRuleResource
 
 class AwsResource r where
   type ResourceType r :: AwsResourceType
-
--- newtype ResourceName (r :: AwsResourceType) = ResourceName Text
---   deriving Eq
---   deriving newtype (Show, ToJSON, FromJSON, Hashable)
-
--- mkResourceName :: Text -> Maybe (ResourceName rt)
--- mkResourceName t = Just $ ResourceName t -- TODO: restrict names according to resource type
 
 -- The logical ID must be alphanumeric (A-Za-z0-9) and unique within the template.
 -- Use the logical name to reference the resource in other parts of the template.
@@ -114,20 +95,8 @@ instance Show (LogicalId 'LambdaEventSourceMappingResource) where
 instance Show (LogicalId 'LambdaPermissionResource) where
   show (LogicalId t) = toS t <> "LambdaPermission"
 
-instance Show (LogicalId 'KfStreamResource) where
-  show (LogicalId t) = toS t <> "KinesisFirehoseDeliveryStream"
-
 instance Show (LogicalId 'IamRoleResource) where
   show (LogicalId t) = toS t <> "IAMRole"
-
-instance Show (LogicalId 'CwEventsRuleResource) where
-  show (LogicalId t) = toS t <> "CloudWatchEventsRule"
-
-instance Show (LogicalId 'SqsQueueResource) where
-  show (LogicalId t) = toS t <> "SqsQueue"
-
--- instance Show (LogicalId 'IamPolicyResource) where
--- show (LogicalId t) = toS t <> "IAMPolicy"
 
 -- TODO: I think I need to remove this
 mkLogicalId :: Text -> Either Text (LogicalId r)
@@ -137,58 +106,52 @@ mkLogicalId t = Right $ LogicalId t -- TODO: restrict names according to resourc
 data PhysicalId (rt :: AwsResourceType) = PhysicalId AppName Text
   deriving (Eq)
 
-instance Show (PhysicalId 'S3BucketResource) where
-  show (PhysicalId appName id) = P.show appName <> "." <> toS id <> "." <> "s3-bucket"
-
-instance Show (PhysicalId 'LambdaFunctionResource) where
-  show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "lambda-function"
-
-instance Show (PhysicalId 'LambdaEventSourceMappingResource) where
-  show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "lambda-event-source-mapping"
-
-instance Show (PhysicalId 'LambdaPermissionResource) where
-  show (PhysicalId appName id) = P.show appName <> "." <> toS id <> "." <> "lambda-permission"
-
-instance Show (PhysicalId 'KfStreamResource) where
-  show (PhysicalId appName id) = P.show appName <> "." <> toS id <> "." <> "kinesis-firehose-delivery-stream"
-
-instance Show (PhysicalId 'IamRoleResource) where
-  show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "iam-role"
-
-instance Show (PhysicalId 'CwEventsRuleResource) where
-  show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "cloud-watch-events-rule"
-
-instance Show (PhysicalId 'SqsQueueResource) where
-  show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "sqs-queue"
-
--- instance Show (PhysicalId 'IamPolicyResource) where
--- show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "iam-policy"
-
 mkPhysicalId :: AppName -> Text -> Either Text (PhysicalId rt)
 mkPhysicalId appName t = Right $ PhysicalId appName t
 
 -- TODO: restrict names according to resource type
---
-parseS3BucketPhysicalId :: Text -> Either Text (PhysicalId 'S3BucketResource)
-parseS3BucketPhysicalId t = parsePhysicalId "s3-bucket" '.' t
 
-parseLambdaFunctionPhysicalId :: Text -> Either Text (PhysicalId 'LambdaFunctionResource)
-parseLambdaFunctionPhysicalId t = parsePhysicalId "lambda-function" '_' t
+class HasPhysicalId r where
+  attrs :: Proxy r -> (Char, Text)
 
-parsePhysicalId :: Text -> Char -> Text -> Either Text (PhysicalId r)
-parsePhysicalId resourceSuffix appNameSeparator t =
-  if resourceSuffix `T.isSuffixOf` t
+instance HasPhysicalId 'S3BucketResource where
+  attrs _ = ('.', "s3-bucket")
+
+instance HasPhysicalId 'LambdaFunctionResource where
+  attrs _ = ('_', "lambda-function")
+
+instance HasPhysicalId 'LambdaPermissionResource where
+  attrs _ = ('.', "lambda-permission")
+
+instance HasPhysicalId 'LambdaEventSourceMappingResource where
+  attrs _ = ('_', "lambda-event-source-mapping")
+
+instance HasPhysicalId 'IamRoleResource where
+  attrs _ = ('_', "iam-role")
+
+instance HasPhysicalId r => Show (PhysicalId r) where
+  show = toS . showPhysicalId
+
+showPhysicalId :: forall r. HasPhysicalId r => PhysicalId r -> Text
+showPhysicalId (PhysicalId appName id) = P.show appName <> sep <> id <> sep <> suffix
+  where
+    (sep, suffix) = first (T.singleton) $ attrs (Proxy :: Proxy r)
+
+parsePhysicalId :: forall r. HasPhysicalId r => Text -> Either Text (PhysicalId r)
+parsePhysicalId t =
+  if suffix `T.isSuffixOf` t
     then physicalId
     else
       Left $
         "The Physical Id suffix is incorrect, saw: " <> P.show t
           <> ", expected to see the following suffix: "
-          <> P.show resourceSuffix
+          <> P.show suffix
   where
     appName = mkAppName $ T.take appNamePrefixLength t
     physicalId = (`mkPhysicalId` (dropResourceTypeSuffix $ T.drop (appNamePrefixLength + 1) t)) =<< appName
-    appNamePrefixLength = T.length (T.takeWhile (/= appNameSeparator) t)
-    dropResourceTypeSuffix = T.reverse . T.drop (T.length resourceSuffix + 1) . T.reverse
+    appNamePrefixLength = T.length (T.takeWhile (/= sep) t)
+    dropResourceTypeSuffix = T.reverse . T.drop (T.length suffix + 1) . T.reverse
+    (sep, suffix) = attrs (Proxy :: Proxy r)
 
 -- extract app name
 toAppName :: PhysicalId rt -> AppName
