@@ -101,6 +101,7 @@ dependencies:
   - resourcet
   - safe
   - servant-client
+  - servant-client-core
   - stm
   - stratosphere
   - system-extra

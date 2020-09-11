@@ -15,7 +15,6 @@ module Qi.AWS.Runtime (
 import           Control.Monad.Catch   (MonadCatch, MonadThrow, throwM, try)
 import           Protolude             hiding (get, try)
 -- import           Data.Aeson
-import           Data.Default.Class    (def)
 import qualified Data.Text             as Text
 import qualified Data.Text.Encoding    as TextEncoding
 import           Data.Time.Clock
@@ -120,7 +119,7 @@ get
 get (host, port) = do
   let url = Req.http host /: "2018-06-01" /: "runtime" /: "invocation" /: "next"
   rsp' <-
-    Req.runReq def $ do
+    Req.runReq Req.defaultHttpConfig $ do
       rsp <-
         Req.req
           Req.GET
@@ -209,7 +208,7 @@ doPost
   -- TODO: what if I want to post Failure response?
 doPost _url _port _reqId (FailureHandlerResponse _ _) = panic "unexpected call to doPost with FailureHandlerResponse"
 doPost url port _reqId (SuccessHandlerResponse pay contType) = do
-  Req.runReq def $ do
+  Req.runReq Req.defaultHttpConfig $ do
     let payload =
           TextEncoding.encodeUtf8 pay
     let contentTypeHeader =

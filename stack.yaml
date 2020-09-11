@@ -1,40 +1,39 @@
-resolver: lts-13.17
+# resolver: nightly-2020-09-10
+resolver: lts-16.13
 
 packages:
 - '.'
-- location:
-    git: https://github.com/ababkin/system-extra.git
-    commit: 8f3f93d5172744a8dedde57693c2b5d3c15f745c
-  extra-dep: true
 
-  #- location:
-  #  git: https://github.com/ababkin/amazonka-s3-streaming.git
-  #  commit: 4fc25d1b20007bef3b8b2924751fe0fc3033e1f5
-  #extra-dep: true
-
-# - location:
-#     git: https://github.com/brendanhay/amazonka.git
-#     commit: e7077512c08f58a8e0a5e6448b6d73c16de46e8d
-#     subdirs:
-#     - amazonka
-#     # - amazonka-lex-models
-#     - core
-#   extra-dep: true
-
-- location:
-    git: https://github.com/freckle/stratosphere.git
-    commit: a388e98e5bd4b9d7fc610a193f614d45c539aa54
-  extra-dep: true
-
-- location:
-    git: https://github.com/isovector/polysemy.git
-    commit: d886b32fe421d8fdca0da7c3f1188a60973f676a
-  extra-dep: true
-
-extra-deps: 
+extra-deps:
   - random-string-0.1.0.1
   - base58-bytestring-0.1.0
-  
+#   - amazonka-1.6.1
+#   - servant-client-0.18
+#   - servant-client-core-0.18
+
+  - git: https://github.com/ababkin/system-extra.git
+    commit: 8f3f93d5172744a8dedde57693c2b5d3c15f745c
+
+    #- location:
+    #  git: https://github.com/ababkin/amazonka-s3-streaming.git
+    #  commit: 4fc25d1b20007bef3b8b2924751fe0fc3033e1f5
+    #extra-dep: true
+
+  # - location:
+  #     git: https://github.com/brendanhay/amazonka.git
+  #     commit: e7077512c08f58a8e0a5e6448b6d73c16de46e8d
+  #     subdirs:
+  #     - amazonka
+  #     # - amazonka-lex-models
+  #     - core
+  #   extra-dep: true
+
+  # - git: https://github.com/freckle/stratosphere.git
+  #   commit: a388e98e5bd4b9d7fc610a193f614d45c539aa54
+
+  # - git: https://github.com/isovector/polysemy.git
+  #   commit: d886b32fe421d8fdca0da7c3f1188a60973f676a
+
 flags: {}
 
 extra-package-dbs: []
