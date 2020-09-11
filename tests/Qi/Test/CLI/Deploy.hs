@@ -1,7 +1,7 @@
-{-# LANGUAGE DeriveFunctor              #-}
-{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Qi.Test.CLI.Deploy where
 
@@ -31,10 +31,8 @@ module Qi.Test.CLI.Deploy where
 -- import           Qi.Test.Ipret
 -- import           Test.Tasty.Hspec
 
-
 -- execName :: Text
 -- execName = "qmuli"
-
 
 -- spec :: Spec
 -- spec = parallel $ do
@@ -43,7 +41,6 @@ module Qi.Test.CLI.Deploy where
 --             config = def :: Config
 --           , stacks = mempty
 --           }
-
 
 --     it "works" $ do
 --       let renderedTemplate = "rendered template"
@@ -58,7 +55,6 @@ module Qi.Test.CLI.Deploy where
 
 --       journal `shouldBe` expectedJournal
 --       config' `shouldBe` def
-
 
 --   describe "Create stack" $ do
 --     let params = def{

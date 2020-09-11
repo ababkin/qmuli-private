@@ -1,3 +1,3 @@
 module Qi (withConfig) where
 
-import           Qi.CLI.Dispatcher (withConfig)
+import Qi.CLI.Dispatcher (withConfig)

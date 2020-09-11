@@ -1,8 +1,8 @@
-{-# LANGUAGE DeriveFunctor              #-}
-{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Qi.Test.Ipret where
 
@@ -31,7 +31,6 @@ module Qi.Test.Ipret where
 -- import           Qi.Program.S3.Lang
 -- import qualified Qi.Program.Wiring.IO          as IO
 -- import           Test.Tasty.Hspec
-
 
 -- data Journal = Journal {
 --     cfActions  :: [ CfAction ]
@@ -62,12 +61,10 @@ module Qi.Test.Ipret where
 --   | DescribeStacksAction
 --   deriving (Eq, Show)
 
-
 -- data S3Action =
 --     PutContentAction S3Object LBS.ByteString
 --   | DeleteBucketAction Text
 --   deriving (Eq, Show)
-
 
 -- data Params = Params {
 --     config :: Config
@@ -79,7 +76,6 @@ module Qi.Test.Ipret where
 --             config = def
 --           , stacks = mempty
 --           }
-
 
 -- testGenRun
 --   :: forall effs a
@@ -127,7 +123,6 @@ module Qi.Test.Ipret where
 
 --   )
 
-
 -- testCfRun
 --   :: forall effs a
 --   .  (Members '[ ConfigEff, Reader Params, Writer Journal ] effs)
@@ -153,7 +148,6 @@ module Qi.Test.Ipret where
 
 --   )
 
-
 -- testS3Run
 --   :: forall effs a
 --   .  (Members '[ ConfigEff, Reader Params, Writer Journal ] effs)
@@ -163,20 +157,17 @@ module Qi.Test.Ipret where
 --   GetContent S3Object{ _s3oBucketId, _s3oKey } ->
 --     panic "GetContent"
 
-
 --   PutContent s3Obj@S3Object{_s3oBucketId, _s3oKey } payload -> do
 --     s3Action $ PutContentAction s3Obj payload
 
 --   ListObjects id maybeToken -> do
 --     panic "ListObjects"
 
-
 --   DeleteObject s3Obj@S3Object{_s3oBucketId, _s3oKey } -> do
 --     {- config <- getConfig -}
 --     {- getName _s3oBucketId -}
 --     {- tell $ s3Action $ DeleteBucketAction name -}
 --     panic "DeleteObject"
-
 
 --   DeleteObjects s3objs -> do
 --     panic "DeleteObjects"

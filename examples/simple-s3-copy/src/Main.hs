@@ -1,28 +1,29 @@
-{-# LANGUAGE TemplateHaskell     #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Main where
 
-import Data.Aeson (Value(String))
-import           Control.Lens
-import           Data.Default           (def)
-import           Protolude
-import           Polysemy
-
-import           Qi                     (withConfig)
-import           Qi.AWS.Lambda.Function
-import           Qi.AWS.Types        (S3BucketId)
-import           Qi.AWS.S3              (s3eObject, s3oBucketId)
-import           Qi.Program.Config.Lang (s3Bucket, s3BucketLambda)
-import           Qi.Program.Gen.Lang    (GenEff, say)
-import           Qi.Program.S3.Lang     (S3Eff, S3LambdaProgram, getContent,
-                                         putContent)
-
+import Control.Lens
+import Data.Aeson (Value (String))
+import Data.Default (def)
+import Polysemy
+import Protolude
+import Qi (withConfig)
+import Qi.AWS.Lambda.Function
+import Qi.AWS.S3 (s3eObject, s3oBucketId)
+import Qi.AWS.Types (S3BucketId)
+import Qi.Program.Config.Lang (s3Bucket, s3BucketLambda)
+import Qi.Program.Gen.Lang (GenEff, say)
+import Qi.Program.S3.Lang
+  ( S3Eff,
+    S3LambdaProgram,
+    getContent,
+    putContent,
+  )
 
 main :: IO ()
 main = withConfig config
   where
     config = do
-
       -- create an "input" s3 bucket
       incoming <- s3Bucket "incoming" def
 
@@ -36,13 +37,14 @@ main = withConfig config
       -- The lambda creation function takes the Lambda name, s3BucketId to attach to, lambda
       -- function itself and a lambda profile, that specifies attributes like memory size and
       -- timeout, and has meaningful defaults for those.
-      void $ s3BucketLambda "copyS3Object" incoming (copyContentsLambda outgoing) $
-        def & lfpMemorySize .~ M1536
+      void $
+        s3BucketLambda "copyS3Object" incoming (copyContentsLambda outgoing) $
+          def & lfpMemorySize .~ M1536
 
-    copyContentsLambda
-      :: (Member S3Eff effs, Member GenEff effs)
-      => S3BucketId
-      -> S3LambdaProgram effs
+    copyContentsLambda ::
+      (Member S3Eff effs, Member GenEff effs) =>
+      S3BucketId ->
+      S3LambdaProgram effs
     copyContentsLambda sinkBucketId = lbd
       where
         lbd event = do
@@ -60,6 +62,5 @@ main = withConfig config
               putContent outgoingS3Obj content
 
               pure $ String "lambda had executed successfully"
-
             Left err ->
               pure . String . toS $ "error: '" <> err <> "'"

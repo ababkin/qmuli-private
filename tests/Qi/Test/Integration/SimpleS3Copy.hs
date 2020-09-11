@@ -29,7 +29,6 @@ module Qi.Test.Integration.SimpleS3Copy where
 -- import           System.RandomString
 -- import           Test.Hspec
 
-
 -- configProgram
 --   :: Member ConfigEff effs
 --   => Eff effs ()
@@ -77,7 +76,6 @@ module Qi.Test.Integration.SimpleS3Copy where
 --             Left err ->
 --               pure . toS $ "error: '" <> err <> "'"
 
-
 -- spec :: Spec
 -- spec = parallel $ do
 --   describe "Integration" $ do
@@ -112,7 +110,6 @@ module Qi.Test.Integration.SimpleS3Copy where
 
 --               -- download the copied file from the outgoing bucket
 --               getContent outgoing
-
 
 --       -- verify that the file has been copied correctly
 --       result `shouldBe` Right content

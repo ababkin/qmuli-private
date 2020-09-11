@@ -2,22 +2,20 @@
 
 module Qi.Test.Config.Eff where
 
-import           Control.Lens
-import           Data.Default                  (def)
-import qualified Data.HashMap.Strict           as SHM
-import           Protolude
+import Control.Lens
+import Data.Default (def)
+import qualified Data.HashMap.Strict as SHM
 import Polysemy
-
-import           Qi.AWS.S3
-import           Qi.AWS.Types
-import           Qi.Config
+import Protolude
+import Qi.AWS.S3
+import Qi.AWS.Types
+import Qi.Config
 import qualified Qi.Program.Config.Ipret.State as Config
-import           Qi.Program.Config.Lang (s3Bucket, getConfig)
-import           Qi.Program.S3.Lang (getContent)
-import qualified Qi.Program.Wiring.IO          as IO
-import           Qi.Test.Logger
-import           Test.Tasty.Hspec
-
+import Qi.Program.Config.Lang (getConfig, s3Bucket)
+import Qi.Program.S3.Lang (getContent)
+import qualified Qi.Program.Wiring.IO as IO
+import Qi.Test.Logger
+import Test.Tasty.Hspec
 
 spec :: Spec
 spec = parallel $
@@ -35,5 +33,3 @@ spec = parallel $
           expectedS3Buckets = SHM.singleton lid (S3Bucket def [])
 
       exec `shouldReturn` expected
-
-
