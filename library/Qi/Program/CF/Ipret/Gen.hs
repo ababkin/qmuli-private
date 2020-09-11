@@ -50,7 +50,7 @@ import Qi.Program.Gen.Lang
 
 run ::
   forall effs a.
-  (Member GenEff effs, Member ConfigEff effs) =>
+  (Members '[GenEff, ConfigEff] effs) =>
   (Sem (CfEff ': effs) a -> Sem effs a)
 run =
   interpret

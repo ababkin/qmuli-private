@@ -22,7 +22,7 @@ import Qi.Program.S3.Lang (S3Eff (..))
 
 run ::
   forall effs a.
-  (Member GenEff effs, Member ConfigEff effs) =>
+  Members '[GenEff, ConfigEff] effs =>
   (Sem (S3Eff ': effs) a -> Sem effs a)
 run =
   interpret
