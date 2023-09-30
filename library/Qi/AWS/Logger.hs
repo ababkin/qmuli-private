@@ -7,7 +7,7 @@ where
 
 import Data.Aeson (Value (..), encode, object, (.=))
 import qualified Data.ByteString.Lazy.Builder as Build
-import Network.AWS (Logger)
+import Amazonka.Logger (Logger)
 import Protolude
 import System.IO
   ( BufferMode (LineBuffering),

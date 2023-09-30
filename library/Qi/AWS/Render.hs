@@ -8,7 +8,6 @@ import qualified Data.ByteString.Lazy as LBS
 import Protolude hiding (all)
 import Qi.AWS.CW
 import Qi.AWS.IAM
-import Qi.AWS.KF
 import Qi.AWS.Lambda.EventSourceMapping
 import Qi.AWS.Lambda.Function
 import Qi.AWS.Lambda.Permission
@@ -49,7 +48,6 @@ toAllResources config =
             toResources @LambdaPermission,
             toResources @LambdaEventSourceMapping,
             toResources @LambdaFunction,
-            toResources @KfStream,
             toResources @CwEventsRule,
             toResources @SqsQueue
           ]

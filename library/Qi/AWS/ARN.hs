@@ -80,14 +80,6 @@ instance ToArn LambdaId where
         resource = "function" <> ":" <> P.show (toPhysicalId appName id)
       }
 
-instance ToArn KfStreamId where
-  toArn id appName =
-    Arn
-      { service = KinesisFirehose,
-        region = "us-east-1",
-        resource = "deliverystream" <> ":" <> P.show (toPhysicalId appName id)
-      }
-
 instance ToArn QueueId where
   toArn id appName =
     Arn

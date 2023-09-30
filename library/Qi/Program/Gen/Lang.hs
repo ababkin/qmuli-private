@@ -2,13 +2,13 @@
 
 module Qi.Program.Gen.Lang where
 
-import qualified Control.Monad.Trans.AWS as AWS (send)
+-- import qualified Control.Monad.Trans.AWS as AWS (send)
 import Data.Aeson (FromJSON, ToJSON, Value)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 import Data.Time.Clock (UTCTime)
-import Network.AWS hiding (Request, Response, send)
-import Network.AWS.Data.Body (RsBody (..))
+import Amazonka hiding (Request, send)
+-- import Network.AWS.Data.Body (RsBody (..))
 import Network.HTTP.Client
 import Polysemy
 import Protolude
@@ -32,12 +32,12 @@ data GenEff m r where
     (AWSRequest a) =>
     Service ->
     a ->
-    GenEff m (Rs a)
+    GenEff m (AWSResponse a)
   AmazonkaPostBodyExtract ::
     (AWSRequest a) =>
     Service ->
     a ->
-    (Rs a -> RsBody) ->
+    (AWSResponse a -> ResponseBody) ->
     GenEff m (Either Text LBS.ByteString)
   Say ::
     Text ->

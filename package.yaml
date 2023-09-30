@@ -103,7 +103,11 @@ dependencies:
   - servant-client
   - servant-client-core
   - stm
-  - stratosphere
+  - stratosphere >= 1.0.0
+# - stratosphere-ec2
+  - stratosphere-iam >= 1.0.0
+  - stratosphere-lambda >= 1.0.0
+  - stratosphere-s3 >= 1.0.0
   - system-extra
   - text
   - time
@@ -124,15 +128,11 @@ library:
     - amazonka
     - amazonka-cloudformation
     # - amazonka-cloudwatch-logs
-    # - amazonka-cognito-identity
-    # - amazonka-cognito-idp
     - amazonka-core
     # - amazonka-dynamodb
     # - amazonka-iam
     - amazonka-lambda
-    # - amazonka-lex-models
     - amazonka-s3
-    - amazonka-kinesis-firehose
     # - amazonka-sqs
     - zip
 
@@ -148,19 +148,6 @@ executables:
   qmuli-simple-s3-copy:
     main: Main.hs
     source-dirs: examples/simple-s3-copy/src
-    dependencies:
-      - base
-      - qmuli
-    when:
-    - condition: flag(build-examples)
-      then:
-        buildable: true
-      else:
-        buildable: false
-
-  qmuli-kf-s3:
-    main: Main.hs
-    source-dirs: examples/kf-s3/src
     dependencies:
       - base
       - qmuli
@@ -191,49 +178,27 @@ executables:
     # dependencies:
       # - base >= 4.8 && < 5
       # - qmuli
+
   # qmuli-apigw-lambda-s3:
     # main: Main.hs
     # source-dirs: examples/apigw-lambda-s3/src
     # dependencies:
       # - base >= 4.8 && < 5
       # - qmuli
+
   # qmuli-apigw-lambda-dynamodb:
     # main: Main.hs
     # source-dirs: examples/apigw-lambda-dynamodb/src
     # dependencies:
       # - base >= 4.8 && < 5
       # - qmuli
+
   # qmuli-dynamodb-stream:
     # main: Main.hs
     # source-dirs: examples/dynamodb-stream/src
     # dependencies:
       # - base >= 4.8 && < 5
       # - qmuli
-  # qmuli-cognito-apigw-lambda:
-    # main: Main.hs
-    # source-dirs: examples/cognito-apigw-lambda/src
-    # dependencies:
-      # - base >= 4.8 && < 5
-      # - qmuli
-  # qmuli-cognito-lambda:
-    # main: Main.hs
-    # source-dirs: examples/cognito-lambda/src
-    # dependencies:
-      # - base >= 4.8 && < 5
-      # - qmuli
-
-  # qmuli-cognito-apigw-lambda:
-    # main: Main.hs
-    # source-dirs: examples/cognito-apigw-lambda/src
-    # dependencies:
-      # - base
-      # - qmuli
-    # when:
-    # - condition: flag(build-examples)
-      # then:
-        # buildable: true
-      # else:
-        # buildable: false
 
   # qmuli-cw-events:
     # main: Main.hs

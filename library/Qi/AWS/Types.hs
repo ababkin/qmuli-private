@@ -9,7 +9,6 @@ module Qi.AWS.Types
     LambdaId,
     S3BucketId,
     QueueId,
-    KfStreamId,
     LambdaMappingId,
     RoleId,
     CwEventsRuleId,
@@ -58,7 +57,6 @@ mkAppName t = Right $ AppName t -- TODO: restrict app names according to validat
 
 data AwsResourceType
   = S3BucketResource
-  | KfStreamResource
   | LambdaFunctionResource
   | LambdaPermissionResource
   | LambdaEventSourceMappingResource
@@ -75,8 +73,6 @@ type LambdaMappingId = LogicalId 'LambdaEventSourceMappingResource
 type LambdaPermissionId = LogicalId 'LambdaPermissionResource
 
 type S3BucketId = LogicalId 'S3BucketResource
-
-type KfStreamId = LogicalId 'KfStreamResource
 
 type QueueId = LogicalId 'SqsQueueResource
 
@@ -114,9 +110,6 @@ instance Show (LogicalId 'LambdaEventSourceMappingResource) where
 instance Show (LogicalId 'LambdaPermissionResource) where
   show (LogicalId t) = toS t <> "LambdaPermission"
 
-instance Show (LogicalId 'KfStreamResource) where
-  show (LogicalId t) = toS t <> "KinesisFirehoseDeliveryStream"
-
 instance Show (LogicalId 'IamRoleResource) where
   show (LogicalId t) = toS t <> "IAMRole"
 
@@ -148,9 +141,6 @@ instance Show (PhysicalId 'LambdaEventSourceMappingResource) where
 
 instance Show (PhysicalId 'LambdaPermissionResource) where
   show (PhysicalId appName id) = P.show appName <> "." <> toS id <> "." <> "lambda-permission"
-
-instance Show (PhysicalId 'KfStreamResource) where
-  show (PhysicalId appName id) = P.show appName <> "." <> toS id <> "." <> "kinesis-firehose-delivery-stream"
 
 instance Show (PhysicalId 'IamRoleResource) where
   show (PhysicalId appName id) = P.show appName <> "_" <> toS id <> "_" <> "iam-role"

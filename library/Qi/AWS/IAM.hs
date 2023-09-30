@@ -3,7 +3,6 @@
 
 module Qi.AWS.IAM where
 
-import Control.Lens
 import Data.Aeson
 import Data.Default (Default, def)
 import Data.HashMap.Strict (HashMap)
@@ -14,8 +13,10 @@ import Qi.AWS.ARN
 import Qi.AWS.Renderable
 import Qi.AWS.Service
 import Qi.AWS.Types
-import Stratosphere (Val (..))
+import Stratosphere
 import qualified Stratosphere as S
+import Stratosphere.IAM.Role
+import Stratosphere.IAM.Policy
 
 data IamRole = IamRole
   { principalArn :: Arn
@@ -36,18 +37,17 @@ instance Default IamConfig where
       { _idToRole = SHM.empty
       }
 
-makeLenses ''IamConfig
-
 instance Renderable IamRole where
   render appName (lid, IamRole {principalArn}) =
-    let res =
-          S.resource (P.show lid) $
-            S.iamRole rolePolicyDocumentObject
-              & S.iamrPolicies ?~ [executePolicy]
-              & S.iamrRoleName ?~ Literal (P.show $ toPhysicalId appName lid)
-              & S.iamrPath ?~ "/"
-     in res -- & resourceDependsOn ?~ reqs
+    S.resource (P.show lid) role
+
     where
+      role :: Role
+      role = mkRole rolePolicyDocumentObject
+        & set @"Policies" [executePolicy]
+        & set @"RoleName" (Literal . P.show $ toPhysicalId appName lid)
+        & set @"Path" (Literal "/")
+
       -- reqs = [ "myEventLambdaLambda" ]
 
       rolePolicyDocumentObject =
@@ -69,15 +69,18 @@ instance Renderable IamRole where
       -- principal = object [ ("AWS", toJSON principalArn) ]
       principal = object [("Service", String . toUrl $ service principalArn)]
       -- [ ("Service", "lambda.amazonaws.com")]
-      -- , ("Service", "firehose.amazonaws.com") ]
 
       executePolicy =
-        S.iamRolePolicy
-          [ ("Version", "2012-10-17"),
-            ("Statement", execStatement)
-          ]
-          $ Literal $ P.show lid <> "Policy"
+        mkPolicyProperty policyDocument policyName
+
         where
+          policyDocument = 
+            [ "Version" .= String "2012-10-17",
+              "Statement" .= execStatement
+            ]
+
+          policyName = Literal $ P.show lid <> "Policy"
+
           execStatement =
             object
               [ ("Effect", "Allow"),

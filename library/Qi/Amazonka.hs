@@ -8,7 +8,7 @@ module Qi.Amazonka where
 import Data.Aeson
 import qualified Data.ByteString.Lazy as LBS
 import Data.Either (either)
-import Network.AWS hiding (send)
+import Amazonka hiding (send)
 import Protolude
 import Text.Heredoc
 

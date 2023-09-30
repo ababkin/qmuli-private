@@ -20,7 +20,6 @@ import qualified Data.HashMap.Strict as SHM
 import Protolude
 import Qi.AWS.CW
 import Qi.AWS.IAM
-import Qi.AWS.KF
 import Qi.AWS.Lambda
 import Qi.AWS.Lambda.EventSourceMapping
 import Qi.AWS.Lambda.Function
@@ -33,7 +32,6 @@ data Config = Config
   { _appName :: AppName,
     _s3Config :: S3Config,
     _lbdConfig :: LambdaConfig,
-    _kfConfig :: KfConfig,
     _iamConfig :: IamConfig,
     _cwConfig :: CwConfig,
     _sqsConfig :: SqsConfig
@@ -46,7 +44,6 @@ mkConfig appName =
     { _appName = appName,
       _s3Config = def,
       _lbdConfig = def,
-      _kfConfig = def,
       _iamConfig = def,
       _cwConfig = def,
       _sqsConfig = def
@@ -90,9 +87,6 @@ instance Configable LambdaPermission where
 
 instance Configable LambdaEventSourceMapping where
   mapping = view $ lbdConfig . idToEventSourceMapping
-
-instance Configable KfStream where
-  mapping = view $ kfConfig . idToStream
 
 instance Configable S3Bucket where
   mapping = view $ s3Config . idToBucket
