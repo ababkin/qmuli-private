@@ -58,6 +58,7 @@ default-extensions:
   - NamedFieldPuns
   - NoImplicitPrelude
   - OverloadedStrings
+  # - OverloadedLists
   - PolyKinds
   - RankNTypes
   - ScopedTypeVariables

@@ -1,39 +1,50 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedLists #-}
 
 module Qi.Program.CF.Ipret.Gen (run) where
 
+import qualified Data.ByteString.Lazy as BS
+import Data.Text.Encoding (decodeUtf8Lenient)
 import Control.Lens
 import Data.Map (Map)
 import qualified Data.Map as Map
-import Network.AWS.CloudFormation
-  ( Capability (CapabilityNamedIAM),
-    StackStatus (SSCreateComplete, SSDeleteComplete, SSUpdateComplete),
-    cloudFormation,
-    createStack,
-    csCapabilities,
-    csTemplateBody,
-    dStackName,
-    deleteStack,
-    describeStacks,
-    dsRetainResources,
-    dsrsStacks,
-    lsrsStackSummaries,
-    oOutputKey,
-    oOutputValue,
-    sOutputs,
-    sStackName,
-    sStackStatus,
-    ssStackName,
-    ssStackStatus,
-    updateStack,
-    usCapabilities,
-    usTemplateBody,
-  )
-import Network.AWS.S3
-  ( BucketName (BucketName),
-    ObjectKey (ObjectKey),
-  )
+import qualified Amazonka.CloudFormation.Types.Stack as Stack
+import qualified Amazonka.CloudFormation.DescribeStacks as SOps
+import qualified Amazonka.CloudFormation.CreateStack as SOps
+import qualified Amazonka.CloudFormation.UpdateStack as SOps
+import qualified Amazonka.CloudFormation.DeleteStack as SOps
+import qualified Amazonka.CloudFormation.Types as Az
+import qualified Amazonka.CloudFormation as Az
+-- import Network.AWS.CloudFormation
+  -- https://github.com/brendanhay/amazonka/blob/main/lib/services/amazonka-cloudformation/gen/Amazonka/CloudFormation/Types/Capability.hs
+  -- ( Capability (..),
+  -- https://github.com/brendanhay/amazonka/blob/main/lib/services/amazonka-cloudformation/gen/Amazonka/CloudFormation/Types/StackStatus.hs
+  --   StackStatus (..),
+  --   cloudFormation,
+  --   createStack,
+  --   csCapabilities,
+  --   csTemplateBody,
+  --   dStackName,
+  --   deleteStack,
+  --   describeStacks,
+  --   dsRetainResources,
+  --   dsrsStacks,
+  --   lsrsStackSummaries,
+  --   oOutputKey,
+  --   oOutputValue,
+  --   sOutputs,
+  --   sStackName,
+  --   sStackStatus,
+  --   ssStackName,
+  --   ssStackStatus,
+  --   updateStack,
+  --   usCapabilities,
+  --   usTemplateBody,
+  -- )
+
+-- import Network.AWS.S3
+--   ( BucketName (BucketName),
+--     ObjectKey (ObjectKey),
+--   )
 import Polysemy hiding (run)
 import Protolude hiding ((<&>))
 import Qi.AWS.S3
@@ -56,19 +67,19 @@ run =
   interpret
     ( \case
         CreateStack name template -> do
-          void . amazonka cloudFormation $
-            createStack (show name)
-              & csTemplateBody ?~ toS template
-              & csCapabilities .~ [CapabilityNamedIAM]
+          void . amazonka $
+            SOps.newCreateStack (show name)
+              & SOps.createStack_templateBody ?~ (decodeUtf8Lenient $ BS.toStrict template)
+              & SOps.createStack_capabilities .~ Just [Az.Capability_CAPABILITY_NAMED_IAM]
         UpdateStack name template -> do
-          void . amazonka cloudFormation $
-            updateStack (show name)
-              & usTemplateBody ?~ toS template
-              & usCapabilities .~ [CapabilityNamedIAM]
+          void . amazonka $
+            SOps.newUpdateStack (show name)
+              & SOps.updateStack_templateBody ?~ (decodeUtf8Lenient $ BS.toStrict template)
+              & SOps.updateStack_capabilities .~ Just [Az.Capability_CAPABILITY_NAMED_IAM]
         DeleteStack name ->
-          void . amazonka cloudFormation $
-            deleteStack (show name)
-              & dsRetainResources .~ []
+          void . amazonka $
+            SOps.newDeleteStack (show name)
+              & SOps.deleteStack_retainResources .~ Nothing
         DescribeStacks ->
           getStackDescriptions
         WaitOnStackStatus name status' isAbsentOk -> do
@@ -86,7 +97,7 @@ run =
   where
     getStackDescriptions :: Sem effs StackDescriptionDict
     getStackDescriptions = do
-      r <- amazonka cloudFormation $ describeStacks
+      r <- amazonka SOps.newDescribeStacks
       -- & dStackName ?~ name
       pure . Map.fromList $
         ( \stack ->
@@ -94,24 +105,25 @@ run =
                 (panic "AWS returned an incorrectly looking app name")
                 identity
                 . mkAppName
-                $ stack ^. sStackName,
+                $ Stack.stackName stack,
               StackDescription
-                { status = stack ^. sStackStatus,
+                { status = Stack.stackStatus stack,
                   outputs =
                     catMaybes $
                       ( \o -> do
-                          key <- o ^. oOutputKey
-                          val <- o ^. oOutputValue
+                          key <- Az.outputKey o
+                          val <- Az.outputValue o
                           pure (key, val)
                       )
-                        <$> stack
-                        ^. sOutputs
+                        <$> collapseMaybe (stack ^. Az.stack_outputs)
                 }
             )
         )
-          <$> r
-          ^. dsrsStacks
+          <$> collapseMaybe (r ^. SOps.describeStacksResponse_stacks)
 
+    collapseMaybe :: forall i . Maybe [i] -> [i]
+    collapseMaybe Nothing = []
+    collapseMaybe (Just x) = x
 {-
 
 updateStack

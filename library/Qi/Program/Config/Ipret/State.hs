@@ -19,15 +19,12 @@ import Protolude hiding
     runState,
   )
 import Qi.AWS.ARN
-import Qi.AWS.CW
 import Qi.AWS.IAM
-import Qi.AWS.KF
 import Qi.AWS.Lambda
 import Qi.AWS.Lambda.EventSourceMapping as ESM
 import Qi.AWS.Lambda.Function
 import Qi.AWS.Lambda.Permission
 import Qi.AWS.S3
-import Qi.AWS.SQS
 import Qi.AWS.Service
 import Qi.AWS.Types
 import Qi.Config hiding (mapping)
@@ -64,43 +61,6 @@ run =
                 modifyBucket = s3bEventConfigs %~ ((S3EventConfig S3ObjectCreatedAll lid) :)
             modify (s3Config . idToBucket %~ SHM.adjust modifyBucket bucketId)
             modify (lbdConfig . idToFunction %~ SHM.insert lid lbd)
-            pure lid
-        Lang.CwEventLambda name ruleProfile program profile -> do
-          withLogicalId name $ \lid -> do
-            insertPermission name lid CwEvents
-            roleId <- insertRole name lid
-            let lbd = LambdaFunction roleId profile (Proxy :: Proxy CwEvent) (Proxy :: Proxy Value) program
-                eventsRule =
-                  CwEventsRule
-                    { _cerName = name,
-                      _cerProfile = ruleProfile,
-                      _cerLbdId = lid
-                    }
-            withLogicalId (name <> "EventsRule") $ \eventsRuleId -> do
-              modify $ cwConfig . idToRule %~ SHM.insert eventsRuleId eventsRule
-              modify (lbdConfig . idToFunction %~ SHM.insert lid lbd)
-            pure lid
-        Lang.SqsLambda name queueId mappingProfile program profile -> do
-          Config {_appName} <- get
-          withLogicalId name $ \lid -> do
-            insertPermission name lid CwEvents
-            roleId <- insertRole name lid
-            let lbd = LambdaFunction roleId profile (Proxy :: Proxy SqsEvent) (Proxy :: Proxy Value) program
-                mapping =
-                  LambdaEventSourceMapping
-                    { source = toArn queueId _appName,
-                      ESM.functionId = lid,
-                      ESM.profile = mappingProfile
-                    }
-            withLogicalId (name <> "EventSourceMapping") $ \mappingId -> do
-              modify $ lbdConfig . idToEventSourceMapping %~ SHM.insert mappingId mapping
-              modify (lbdConfig . idToFunction %~ SHM.insert lid lbd)
-            pure lid
-        Lang.KfStreamS3 name bucketId -> do
-          withLogicalId name $ \lid -> do
-            roleId <- insertRole name lid
-            let kfStream = KfStream def roleId bucketId
-            modify (kfConfig . idToStream %~ SHM.insert lid kfStream)
             pure lid
     )
   where

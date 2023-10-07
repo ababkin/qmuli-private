@@ -14,7 +14,7 @@ where
 
 import Data.Aeson (Value)
 import qualified Data.ByteString.Lazy as LBS
-import Network.AWS.S3.Types (ETag)
+-- import Network.AWS.S3.Types (ETag)
 import Polysemy
 import Protolude
 import Qi.AWS.S3

@@ -1,8 +1,9 @@
-{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedLists #-}
 
 module Qi.AWS.IAM where
 
+import Control.Lens (makeLenses)
 import Data.Aeson
 import Data.Default (Default, def)
 import Data.HashMap.Strict (HashMap)
@@ -36,6 +37,8 @@ instance Default IamConfig where
     IamConfig
       { _idToRole = SHM.empty
       }
+
+makeLenses ''IamConfig
 
 instance Renderable IamRole where
   render appName (lid, IamRole {principalArn}) =

@@ -8,8 +8,8 @@ import Protolude
 import Qi.AWS.Renderable
 import Qi.AWS.Service
 import Qi.AWS.Types
-import Stratosphere (Val (..))
 import qualified Stratosphere as S
+import qualified Stratosphere.Lambda.Permission as L
 
 -- this creates a permission for the source (e.g. S3 bucket, another Lambda, etc) to call the Lambda
 --
@@ -25,7 +25,7 @@ instance AwsResource LambdaPermission where
 instance Renderable LambdaPermission where
   render appName (lid, LambdaPermission {principal, functionId}) =
     S.resource (show lid) $
-      S.lambdaPermission
+      L.mkPermission
         "lambda:*"
-        (GetAtt (show functionId) "Arn")
-        (Literal . toUrl $ principal)
+        (S.GetAtt (show functionId) "Arn")
+        (S.Literal . toUrl $ principal)

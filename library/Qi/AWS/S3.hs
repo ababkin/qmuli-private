@@ -36,8 +36,10 @@ import Qi.AWS.ARN
 import Qi.AWS.Renderable
 import Qi.AWS.Service
 import Qi.AWS.Types
-import Stratosphere (Val (..))
 import qualified Stratosphere as S
+import qualified Stratosphere.Resource as S
+import qualified Stratosphere.S3.Bucket as S
+import qualified Stratosphere.S3.Bucket.LambdaConfigurationProperty as S
 
 data S3BucketProfile = S3BucketProfile
   { _s3bpExistence :: ResourceExistence
@@ -144,14 +146,13 @@ instance AwsResource S3Bucket where
   type ResourceType S3Bucket = 'S3BucketResource
 
 instance Renderable S3Bucket where
-  render appName (lid, bucket) =
-    ( S.resource (P.show lid) $
-        S.s3Bucket
-          & S.sbBucketName ?~ Literal (P.show pid)
-          & S.sbAccessControl ?~ Literal S.PublicReadWrite
-          & S.sbNotificationConfiguration ?~ lbdConfigs
-    )
-      & S.resourceDependsOn ?~ reqs
+  render appName (lid, bucket) = S.set @"DependsOn" reqs $
+    S.resource (P.show lid) $
+      S.mkBucket
+        & S.set @"BucketName" (S.Literal $ P.show pid)
+        & S.set @"AccessControl" (S.Literal "PublicReadWrite")
+        & S.set @"NotificationConfiguration" notifications
+        
     where
       pid = toPhysicalId appName lid
       eventConfigs = bucket ^. s3bEventConfigs
@@ -166,14 +167,14 @@ instance Renderable S3Bucket where
           )
             <$> eventConfigs
 
-      lbdConfigs =
-        S.s3BucketNotificationConfiguration
-          & S.sbncLambdaConfigurations ?~ map lbdConf eventConfigs
+      notifications = 
+        S.mkNotificationConfigurationProperty
+          & S.set @"LambdaConfigurations" (map lbdConf eventConfigs) -- [lbdConf]
 
       lbdConf s3EventConfig =
-        S.s3BucketLambdaConfiguration
-          (Literal . P.show $ s3EventConfig ^. event)
-          (GetAtt (P.show $ s3EventConfig ^. lbdId) "Arn")
+        S.mkLambdaConfigurationProperty
+          (S.Literal . P.show $ s3EventConfig ^. event)
+          (S.GetAtt (P.show $ s3EventConfig ^. lbdId) "Arn")
 
 -- | This represents config for the S3 resources
 data S3Config = S3Config

@@ -8,16 +8,14 @@
 module Qi.Program.Gen.Ipret.IO (run) where
 
 import Control.Lens hiding ((.=))
-import Control.Monad.Trans.AWS (runAWST)
-import qualified Control.Monad.Trans.AWS as AWS (send)
 import Data.Aeson
 import qualified Data.ByteString.Lazy as LBS
 import Data.Conduit.Binary (sinkLbs)
 import qualified Data.Time.Clock as C
-import Network.AWS hiding (Request, Response, send)
-import Network.AWS.Types (Service (..))
+-- import Network.AWS hiding (Request, Response, send)
+-- import Network.AWS.Types (Service (..))
 import Network.HTTP.Client (httpLbs, newManager)
-import Polysemy hiding (run)
+import Polysemy hiding (send, run)
 import Protolude hiding ((<&>))
 import Qi.AWS.Types (AwsMode (..))
 import Qi.Amazonka (currentRegion)
@@ -39,6 +37,10 @@ import System.Environment.Executable (splitExecutablePath)
 import System.IO (stderr)
 import System.Posix.Files
 import System.Posix.Types (FileMode)
+import Amazonka hiding (build)
+import Amazonka.Env
+import qualified Amazonka as Az
+import Control.Monad.Trans.Resource (ResourceT)
 
 run ::
   forall effs a.
@@ -57,12 +59,32 @@ run mode mkLogger =
         RunServant mgrSettings baseUrl req -> embed $ do
           mgr <- newManager mgrSettings
           runClientM req $ mkClientEnv mgr baseUrl
-        Amazonka svc req ->
-          embed . runAmazonka svc $ AWS.send req
-        AmazonkaPostBodyExtract svc req post ->
-          embed $
-            runAmazonka svc $
-              map Right . (`sinkBody` sinkLbs) . post =<< AWS.send req
+        Amazonka _req ->
+          panic "not implemented"
+        -- Amazonka svc (req :: b) ->
+        --   let 
+        --     act :: IO (Az.AWSResponse b)
+        --     act = do
+        --       -- env <- getEnv
+        --       logger <- Az.newLogger Az.Debug stdout
+        --       discoveredEnv <- Az.newEnv Az.discover
+
+        --       let env =
+        --             discoveredEnv
+        --               { Az.logger = logger
+        --               , Az.region = Az.Frankfurt
+        --               }
+
+        --       Az.runResourceT $ Az.send env req
+        --   in
+
+        --   embed act
+        
+        -- AmazonkaPostBodyExtract svc req post ->
+        --   embed $ do
+        --     env <- getEnv
+        --     runResourceT $ 
+        --       map Right . (`sinkBody` sinkLbs) . post =<< Az.send env req
         Say msg -> embed $ do
           hPutStrLn stderr . encode $ object ["message" .= String msg]
           putStrLn msg :: IO ()
@@ -76,15 +98,14 @@ run mode mkLogger =
         PutStr content -> embed $ LBS.putStr content
     )
   where
-    runAmazonka :: Service -> AWS b -> IO b
-    runAmazonka svc action = do
+    -- runAmazonka :: Service -> AWS b -> IO b
+    getEnv = do
       logger <- mkLogger
-      env <-
-        newEnv Discover
-          <&> set envLogger logger
-            . set envRegion currentRegion
+      newEnv discover
+        <&> set env_logger logger
+          . set env_region currentRegion
 
-      runResourceT . runAWST env $ reconf mode svc action
+      -- TODO: fix this -- runResourceT . runAWST env $ reconf mode svc action
 
 build ::
   FilePath ->
@@ -128,30 +149,30 @@ build srcDir exeTarget = do
           otherExecuteMode
         ]
 
-reconf ::
-  forall x.
-  AwsMode ->
-  Service ->
-  (AWS x -> AWS x)
-reconf RealDeal _ = identity
-reconf LocalStack svc = case _svcAbbrev svc of
-  "API Gateway" -> setport 4567
-  "CloudFormation" -> setport 4581
-  "CloudWatch" -> setport 4582
-  "DynamoDB" -> setport 4569
-  "DynamoDB Streams" -> setport 4570
-  "Elasticsearch" -> setport 4571
-  "Firehose" -> setport 4573
-  "Kinesis" -> setport 4568
-  "Lambda" -> setport 4574
-  "Redshift" -> setport 4577
-  "Route53" -> setport 4580
-  "S3" -> setport 4572
-  "SES" -> setport 4579
-  "Secrets Manager" -> setport 4584
-  "SNS" -> setport 4575
-  "SQS" -> setport 4576
-  "SSM" -> setport 4583
-  unknown -> panic $ show unknown
-  where
-    setport port = reconfigure (setEndpoint False "localhost" port svc)
+-- reconf ::
+--   forall x.
+--   AwsMode ->
+--   Service ->
+--   (AWS x -> AWS x)
+-- reconf RealDeal _ = identity
+-- reconf LocalStack svc = case _svcAbbrev svc of
+--   "API Gateway" -> setport 4567
+--   "CloudFormation" -> setport 4581
+--   "CloudWatch" -> setport 4582
+--   "DynamoDB" -> setport 4569
+--   "DynamoDB Streams" -> setport 4570
+--   "Elasticsearch" -> setport 4571
+--   "Firehose" -> setport 4573
+--   "Kinesis" -> setport 4568
+--   "Lambda" -> setport 4574
+--   "Redshift" -> setport 4577
+--   "Route53" -> setport 4580
+--   "S3" -> setport 4572
+--   "SES" -> setport 4579
+--   "Secrets Manager" -> setport 4584
+--   "SNS" -> setport 4575
+--   "SQS" -> setport 4576
+--   "SSM" -> setport 4583
+--   unknown -> panic $ show unknown
+--   where
+--     setport port = reconfigure (setEndpoint False "localhost" port svc)

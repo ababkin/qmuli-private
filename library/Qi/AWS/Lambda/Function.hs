@@ -24,15 +24,14 @@ import Qi.AWS.Renderable
 import Qi.AWS.Service
 import Qi.AWS.Types
 import Qi.Program.Gen.Lang
-import Qi.Program.KF.Lang (KfEff)
 import Qi.Program.Lambda.Lang (LambdaEff)
 import Qi.Program.S3.Lang (S3Eff)
-import Stratosphere (Val (..))
 import qualified Stratosphere as S
+import qualified Stratosphere.Lambda.Function.CodeProperty as S
+import qualified Stratosphere.Lambda.Function as S
 
 type AllLambdaEffects effs =
   ( Member GenEff effs,
-    Member KfEff effs,
     Member S3Eff effs,
     Member LambdaEff effs
   )
@@ -129,26 +128,24 @@ makeLenses ''LambdaFunctionProfile
 instance Renderable LambdaFunction where
   render appName (lid, LambdaFunction {roleId, profile}) =
     ( S.resource (P.show lid) $
-        S.lambdaFunction
-          lbdCode
-          "index.handler"
-          (GetAtt (P.show roleId) "Arn")
-          (Literal $ S.OtherRuntime "provided")
-          & S.lfFunctionName ?~ Literal (P.show $ toPhysicalId appName lid)
-          & S.lfMemorySize ?~ Literal memorySize
-          & S.lfTimeout ?~ Literal timeOut
+        S.mkFunction lbdCode (S.GetAtt (P.show roleId) "Arn")
+          & S.set @"FunctionName" (S.Literal $ P.show $ toPhysicalId appName lid)
+          & S.set @"MemorySize" (S.Literal memorySize)
+          & S.set @"Timeout" (S.Literal timeOut)
+          & S.set @"Handler" "index.handler"
+          & S.set @"Runtime" "provided"
     )
     where
       memorySize = fromIntegral . fromEnum $ profile ^. lfpMemorySize
       timeOut = fromIntegral $ profile ^. lfpTimeoutSeconds
 
       lbdCode =
-        S.lambdaFunctionCode
-          & S.lfcS3Bucket ?~ lambdaS3Bucket
-          & S.lfcS3Key ?~ lambdaS3Object
+        S.mkCodeProperty
+          & S.set @"S3Bucket" lambdaS3Bucket
+          & S.set @"S3Key" lambdaS3Object
 
-      lambdaS3Bucket :: Val Text
-      lambdaS3Bucket = Literal $ P.show appName <> ".app"
+      lambdaS3Bucket :: S.Value Text
+      lambdaS3Bucket = S.Literal $ P.show appName <> ".app"
 
-      lambdaS3Object :: Val Text
+      lambdaS3Object :: S.Value Text
       lambdaS3Object = "lambda.zip"

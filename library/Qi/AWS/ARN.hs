@@ -79,11 +79,3 @@ instance ToArn LambdaId where
         region = "us-east-1",
         resource = "function" <> ":" <> P.show (toPhysicalId appName id)
       }
-
-instance ToArn QueueId where
-  toArn id appName =
-    Arn
-      { service = Sqs,
-        region = "us-east-1",
-        resource = P.show (toPhysicalId appName id)
-      }

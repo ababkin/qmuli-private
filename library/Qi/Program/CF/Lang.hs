@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedLists #-}
 
 module Qi.Program.CF.Lang
   ( CfEff (..),
@@ -18,8 +19,8 @@ import Data.Aeson hiding ((.:))
 import qualified Data.ByteString.Lazy as LBS
 import Data.HashMap.Strict (fromList)
 import Data.Map (Map)
-import Network.AWS.CloudFormation (StackStatus (..))
-import Network.AWS.S3.Types (ETag)
+import Amazonka.CloudFormation.Types (StackStatus (..))
+-- import Network.AWS.S3.Types (ETag)
 import Polysemy
 import Protolude
 import Qi.AWS.S3
@@ -38,7 +39,7 @@ instance ToJSON StackDescription where
   toJSON StackDescription {status, outputs} =
     object
       [ "status" .= String (show status :: Text),
-        "outputs" .= (Object $ fromList $ second String <$> outputs)
+        "outputs" .= (fromList $ second String <$> outputs)
       ]
 
 data AbsentDirective = AbsentOk | NoAbsent

@@ -30,15 +30,15 @@ data GenEff m r where
     GenEff m (Either ClientError a)
   Amazonka ::
     (AWSRequest a) =>
-    Service ->
+    -- Service ->
     a ->
     GenEff m (AWSResponse a)
-  AmazonkaPostBodyExtract ::
-    (AWSRequest a) =>
-    Service ->
-    a ->
-    (AWSResponse a -> ResponseBody) ->
-    GenEff m (Either Text LBS.ByteString)
+  -- AmazonkaPostBodyExtract ::
+  --   (AWSRequest a) =>
+  --   Service ->
+  --   a ->
+  --   (AWSResponse a -> ResponseBody) ->
+  --   GenEff m (Either Text LBS.ByteString)
   Say ::
     Text ->
     GenEff m ()

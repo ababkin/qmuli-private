@@ -6,9 +6,10 @@ module Qi.AWS.Logger
 where
 
 import Data.Aeson (Value (..), encode, object, (.=))
-import qualified Data.ByteString.Lazy.Builder as Build
+import qualified Data.ByteString.Builder as Build
 import Amazonka.Logger (Logger)
 import Protolude
+import qualified Data.Text as T
 import System.IO
   ( BufferMode (LineBuffering),
     hSetBuffering,
@@ -19,8 +20,9 @@ mkLambdaLogger ::
   IO Logger
 mkLambdaLogger = do
   hSetBuffering stderr LineBuffering
-  pure $ \lvl b ->
-    hPutStrLn stderr . encode $ object ["level" .= String (show lvl), "message" .= String (toS $ Build.toLazyByteString b)]
+  pure $ \lvl _b ->
+    -- hPutStrLn stderr . encode $ object ["level" .= String (show lvl), "message" .= String (T.pack . toS $ Build.toLazyByteString b)]
+    hPutStrLn stderr . encode $ object ["level" .= String (show lvl), "message" .= String "TODO: fix logging!"]
 
 mkCliLogger ::
   IO Logger

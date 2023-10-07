@@ -84,7 +84,7 @@ getEndpoint =
       <$> lookupEnv "AWS_LAMBDA_RUNTIME_API"
   where
     getHostAndPort endpoint =
-      let getPort rawPort = fromMaybe 80 . readMaybe . toS $ rawPort
+      let getPort rawPort = fromMaybe 80 . readMaybe $ rawPort
        in case Text.splitOn ":" endpoint of
             [] -> ("", 80)
             [host] -> (host, 80)
